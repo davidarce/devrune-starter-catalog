@@ -4,6 +4,9 @@ scope: architecture
 applies-to:
   - architect-adviser
 description: "Kent Beck's 4 Rules of Simple Design: test-first, clarity, DRY, minimality"
+paths:
+  - "**/*.java"
+  - "**/*.{ts,tsx}"
 ---
 
 # Beck's 4 Rules of Simple Design

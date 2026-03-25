@@ -4,6 +4,10 @@ scope: testing
 applies-to:
   - unit-test-adviser
 description: "Mother builder pattern, test data construction, BDDMockito"
+paths:
+  - "**/*Mother.java"
+  - "**/*Test.java"
+  - "**/*Tests.java"
 ---
 
 # Mother Pattern Reference

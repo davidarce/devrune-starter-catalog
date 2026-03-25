@@ -4,6 +4,9 @@ scope: architecture
 applies-to:
   - architect-adviser
 description: "Hexagonal architecture, DDD patterns, ports and adapters"
+paths:
+  - "**/*.java"
+  - "**/*.{ts,tsx}"
 ---
 
 # Clean Architecture Reference

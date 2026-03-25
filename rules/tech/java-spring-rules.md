@@ -8,6 +8,8 @@ applies-to:
   - integration-test-adviser
   - api-first-adviser
 description: "Java Spring Boot conventions: module structure, DI, testing, API patterns"
+paths:
+  - "**/*.java"
 ---
 
 # Java/Spring Boot Reference

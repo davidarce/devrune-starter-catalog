@@ -5,6 +5,8 @@ applies-to:
   - component-adviser
   - frontend-test-adviser
 description: 'React and TypeScript coding standards: component patterns, hooks, props, naming, file structure.'
+paths:
+  - "**/*.{tsx,jsx}"
 ---
 
 # React & TypeScript Standards

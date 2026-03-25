@@ -4,6 +4,10 @@ scope: api
 applies-to:
   - api-first-adviser
 description: "REST API naming, validation, error models, versioning"
+paths:
+  - "**/*.{yaml,yml}"
+  - "**/*.java"
+  - "**/*.ts"
 ---
 
 # API Design Standards

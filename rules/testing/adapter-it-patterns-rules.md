@@ -4,6 +4,8 @@ scope: testing
 applies-to:
   - integration-test-adviser
 description: "Adapter integration test patterns with WireMock for HTTP service simulation"
+paths:
+  - "**/*IT.java"
 ---
 
 # Adapter Integration Test Patterns

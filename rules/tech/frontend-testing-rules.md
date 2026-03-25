@@ -5,6 +5,10 @@ applies-to:
   - frontend-test-adviser
   - component-adviser
 description: 'Frontend testing standards: React Testing Library, Vitest/Jest, Cypress/Playwright e2e, test structure, mocking, coverage.'
+paths:
+  - "**/*.test.{ts,tsx}"
+  - "**/*.spec.{ts,tsx}"
+  - "**/*.cy.{ts,tsx}"
 ---
 
 # Frontend Testing Standards

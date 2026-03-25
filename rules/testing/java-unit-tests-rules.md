@@ -4,6 +4,9 @@ scope: testing
 applies-to:
   - unit-test-adviser
 description: "Java Unit Test Standards"
+paths:
+  - "**/*Test.java"
+  - "**/*Tests.java"
 ---
 
 # Java Unit Test Standards

@@ -6,6 +6,8 @@ applies-to:
   - component-adviser
   - frontend-test-adviser
 description: 'Web accessibility standards: WCAG 2.2 AA, ARIA patterns, keyboard navigation, semantic HTML.'
+paths:
+  - "**/*.{tsx,jsx}"
 ---
 
 # Accessibility Standards
