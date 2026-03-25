@@ -8,6 +8,7 @@ Before starting ANY implementation, evaluate if SDD applies:
 How to offer: ALWAYS present options: **Start with /sdd-explore {topic}** / **Skip SDD, just do it**
 
 Full orchestrator instructions: {SKILLS_PATH}/ORCHESTRATOR.md
+> This path is relative to your **project root** (the directory containing this CLAUDE.md file). Read it directly — do not search.
 
 > **IMPORTANT**: SDD phases are NOT slash commands. Do NOT invoke them via the Skill tool.
 > The orchestrator reads the instructions file above and delegates each phase to sub-agents via the Task tool.
@@ -25,7 +26,7 @@ Full orchestrator instructions: {SKILLS_PATH}/ORCHESTRATOR.md
 
 After compaction or context reset, if memory contains observations with titles matching `sdd/*/active-workflow` whose content starts with "ACTIVE":
 
-1. You are in an active SDD workflow. Re-read the orchestrator instructions at `{SKILLS_PATH}/ORCHESTRATOR.md` — specifically the **Compaction Recovery Protocol** section.
+1. You are in an active SDD workflow. Re-read the orchestrator instructions at `{SKILLS_PATH}/ORCHESTRATOR.md` (relative to your project root — do not search) — specifically the **Compaction Recovery Protocol** section.
 2. Read `.sdd/{change}/state.yaml` (where `{change}` is extracted from the marker title) to determine the current phase and resume point.
 3. Resume as the **delegate-only orchestrator**: coordinate phases via sub-agents, NEVER execute phase work inline.
 
