@@ -172,7 +172,7 @@ Task(
   description: 'explore for {change-name}',
   subagent_type: 'general',
   model: '{SDD_MODEL_EXPLORE}',
-  prompt: 'You are an SDD sub-agent. Read the skill file at {SKILLS_PATH}/sdd-explore/SKILL.md FIRST, then follow its instructions exactly.
+  prompt: 'You are an SDD sub-agent. Read the skill file at {project path}/{SKILLS_PATH}/sdd-explore/SKILL.md FIRST, then follow its instructions exactly.
 
   CONTEXT:
   - Project: {project path}
@@ -187,7 +187,7 @@ Task(
   - Save important discoveries, decisions, or bug fixes to engram before returning:
     mem_save(title: "{description}", type: "{decision|bugfix|discovery|pattern}", project: "{project}", content: "**What**: ...\n**Why**: ...\n**Where**: ...\n**Learned**: ...")
   - For SDD artifacts: see your SKILL.md engram persistence section
-  - Reference: {SKILLS_PATH}/_shared/persistence-contract.md
+  - Reference: {project path}/{SKILLS_PATH}/_shared/persistence-contract.md
 
   IMPORTANT: Your LAST output MUST be the SDD Envelope following the format in _shared/envelope-contract.md. The orchestrator parses this envelope to track state and decide next steps.'
 )
@@ -200,7 +200,7 @@ Task(
   description: 'plan for {change-name}',
   subagent_type: 'general',
   model: '{SDD_MODEL_PLAN}',
-  prompt: 'You are an SDD sub-agent. Read the skill file at {SKILLS_PATH}/sdd-plan/SKILL.md FIRST, then follow its instructions exactly.
+  prompt: 'You are an SDD sub-agent. Read the skill file at {project path}/{SKILLS_PATH}/sdd-plan/SKILL.md FIRST, then follow its instructions exactly.
 
   CONTEXT:
   - Project: {project path}
@@ -215,7 +215,7 @@ Task(
   - Save important discoveries, decisions, or bug fixes to engram before returning:
     mem_save(title: "{description}", type: "{decision|bugfix|discovery|pattern}", project: "{project}", content: "**What**: ...\n**Why**: ...\n**Where**: ...\n**Learned**: ...")
   - For SDD artifacts: see your SKILL.md engram persistence section
-  - Reference: {SKILLS_PATH}/_shared/persistence-contract.md
+  - Reference: {project path}/{SKILLS_PATH}/_shared/persistence-contract.md
 
   IMPORTANT: Your LAST output MUST be the SDD Envelope following the format in _shared/envelope-contract.md. The orchestrator parses this envelope to track state and decide next steps.'
 )
@@ -238,7 +238,7 @@ Task(
   description: 'implement wave {N} for {change-name}',
   subagent_type: 'general',
   model: '{SDD_MODEL_IMPLEMENT}',
-  prompt: 'You are an SDD sub-agent. Read the skill file at {SKILLS_PATH}/sdd-implement/SKILL.md FIRST, then follow its instructions.
+  prompt: 'You are an SDD sub-agent. Read the skill file at {project path}/{SKILLS_PATH}/sdd-implement/SKILL.md FIRST, then follow its instructions.
 
   CONTEXT:
   - Project: {project path}
@@ -270,7 +270,7 @@ Task(
   description: 'review for {change-name}',
   subagent_type: 'general',
   model: '{SDD_MODEL_REVIEW}',
-  prompt: 'You are an SDD sub-agent. Read the skill file at {SKILLS_PATH}/sdd-review/SKILL.md FIRST, then follow its instructions exactly.
+  prompt: 'You are an SDD sub-agent. Read the skill file at {project path}/{SKILLS_PATH}/sdd-review/SKILL.md FIRST, then follow its instructions exactly.
 
   CONTEXT:
   - Project: {project path}
@@ -285,7 +285,7 @@ Task(
   - Save important discoveries, decisions, or bug fixes to engram before returning:
     mem_save(title: "{description}", type: "{decision|bugfix|discovery|pattern}", project: "{project}", content: "**What**: ...\n**Why**: ...\n**Where**: ...\n**Learned**: ...")
   - For SDD artifacts: see your SKILL.md engram persistence section
-  - Reference: {SKILLS_PATH}/_shared/persistence-contract.md
+  - Reference: {project path}/{SKILLS_PATH}/_shared/persistence-contract.md
 
   IMPORTANT: Your LAST output MUST be the SDD Envelope following the format in _shared/envelope-contract.md. The orchestrator parses this envelope to track state and decide next steps.'
 )
