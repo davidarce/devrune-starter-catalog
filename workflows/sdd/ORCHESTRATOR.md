@@ -56,7 +56,7 @@ After ANY sub-agent returns, the orchestrator MUST execute these steps IN ORDER.
        type: "architecture",
        project: "{project}",
        title: "sdd/{change}/active-workflow",
-       content: "ACTIVE SDD workflow: {change}. Orchestrator: {SKILLS_PATH}/sdd-orchestrator/ORCHESTRATOR.md. Phase just completed: {phase}. Next: {next_phase}."
+       content: "ACTIVE SDD workflow: {change}. Orchestrator: {SKILLS_PATH}/ORCHESTRATOR.md. Phase just completed: {phase}. Next: {next_phase}."
      )
      ```
    If engram is NOT available, skip this step silently. The file-based `state.yaml` from step 2 is sufficient.
@@ -157,7 +157,7 @@ Before launching a sub-agent, the orchestrator MUST:
      type: "architecture",
      project: "{project}",
      title: "sdd/{change}/active-workflow",
-      content: "ACTIVE SDD workflow: {change}. Orchestrator: {SKILLS_PATH}/sdd-orchestrator/ORCHESTRATOR.md. Phase: starting explore."
+       content: "ACTIVE SDD workflow: {change}. Orchestrator: {SKILLS_PATH}/ORCHESTRATOR.md. Phase: starting explore."
    )
    ```
    This marker enables compaction recovery. It will be updated on each subsequent phase transition (see Post-Phase Protocol step 3).
