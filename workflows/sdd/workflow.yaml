@@ -1,0 +1,55 @@
+apiVersion: devrune/workflow/v1
+metadata:
+  name: sdd
+  description: "Spec-Driven Development workflow: explore, plan, implement, review."
+  version: "1.0.0"
+components:
+  skills:
+    - sdd-explore
+    - sdd-plan
+    - sdd-implement
+    - sdd-review
+  entrypoint: "ORCHESTRATOR.md"
+  roles:
+    - name: sdd-explorer
+      kind: subagent
+      skill: sdd-explore
+      model: sonnet
+    - name: sdd-planner
+      kind: subagent
+      skill: sdd-plan
+      model: opus
+    - name: sdd-implementer
+      kind: subagent
+      skill: sdd-implement
+      model: sonnet
+    - name: sdd-reviewer
+      kind: subagent
+      skill: sdd-review
+      model: opus
+    - name: sdd-orchestrator
+      kind: orchestrator
+  decisionRules:
+    - scenario: '"commit", "commit my changes", "create commit"'
+      resolution: "Use `git:commit`"
+    - scenario: '"create PR", "pull request", "create pull request"'
+      resolution: "Use `git:pull-request`"
+    - scenario: '"Review my tests" + integration test files'
+      resolution: "Use `integration-test-adviser`"
+    - scenario: '"Review my tests" + domain unit test files'
+      resolution: "Use `unit-test-adviser`"
+    - scenario: '"Design an API" + mentions OpenAPI/REST'
+      resolution: "Use `api-first-adviser`"
+    - scenario: '"Design a service" + mentions architecture/DDD'
+      resolution: "Use `architect-adviser`"
+    - scenario: '"Review my component" + React/TypeScript'
+      resolution: "Use `component-adviser`"
+    - scenario: '"Review my tests" + frontend test files'
+      resolution: "Use `frontend-test-adviser`"
+  invocationControls:
+    - skills: "git:commit, git:pull-request"
+      description: "When user requests commit/PR operations (see Decision Rules)"
+  registry: "REGISTRY.md"
+  permissions:
+    - "Bash(mkdir -p .sdd*)"
+    - "Bash(tree:*)"

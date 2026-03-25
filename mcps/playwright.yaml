@@ -1,0 +1,12 @@
+name: playwright
+command: npx
+args:
+  - "@playwright/mcp@latest"
+agentInstructions: |
+  ## Playwright Browser Automation
+
+  You have access to a real browser via the Playwright MCP server.
+  - Use it to navigate web pages, click elements, fill forms, and take screenshots.
+  - Interactions use accessibility snapshots (roles and names), not CSS selectors.
+  - Useful for exploratory testing, verifying UI changes, and scraping web content.
+  - The browser runs locally on the user's machine (headed by default).

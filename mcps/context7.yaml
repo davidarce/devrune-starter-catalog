@@ -1,0 +1,12 @@
+name: context7
+type: http
+url: https://mcp.context7.com/mcp
+headers:
+  CONTEXT7_API_KEY: "${CONTEXT7_API_KEY}"
+agentInstructions: |
+  ## Library Documentation (Context7)
+
+  You have access to Context7 for up-to-date library documentation via MCP tools.
+  - Use Context7 to fetch current docs, API references, and code examples for external packages.
+  - Prefer Context7 over training data for library-specific code to avoid outdated patterns.
+  - If you know the exact library ID (e.g. /vercel/next.js), pass it directly to skip resolution.

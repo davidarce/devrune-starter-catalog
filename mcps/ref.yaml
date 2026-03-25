@@ -1,0 +1,12 @@
+name: ref
+type: http
+url: https://api.ref.tools/mcp
+headers:
+  x-ref-api-key: "${REF_API_KEY}"
+agentInstructions: |
+  ## Documentation Search
+
+  You have access to Ref for searching technical documentation via MCP tools (ref_search_documentation, ref_read_url).
+  - Use `ref_search_documentation` to find API docs, library references, and code examples.
+  - Use `ref_read_url` to read the full content of a documentation URL found via search.
+  - Include programming language and framework names in queries for better results.

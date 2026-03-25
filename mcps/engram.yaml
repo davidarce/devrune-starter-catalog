@@ -1,0 +1,72 @@
+name: engram
+command: engram
+args:
+  - "mcp"
+agentInstructions: |
+  ## Memory
+
+  You have access to Engram persistent memory via MCP tools (mem_save, mem_search, mem_session_summary, etc.).
+  - Save proactively after significant work — don't wait to be asked.
+  - After any compaction or context reset, call `mem_context` to recover session state before continuing.
+
+  ### WHEN TO SAVE (mandatory)
+
+  Call `mem_save` IMMEDIATELY after any of these:
+  - Bug fix completed
+  - Architecture or design decision made
+  - Non-obvious discovery about the codebase
+  - Configuration change or environment setup
+  - Pattern established (naming, structure, convention)
+  - User preference or constraint learned
+
+  Format for `mem_save`:
+  - **title**: Verb + what — short, searchable (e.g. "Fixed N+1 query in UserList")
+  - **type**: `bugfix` | `decision` | `architecture` | `discovery` | `pattern` | `config` | `preference`
+  - **content**: What was done, Why, Where (files affected), Learned (gotchas)
+
+  ### WHEN TO SEARCH MEMORY
+
+  Search memory PROACTIVELY when:
+  - Starting work on something that might have been done before
+  - The user mentions a topic you have no context on
+  - The user asks to recall something ("remember", "recall", "what did we do")
+
+  Search pattern:
+  1. `mem_context` — recent session history (fast)
+  2. `mem_search` with keywords — full-text search
+  3. `mem_get_observation` — full content of a specific memory
+
+  #### Two-Step Recovery Enforcement (mandatory)
+
+  `mem_search` returns **truncated 300-character previews** -- never treat search results as complete content. Any engram read that requires full content MUST use the two-step pattern:
+
+  1. **Step 1 -- Search**: `mem_search(query: "...")` to locate the observation ID and verify it exists.
+  2. **Step 2 -- Retrieve**: `mem_get_observation(id: <id>)` to get the full, untruncated content.
+
+  **Rules:**
+  - NEVER use `mem_search` results as the final content -- they are previews only.
+  - ALWAYS follow up with `mem_get_observation` when you need to read, parse, or act on saved content.
+  - If `mem_search` returns no results, there is nothing to retrieve -- do not call `mem_get_observation`.
+
+  ### ENGRAM AVAILABILITY GUARD
+
+  Engram tools (`mem_save`, `mem_search`, `mem_context`, etc.) depend on an MCP server that may not be installed or configured. All engram operations MUST follow the availability guard pattern:
+
+  **Detection**: At the start of a session or workflow, attempt a lightweight engram call (e.g., `mem_context`). If it succeeds, engram is available. If it fails or the tool is not recognized, engram is unavailable.
+
+  **Guard rules:**
+  - **If available**: Use engram normally -- save, search, recover as documented above.
+  - **If unavailable**: Skip ALL engram operations silently. Do not emit errors, warnings, or user-facing messages about engram absence.
+  - **Never block workflow**: No task, phase, or operation should fail because engram is not available. Engram is always complementary, never required.
+  - **Do not retry**: If an engram call fails, skip it and continue. Do not retry or enter a loop.
+
+  **Pattern:**
+  ```
+  1. Attempt engram operation (mem_save, mem_search, etc.)
+  2. If tool is unavailable or call fails -> skip silently, continue workflow
+  3. If tool succeeds -> use the result normally
+  ```
+
+  ### SESSION CLOSE PROTOCOL (mandatory)
+
+  Before ending a session, call `mem_session_summary` with: Goal, Discoveries, Accomplished, Next Steps, Relevant Files.

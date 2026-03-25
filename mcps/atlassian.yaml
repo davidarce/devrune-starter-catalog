@@ -1,0 +1,13 @@
+name: atlassian
+command: npx
+args:
+  - "-y"
+  - "mcp-remote"
+  - "https://mcp.atlassian.com/v1/sse"
+agentInstructions: |
+  ## Atlassian (Jira & Confluence)
+
+  You have access to Atlassian via MCP tools for Jira and Confluence integration.
+  - Use Jira tools to search, read, create, and update issues, sprints, and boards.
+  - Use Confluence tools to search and read pages and spaces.
+  - Authentication is handled via OAuth through mcp-remote on first use.
