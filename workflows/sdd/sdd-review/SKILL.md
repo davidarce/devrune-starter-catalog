@@ -1,7 +1,7 @@
 ---
 name: sdd:review
 description: 'Use when reviewing code changes before commit, comparing implementation against SDD plan, or doing standalone code review with adviser consultation.'
-argument-hint: [change_name?]
+argument-hint: "[change_name?]"
 allowed-tools: Bash(git diff:*), Bash(git status:*), Bash(git log:*), Read, Glob, Grep, AskUserQuestion, Skill
 ---
 

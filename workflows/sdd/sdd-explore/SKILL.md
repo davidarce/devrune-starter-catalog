@@ -1,7 +1,7 @@
 ---
 name: sdd:explore
 description: 'Use when starting an SDD workflow to discover codebase context, curate relevant files, and prepare exploration.md for planning.'
-argument-hint: [change_name] [instructions]
+argument-hint: "[change_name] [instructions]"
 disable-model-invocation: true
 allowed-tools: Bash, Bash(tree:*), Read, Glob, Grep, Write, Edit, AskUserQuestion, Skill, mcp__atlassian__jira_get_issue
 ---

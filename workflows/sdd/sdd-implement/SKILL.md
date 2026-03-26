@@ -1,7 +1,7 @@
 ---
 name: sdd:implement
 description: 'Use when executing an SDD plan via batch-based task implementation, tracking progress with [ ]/[X] markers and quality gates.'
-argument-hint: [change_name] [instructions]
+argument-hint: "[change_name] [instructions]"
 allowed-tools: Bash, Bash(tree:*), Read, Glob, Grep, Write, Edit, Task, mcp__atlassian__jira_get_issue
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: sdd:plan
 description: 'Use when creating an SDD implementation plan from exploration.md, with deep interview, task breakdown, and batch assignments.'
-argument-hint: [change_name] [instructions]
+argument-hint: "[change_name] [instructions]"
 allowed-tools: Bash, Bash(tree:*), Read, Glob, Grep, Write, Edit, AskUserQuestion, Skill, Task, mcp__atlassian__jira_get_issue
 ---
 
