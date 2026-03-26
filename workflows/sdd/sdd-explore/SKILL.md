@@ -1,9 +1,9 @@
 ---
-name: sdd-explore
-description: Discover and curate file context for implementation planning.
-argument-hint: "[change_name] [instructions]"
+name: sdd:explore
+description: 'Use when starting an SDD workflow to discover codebase context, curate relevant files, and prepare exploration.md for planning.'
+argument-hint: [change_name] [instructions]
 disable-model-invocation: true
-allowed-tools: Bash, Bash(tree:*), Read, Glob, Grep, Write, Edit, AskUserQuestion, Skill
+allowed-tools: Bash, Bash(tree:*), Read, Glob, Grep, Write, Edit, AskUserQuestion, Skill, mcp__atlassian__jira_get_issue
 ---
 
 <meta prompt 1 = "System: Agent Discover">
@@ -30,18 +30,20 @@ NEVER accumulate all findings to write exploration.md in one giant Write call at
 - Step 1: Create the file with the template (Write)
 - Steps 2-5: After each discovery batch (every 3-5 files read), **immediately update exploration.md using `Edit`** to fill in sections incrementally
 - Step 6: Final pass to polish remaining sections (Edit)
-This ensures progress is saved continuously and no single tool call needs to generate the entire document.
+  This ensures progress is saved continuously and no single tool call needs to generate the entire document.
 
 1) **Create the session file** — Initialize with the template
-    - Template: Use the exploration template from [templates/exploration_template.md](templates/exploration_template.md) as base, do not omit any section
-    - Format file name: `.sdd/{change-name}/exploration.md`
-    - Use: `Write` tool to create the file with the template placeholders
-    - Also fill in `## Objective` immediately if the task is clear from the prompt
+   - Template: Use the exploration template from [templates/exploration_template.md](templates/exploration_template.md) as base, do not omit any section
+   - Format file name: `.sdd/{change-name}/exploration.md`
+   - Use: `Write` tool to create the file with the template placeholders
+   - Also fill in `## Objective` immediately if the task is clear from the prompt
 
-2) **Get external context (optional)**
-    - **If a ticket/issue ID was provided in the arguments AND a Jira or issue-tracking tool is available**, fetch the ticket details to understand requirements and acceptance criteria.
-    - **If no ticket ID was provided, or no issue-tracking tool is available, skip this step entirely and proceed to Step 3.**
-    - **Immediately after** (if fetched): Use `Edit` to update `## Objective` and `### Task:` sections in exploration.md with what you learned
+2) **Get Jira ticket details**
+   - **If no ticket ID was provided in the arguments, skip this step entirely and proceed to Step 3.**
+   - Tool: `mcp__atlassian__jira_get_issue`
+   - Args: `{"issue_key": "<ticket_id from arguments>"}`
+   - Purpose: Understand requirements, acceptance criteria
+   - **Immediately after**: Use `Edit` to update `## Objective` and `### Task:` sections in exploration.md with what you learned
 
 3) **START with embedded tree for overview**
    START by reviewing the embedded tree, then fetch full overview or drill deeper:
@@ -56,17 +58,17 @@ This ensures progress is saved continuously and no single tool call needs to gen
     ```
 
 4) **Explore the codebase** — Identify relevant files and understand the task
-    - `Glob` — find files by patterns
-    - `Grep` — search for keywords, types, functions where user terms appear
-    - `Read` — implementation details for specific sections
-    - `tree` — drill into specific directories
-    - **After every 3-5 files read**: Use `Edit` to append findings to `### Selected Context:` and `### Architecture:` sections in exploration.md. Do NOT wait until the end.
+   - `Glob` — find files by patterns
+   - `Grep` — search for keywords, types, functions where user terms appear
+   - `Read` — implementation details for specific sections
+   - `tree` — drill into specific directories
+   - **After every 3-5 files read**: Use `Edit` to append findings to `### Selected Context:` and `### Architecture:` sections in exploration.md. Do NOT wait until the end.
 
 5) **Build selection iteratively**
-    - **Actively add ALL task-relevant files** as full files or directories
-    - Repeat until you maximize implementation context
-    - Use `Edit` to update `### Selected Code Structure` section after each batch of files discovered
-    - Use `Edit` to update `### Selected Files Tree` section after each batch
+   - **Actively add ALL task-relevant files** as full files or directories
+   - Repeat until you maximize implementation context
+   - Use `Edit` to update `### Selected Code Structure` section after each batch of files discovered
+   - Use `Edit` to update `### Selected Files Tree` section after each batch
 
 6) **Craft and set the handoff prompt (MANDATORY)** — distill discovery into actionable clarity
 
@@ -80,14 +82,14 @@ This ensures progress is saved continuously and no single tool call needs to gen
    - `### Relationships:` — call chains and data flow
    - `### Ambiguities:` — open questions or "None"
 
-   **Handoff Contract** — sdd-plan reads exploration.md expecting these exact headings. Use them verbatim:
+   **Handoff Contract** — sdd:plan reads exploration.md expecting these exact headings. Use them verbatim:
    - `## Objective` — what the feature must achieve
    - `## User Requirements` — contains the sub-sections below
-     - `### Task:` — clear restatement of what needs to be done
-     - `### Architecture:` — key modules and responsibilities
-     - `### Selected Context:` — file paths with one-line descriptions
-     - `### Relationships:` — call chains and data flow
-     - `### Ambiguities:` — open questions or "None"
+      - `### Task:` — clear restatement of what needs to be done
+      - `### Architecture:` — key modules and responsibilities
+      - `### Selected Context:` — file paths with one-line descriptions
+      - `### Relationships:` — call chains and data flow
+      - `### Ambiguities:` — open questions or "None"
    - `## Selected Code Structure` — flat list of selected file paths
    - `## Selected Files Tree` — directory tree of selected files
 
@@ -137,18 +139,28 @@ mem_save(
 If engram tools are NOT available, skip silently. This is complementary to the .sdd/ artifacts.
 
 7) **Pre-halt checklist (MANDATORY):**
-   - Files that might be edited: included with implementation (full files or slices)
-   - Supporting/reference files: included as appropriate (full files, slices)
-   - Handoff prompt explains what's included and why
+   - ✅ Files that might be edited: included with implementation (full files or slices)
+   - ✅ Supporting/reference files: included as appropriate (full files, slices)
+   - ✅ Handoff prompt explains what's included and why
 
 8) **Verify exploration.md is complete** — Read the file one final time. Confirm no empty sections and no placeholder text remaining. If any section is incomplete, use `Edit` to fill it in.
+
+---
+
+## Gotchas
+
+- **Accumulating all findings to write exploration.md in one giant Write at the end** — this exceeds output token limits and causes infinite loops. Use incremental `Edit` calls after every 3-5 files discovered; never defer all writes to the end.
+- **Skipping Step 2 (Jira fetch) when a ticket ID IS provided** — always retrieve ticket details before exploring. Skipping loses valuable business context (acceptance criteria, scope constraints) that the handoff prompt needs.
+- **Writing implementation proposals into exploration.md** — this file is context only; the plan phase decides approach. Including proposed solutions biases the planning model and narrows its solution space.
+- **Leaving the handoff prompt empty or vague** — the next model's entire world is what you curate. A missing or generic handoff prompt forces the planning model to re-derive context that exploration already resolved.
+- **Narrow file selection based on your assumed solution** — include complete context for different approaches. The planning model may solve it differently; files omitted here are invisible to it.
 
 ---
 
 ## Reference: Selection Refinement Process
 
 1. **Initial selection**: Add all relevant files/directories as full files
-**Priority**: Full files > Slices > Codemaps. Prefer full files when they fit the budget; use slices for large files; use codemaps for architectural context when budget-constrained.
+   **Priority**: Full files > Slices > Codemaps. Prefer full files when they fit the budget; use slices for large files; use codemaps for architectural context when budget-constrained.
 
 ## Reference: Mode Selection Guide
 - **Full files**: Any file that might be edited OR whose implementation is needed
@@ -184,8 +196,8 @@ When budget-constrained, use slices to include targeted sections instead of full
 **Quality requirements:**
 - **Prefer 100-200+ line self-contained sections** over tiny fragments
 - **REQUIRED: Every slice needs a descriptive `description`** explaining what it contains, why it's relevant, and how it relates to other code
-    - Bad: "UserAuth methods"
-    - Good: "UserAuth.login() and logout() - session management called by LoginView, creates Token objects"
+   - Bad: "UserAuth methods"
+   - Good: "UserAuth.login() and logout() - session management called by LoginView, creates Token objects"
 - Include interconnections (if slicing a function call, include both caller and callee)
 - The consumer sees ONLY your slices—omitting critical context causes task failure
 - Preview slices first to inspect before including them
@@ -210,31 +222,31 @@ After completing all exploration steps, your **LAST output** MUST be the SDD Env
 
 **Success Criteria**
 
-- **Selection executed** (not just planned) targeting 50–80k but accepting more for completeness
-- **Prompt crystallized** with architectural clarity, symbol relationships, and taskname metadata
-- **Token budget self-assessed** — agent confirms selection targets 50–80k tokens before completing exploration
-- **Architecture understood** through exploration and strategic file reading
-- **All relevant context included** with implementation details where needed
-- **Envelope returned with correct fields** — status, phase, change, executive summary, artifacts, next recommended, risks
+✅ **Selection executed** (not just planned) targeting 50–80k but accepting more for completeness
+✅ **Prompt crystallized** with architectural clarity, symbol relationships, and taskname metadata
+✅ **Token budget self-assessed** — agent confirms selection targets 50–80k tokens before completing exploration
+✅ **Architecture understood** through exploration and strategic file reading
+✅ **All relevant context included** with implementation details where needed
+✅ **Envelope returned with correct fields** — status, phase, change, executive summary, artifacts, next recommended, risks
 
 **Anti-patterns to Avoid**
-- **CRITICAL: Accumulating all findings to write exploration.md in one giant Write at the end** — this exceeds output token limits and causes infinite loops. ALWAYS use incremental `Edit` calls to update sections as you discover them
-- **Assuming a solution and only selecting context for that solution** — the next model may solve it differently
-- Narrow slicing based on what YOU think needs changing — include complete context for different approaches
-- Using codemap-only for files that require implementation understanding
-- Leaving >30% of tokens to codemaps after creating slices
-- Not iterating on selection to optimize token usage
-- Not reading enough files during exploration to understand the task
-- **Skipping final token verification after setting the handoff prompt** — always validate you're within budget before halting
-- Excluding important files just to stay under token limits
-- Files that might be edited included only as codemaps (need implementation)
-- Mentioning files as relevant but not including them in selection
-- Forgetting to execute the final selection
-- **CRITICAL:** Skipping the handoff prompt entirely—this is a mandatory step
-- Proposing solutions or implementation approaches in the handoff prompt
-- Implementing the task after setting the context and handoff prompt without explicit user approval
-- **Writing implementation code or proposed solutions into exploration.md** — this file is context only; the plan phase decides approach
-- **Skipping Step 2 (external context fetch) when a ticket ID IS provided and the tool IS available** — always retrieve requirements before exploring
+- 🚫 **CRITICAL: Accumulating all findings to write exploration.md in one giant Write at the end** — this exceeds output token limits and causes infinite loops. ALWAYS use incremental `Edit` calls to update sections as you discover them
+- 🚫 **Assuming a solution and only selecting context for that solution** — the next model may solve it differently
+- 🚫 Narrow slicing based on what YOU think needs changing — include complete context for different approaches
+- 🚫 Using codemap-only for files that require implementation understanding
+- 🚫 Leaving >30% of tokens to codemaps after creating slices
+- 🚫 Not iterating on selection to optimize token usage
+- 🚫 Not reading enough files during exploration to understand the task
+- 🚫 **Skipping final token verification after setting the handoff prompt** — always validate you're within budget before halting
+- 🚫 Excluding important files just to stay under token limits
+- 🚫 Files that might be edited included only as codemaps (need implementation)
+- 🚫 Mentioning files as relevant but not including them in selection
+- 🚫 Forgetting to execute the final selection
+- 🚫 **CRITICAL:** Skipping the handoff prompt entirely—this is a mandatory step
+- 🚫 Proposing solutions or implementation approaches in the handoff prompt
+- 🚫 Implementing the task after setting the context and handoff prompt without explicit user approval
+- 🚫 **Writing implementation code or proposed solutions into exploration.md** — this file is context only; the plan phase decides approach
+- 🚫 **Skipping Step 2 (Jira fetch) when a ticket ID IS provided** — always retrieve requirements before exploring
 
 Remember: You are the scout who maps the territory. The next model depends entirely on your file curation and the clarifying prompt you leave behind. Don't solve the problem—provide complete context so the next model can explore and choose their own solution approach.
 
@@ -254,4 +266,4 @@ Shared contracts:
 
 - change_name: $1
 - instructions: $2
-</user_instructions>
+  </user_instructions>

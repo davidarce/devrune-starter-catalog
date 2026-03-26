@@ -1,7 +1,7 @@
 ---
-name: sdd-review
-description: Review code changes before commit. Compares implementation against plan if change_name provided.
-argument-hint: "[change_name?]"
+name: sdd:review
+description: 'Use when reviewing code changes before commit, comparing implementation against SDD plan, or doing standalone code review with adviser consultation.'
+argument-hint: [change_name?]
 allowed-tools: Bash(git diff:*), Bash(git status:*), Bash(git log:*), Read, Glob, Grep, AskUserQuestion, Skill
 ---
 
@@ -159,23 +159,30 @@ Your **LAST output MUST be the SDD Envelope**. Nothing may follow the envelope.
 
 ## Success Criteria
 
-- **Git status checked** — understand scope of changes
-- **Git diff analyzed** — reviewed all modifications
-- **Plan compared** (SDD mode) — verified implementation matches plan
-- **Issues identified** — flagged any critical or minor concerns
-- **Review formatted** — clear summary with actionable items
-- **Envelope returned with status reflecting findings severity** — ok/warning/failed maps to finding types
+✅ **Git status checked** — understand scope of changes
+✅ **Git diff analyzed** — reviewed all modifications
+✅ **Plan compared** (SDD mode) — verified implementation matches plan
+✅ **Issues identified** — flagged any critical or minor concerns
+✅ **Review formatted** — clear summary with actionable items
+✅ **Envelope returned with status reflecting findings severity** — ok/warning/failed maps to finding types
+
+## Gotchas
+
+- **Reporting Critical Issues without specialist diagnosis** — before finalizing any Critical Issue, check for available `*-adviser` skills and invoke the relevant one via the Skill tool. Reporting domain logic or test coverage gaps without adviser input produces vague, unactionable feedback.
+- **Re-running git commands when Dynamic Context is already pre-resolved** — the skill injects git status, diff stat, and full diff at invocation time. Use those values directly; re-executing git commands wastes turns and may produce stale results if the working tree changes mid-review.
+- **Blocking on minor issues** — distinguish Critical (must fix before commit) from Minor (nice-to-have). Marking minor issues as blockers stalls workflow unnecessarily.
+- **Making code changes during review** — the review phase analyzes only; never modifies files. Any fixes belong in a follow-up implementation task.
 
 ## Anti-patterns to Avoid
 
-- **Skipping git diff** — always review the actual changes
-- **Not reading plan.md** (SDD mode) — this is critical for alignment check
-- **Vague feedback** — provide specific, actionable recommendations
-- **Blocking on minor issues** — distinguish critical from nice-to-have
-- **Making code changes** — review only analyzes, never modifies
-- **Reporting Critical Issues without specialist diagnosis** — if the issue touches domain logic or test patterns, check for available adviser skills (matching `*-adviser` pattern) and invoke the relevant one before finalising the report
-- **Invoking git:commit or other flow skills directly** — return the envelope; the orchestrator decides what runs next
-- **Using legacy .spec references** — all context lives in `.sdd/{change-name}/`
+- 🚫 **Skipping git diff** — always review the actual changes
+- 🚫 **Not reading plan.md** (SDD mode) — this is critical for alignment check
+- 🚫 **Vague feedback** — provide specific, actionable recommendations
+- 🚫 **Blocking on minor issues** — distinguish critical from nice-to-have
+- 🚫 **Making code changes** — review only analyzes, never modifies
+- 🚫 **Reporting Critical Issues without specialist diagnosis** — if the issue touches domain logic or test patterns, check for available adviser skills (matching `*-adviser` pattern) and invoke the relevant one before finalising the report
+- 🚫 **Invoking git:commit or other flow skills directly** — return the envelope; the orchestrator decides what runs next
+- 🚫 **Using legacy .spec references** — all context lives in `.sdd/{change-name}/`
 
 ## References
 
@@ -194,4 +201,4 @@ Shared contracts:
 <user_instructions>
 
 - change_name: $1 (optional - if provided, loads .sdd/{change-name}/plan.md context for plan alignment)
-</user_instructions>
+  </user_instructions>

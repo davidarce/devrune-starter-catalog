@@ -1,8 +1,8 @@
 ---
-name: sdd-plan
-description: Create detailed implementation plan from exploration context.
-argument-hint: "[change_name] [instructions]"
-allowed-tools: Bash, Bash(tree:*), Read, Glob, Grep, Write, Edit, AskUserQuestion, Skill, Task
+name: sdd:plan
+description: 'Use when creating an SDD implementation plan from exploration.md, with deep interview, task breakdown, and batch assignments.'
+argument-hint: [change_name] [instructions]
+allowed-tools: Bash, Bash(tree:*), Read, Glob, Grep, Write, Edit, AskUserQuestion, Skill, Task, mcp__atlassian__jira_get_issue
 ---
 
 <meta prompt 1 = "System: Architect">
@@ -13,7 +13,7 @@ You are a senior software architect specializing in code design and implementati
    **Engram Recovery Fallback**: If `exploration.md` is not found or is incomplete, and engram tools are available, use the mandatory **TWO-STEP** recovery pattern (`mem_search` returns truncated ~300-char previews — NEVER use search results directly as artifact content):
    1. `mem_search(query: "sdd/{change-name}/explore", project: "{project}")` → get observation ID from results (preview only — truncated, incomplete)
    2. `mem_get_observation(id: {observation-id})` → full, untruncated exploration summary (REQUIRED — always follow search with get)
-   Use this recovered content as your exploration context. If neither file nor engram has the exploration, return envelope with `status: blocked` and explain the missing dependency.
+      Use this recovered content as your exploration context. If neither file nor engram has the exploration, return envelope with `status: blocked` and explain the missing dependency.
 
 2. Create plan file `.sdd/{change-name}/plan.md`
    - Use the plan template from [templates/plan_template.md](templates/plan_template.md) as a template do not omit any section
@@ -22,7 +22,7 @@ You are a senior software architect specializing in code design and implementati
    Before analyzing architecture or selecting advisors, conduct an in-depth interview with the user to surface requirements, constraints, tradeoffs, and design decisions that exploration.md alone cannot capture.
 
    Follow the complete interview methodology in [references/interview_guide.md](references/interview_guide.md), which covers:
-   - **Interview Dimensions** — 9 dimensions to explore (behavioral contracts, hidden constraints, tradeoff tensions, failure modes, integration surface, data lifecycle, UX/DX decisions, observability, evolution path)
+   - **Interview Dimensions** — 10 dimensions to explore (behavioral contracts, hidden constraints, tradeoff tensions, failure modes, integration surface, contract specification, data lifecycle, UX/DX decisions, observability, evolution path)
    - **Question Generation Rules** — 5 filters every question must pass to ensure non-obvious, insightful questions
    - **Interview Loop Mechanics** — iterative multi-round loop with minimum 2 rounds before offering to end
 
@@ -48,15 +48,15 @@ You are a senior software architect specializing in code design and implementati
    4. Document selections in the plan under `## Team Selection` section with reasoning
 
 6. Create a detailed implementation plan that includes:
-    - Files that need to be modified
-    - Specific code sections requiring changes
-    - New functions, methods, or classes to be added
-    - Dependencies or imports to be updated
-    - Data structure modifications
-    - Interface changes
-    - Configuration updates
+   - Files that need to be modified
+   - Specific code sections requiring changes
+   - New functions, methods, or classes to be added
+   - Dependencies or imports to be updated
+   - Data structure modifications
+   - Interface changes
+   - Configuration updates
 
-   **Task Format (CRITICAL — machine-parsed by sdd-implement)**:
+   **Task Format (CRITICAL — machine-parsed by sdd:implement)**:
    Every task in the plan MUST follow this exact format:
    `- [ ] TXXX [TAGS]? Description — file_path`
 
@@ -66,7 +66,7 @@ You are a senior software architect specializing in code design and implementati
    - Each task MUST reference its target file path after an em-dash (—, not hyphen -)
    - See [templates/plan_template.md](templates/plan_template.md) for the complete specification with valid/invalid examples
 
-   This format is NOT optional. The `sdd-implement` skill parses these markers to:
+   This format is NOT optional. The `sdd:implement` skill parses these markers to:
    1. Track progress via `[ ]` → `[X]` transitions
    2. Resume implementation across sessions
    3. Execute tasks in batch order (see Batch Assignment Table below)
@@ -88,7 +88,19 @@ You are a senior software architect specializing in code design and implementati
    - Batches on different files with no cross-dependencies can run in parallel (`Parallel=Yes`)
    - If ALL batches are sequential (single file or linear deps), the table still documents execution order
    - The table is DERIVED from the tasks — not new information. After defining tasks, scan file paths and group automatically
-   - `sdd-implement` reads this table to decide batch execution strategy
+   - `sdd:implement` reads this table to decide batch execution strategy
+
+   **Detail Quality Gate (MANDATORY — self-check before proceeding to step 7)**:
+
+   Before proceeding to the Advice Phase, verify your plan meets the detail quality bar:
+
+   1. **Task Detail Blocks**: Every non-trivial task has a `**Details for TXXX**:` block immediately after the task line. Trivial tasks (renaming, import-only, config toggle) may omit it. When in doubt, include it.
+   2. **Contract Specifications**: If the plan introduces new types, interfaces, or data schemas, Section 2 must have a populated "Contract Specifications" subsection with exact signatures in code blocks.
+   3. **Before/After Analysis**: If the plan modifies existing code or configuration, Section 2 must have a populated "Before/After Analysis" subsection showing current state → proposed state for each modified component.
+   4. **Testable Checkpoints**: Every phase checkpoint includes specific, verifiable criteria (not just "story complete" — list what can be tested).
+
+   If any check fails, go back and add the missing detail before continuing.
+   The implementer (a different model with no memory of this session) depends entirely on plan.md for design decisions.
 
 7. Advice Phase (MANDATORY when skills were selected in step 5)
 
@@ -151,7 +163,7 @@ Use this incremental approach:
 3. Edit to fill Section 3 (Implementation Tasks)
 4. Edit to fill Section 4 (Clarifications) - populated during Deep Interview Phase (step 3)
 5. Edit to fill Section 5 (Risks & Considerations)
-6. Edit to update Status to "Complete"
+6. Edit to update Status to "✅ Complete"
 
 **Edit tool pattern**:
 ```
@@ -160,13 +172,13 @@ new_string: "## 1. Overview\n\n[Your actual overview content here]"
 ```
 
 **Why this approach works**:
-- Small writes/edits = no timeout risk
-- Progress is saved after each Edit call
-- Each Edit call is a single-section replacement — if one fails, all prior sections are preserved
+- ✅ Small writes/edits = no timeout risk
+- ✅ Progress is saved after each Edit call
+- ✅ Each Edit call is a single-section replacement — if one fails, all prior sections are preserved
 
 **Anti-pattern that CAUSES timeouts**:
-- Writing entire plan (200+ lines) in one Write call
-- Trying to fill multiple sections in one Edit call
+- ❌ Writing entire plan (200+ lines) in one Write call
+- ❌ Trying to fill multiple sections in one Edit call
 
 **Notes**
 You may include short code snippets to illustrate specific patterns, signatures, or structures, but do not implement the full solution.
@@ -185,13 +197,13 @@ After writing plan.md, persist the full plan to engram if available.
 
 Save the plan:
 
-  mem_save(
-    title: "sdd/{change-name}/plan",
-    topic_key: "sdd/{change-name}/plan",
-    type: "architecture",
-    project: "{project-name from context}",
-    content: "{full plan.md content}"
-  )
+mem_save(
+title: "sdd/{change-name}/plan",
+topic_key: "sdd/{change-name}/plan",
+type: "architecture",
+project: "{project-name from context}",
+content: "{full plan.md content}"
+)
 
 If engram tools are NOT available, skip this step silently. Do NOT error or warn the user. The `.sdd/` files are always the primary source of truth; engram is complementary and optional.
 
@@ -240,43 +252,58 @@ See [envelope contract](../_shared/envelope-contract.md) for format.
 
 **Rules:**
 1. The envelope is your FINAL output. Nothing after it.
-2. Do NOT invoke `sdd-implement` or any other SDD skill. Return the envelope; the orchestrator decides next steps.
+2. Do NOT invoke `sdd:implement` or any other SDD skill. Return the envelope; the orchestrator decides next steps.
 
 ---
 
 ## Success Criteria
 
-- **Exploration file read** — gathered all context from `.sdd/{change-name}/exploration.md`
-- **Plan file created** — using the plan_template.md structure
-- **Deep interview completed** — minimum 2 rounds of AskUserQuestion, relevant dimensions explored
-- **All sections filled** — no [PENDING] placeholders remain
-- **Clarifications recorded** — all interview responses documented in ## 4. Clarifications with dimension labels
-- **Tasks follow strict format** — every task uses `- [ ] TXXX Description — file_path` format (machine-parsed by sdd-implement)
-- **Architecture decisions documented** — trade-offs and reasoning included
-- **Status updated** — marked as "Complete"
-- **Envelope returned with correct fields** — SDD Envelope is the last output with status, phase, artifacts, next_recommended, and risks
+✅ **Exploration file read** — gathered all context from `.sdd/{change-name}/exploration.md`
+✅ **Plan file created** — using the plan_template.md structure
+✅ **Deep interview completed** — minimum 2 rounds of AskUserQuestion, relevant dimensions explored
+✅ **All sections filled** — no [PENDING] placeholders remain
+✅ **Clarifications recorded** — all interview responses documented in ## 4. Clarifications with dimension labels
+✅ **Tasks follow strict format** — every task uses `- [ ] TXXX Description — file_path` format (machine-parsed by sdd:implement)
+✅ **Architecture decisions documented** — trade-offs and reasoning included
+✅ **Status updated** — marked as "✅ Complete"
+✅ **Envelope returned with correct fields** — SDD Envelope is the last output with status, phase, artifacts, next_recommended, and risks
+✅ **Detail Blocks present** — every non-trivial task has a `**Details for TXXX**:` block with signatures, types, or schema
+✅ **Contract Specifications populated** — Section 2 includes contract specs when new types/interfaces are introduced (or explicitly marked N/A)
+✅ **Before/After documented** — modification tasks show current → proposed state in Section 2
+✅ **Testable checkpoints** — every phase checkpoint lists specific verification criteria
+
+## Gotchas
+
+- **Breaking task format** — every task MUST use `- [ ] TXXX Description — file_path`. Missing IDs or non-standard formats break `sdd:implement` parsing and session resumption. Validate each task line before finalizing.
+- **Using lowercase `[x]` instead of uppercase `[X]`** — the implement phase parser only recognizes uppercase `[X]` as complete. A lowercase `[x]` will be treated as an incomplete task, causing the implement agent to re-execute already-done work.
+- **Writing the entire plan in one Write call** — large single-call writes cause timeout or permission hook failures. Use incremental Edit calls, one section per Edit; each section stays under 50 lines.
+- **Empty Contract Specifications when new types are introduced** — if the plan adds new interfaces, types, or schemas, Section 2 must list them with exact signatures. Omitting forces the implementer to invent definitions during coding.
+- **Skipping the Deep Interview Phase** — minimum 2 rounds of `AskUserQuestion` before architecture analysis is mandatory. Single-round or skipped interviews produce plans that miss hidden constraints and force design decisions during implementation.
 
 ## Anti-patterns to Avoid
 
-- **Not reading exploration.md first** — this contains critical context from discovery
-- **Skipping the interview** — Deep Interview Phase is mandatory before architecture analysis
-- **Asking obvious questions** — every question must pass the non-obvious filter (not answerable from exploration.md, exposes hidden decisions, challenges assumptions)
-- **Single round of questions** — minimum 2 rounds; the interview is iterative, not one-shot
-- **Assuming requirements** — conduct Deep Interview Phase before making architectural decisions
-- **Breaking task format** — every task MUST use `- [ ] TXXX Description — file_path`; missing IDs, lowercase `[x]`, or non-standard formats break sdd-implement parsing and session resumption
-- **Vague or generic tasks** — each task must specify exact files and changes
-- **Writing entire plan in one operation** — use incremental Edit calls
-- **Skipping advice phase** — always consult subagents when uncertain
-- **Not updating plan after advice** — integrate all feedback received
-- **Proposing implementation code** — plan describes WHAT, not HOW in detail
-- **Ignoring risks section** — always document potential issues and mitigations
-- **Omitting test scope from the plan** — always identify required unit and integration tests, even if test code is written in a later phase
-- **Leaving [PENDING] placeholders unfilled** — every section must have real content before status is marked Complete
-- **Invoking next skill instead of returning envelope** — never call `Skill("sdd-implement")` or any SDD skill; return the envelope and let the orchestrator decide
-- **Adding text after the envelope** — the SDD Envelope must be the absolute last output
-- **Defining parallelism anywhere other than the Batch table** — do not use `[P]` markers or inline parallelism hints in tasks; the Batch Assignment Table is the single source of truth
-- **Missing Batch Assignment Table** — every plan MUST include the batch table after all tasks are defined, even when all execution is sequential
-- **Parallel batches with undeclared cross-dependencies** — if batch B depends on batch A's output, it must declare `Depends on: A`
+- 🚫 **Not reading exploration.md first** — this contains critical context from discovery
+- 🚫 **Skipping the interview** — Deep Interview Phase is mandatory before architecture analysis
+- 🚫 **Asking obvious questions** — every question must pass the non-obvious filter (not answerable from exploration.md, exposes hidden decisions, challenges assumptions)
+- 🚫 **Single round of questions** — minimum 2 rounds; the interview is iterative, not one-shot
+- 🚫 **Assuming requirements** — conduct Deep Interview Phase before making architectural decisions
+- 🚫 **Breaking task format** — every task MUST use `- [ ] TXXX Description — file_path`; missing IDs, lowercase `[x]`, or non-standard formats break sdd:implement parsing and session resumption
+- 🚫 **Vague or generic tasks** — each task must specify exact files AND include a Detail Block with type signatures, function prototypes, schema definitions, or config values. A task like 'Create domain entity — src/Entity.java' without specifying fields, types, and validation rules is vague.
+- 🚫 **One-line tasks without Detail Blocks** — non-trivial tasks (creating types, implementing logic, writing tests) MUST have a Detail Block with signatures, schemas, or verification criteria. One-line descriptions force the implementer to design during coding.
+- 🚫 **Missing Before/After for modification tasks** — any task that modifies existing code MUST include before/after state in Section 2's Before/After Analysis. The implementer cannot reverse-engineer the current state from a one-line description.
+- 🚫 **Empty Contract Specifications** — when the plan introduces new types, interfaces, or data schemas, the Contract Specifications subsection in Section 2 MUST list them with exact signatures. Omitting this forces the implementer to invent type definitions.
+- 🚫 **Writing entire plan in one operation** — use incremental Edit calls
+- 🚫 **Skipping advice phase** — always consult subagents when uncertain
+- 🚫 **Not updating plan after advice** — integrate all feedback received
+- 🚫 **Proposing implementation code** — plan describes WHAT to build (including type signatures, schemas, and interface contracts) but does NOT include full function implementations. Short code snippets showing signatures and structure are expected; complete method bodies are not
+- 🚫 **Ignoring risks section** — always document potential issues and mitigations
+- 🚫 **Omitting test scope from the plan** — always identify required unit and integration tests, even if test code is written in a later phase
+- 🚫 **Leaving [PENDING] placeholders unfilled** — every section must have real content before status is marked Complete
+- 🚫 **Invoking next skill instead of returning envelope** — never call `Skill("sdd:implement")` or any SDD skill; return the envelope and let the orchestrator decide
+- 🚫 **Adding text after the envelope** — the SDD Envelope must be the absolute last output
+- 🚫 **Defining parallelism anywhere other than the Batch table** — do not use `[P]` markers or inline parallelism hints in tasks; the Batch Assignment Table is the single source of truth
+- 🚫 **Missing Batch Assignment Table** — every plan MUST include the batch table after all tasks are defined, even when all execution is sequential
+- 🚫 **Parallel batches with undeclared cross-dependencies** — if batch B depends on batch A's output, it must declare `Depends on: A`
 
 ## References
 
@@ -298,4 +325,4 @@ Shared contracts:
 
 - change_name: $1
 - instructions: $2
-</user_instructions>
+  </user_instructions>

@@ -46,15 +46,6 @@ Full orchestrator instructions: {SKILLS_PATH}/ORCHESTRATOR.md
 > **IMPORTANT**: SDD phases are NOT slash commands. Do NOT invoke them via the Skill tool.
 > The orchestrator reads the instructions file above and delegates each phase to sub-agents via the Task tool.
 
-### SDD Commands
-
-| Command | Action |
-|---------|--------|
-| `sdd-explore <topic>` | Explore and investigate |
-| `sdd-plan <change>` | Create implementation plan |
-| `sdd-implement <change>` | Execute from plan |
-| `sdd-review <change>` | Review implementation |
-
 ### SDD — Compaction Recovery (MANDATORY)
 
 After compaction or context reset, if memory contains observations with titles matching `sdd/*/active-workflow` whose content starts with "ACTIVE":

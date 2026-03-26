@@ -30,21 +30,7 @@ After ANY sub-agent returns, the orchestrator MUST execute these steps IN ORDER.
 
 1. **Parse** the SDD Envelope from sub-agent output
 2. **Write file-based state** (ALWAYS — regardless of engram availability):
-   Write `.sdd/{change}/state.yaml` with the following YAML schema:
-   ```yaml
-   change: {change-name}
-   current_phase: {phase that just completed}
-   phases:
-     explore: done | pending | in_progress
-     plan: done | pending | in_progress
-     implement: done | pending | in_progress
-     review: done | pending | in_progress
-   artifacts:
-     - .sdd/{change}/exploration.md
-     - .sdd/{change}/plan.md
-     # ... list all artifact files that exist at this point
-   last_updated: {ISO 8601 datetime}
-   ```
+   Write `.sdd/{change}/state.yaml` following the schema defined in `{SKILLS_PATH}/skills/_shared/persistence-contract.md`.
    This is the **primary** state persistence — it always works, even without engram.
 3. **Save state to Engram** (conditional — only if engram is available, see Engram Availability Detection):
    - `mem_save(topic_key: "sdd/{change}/{phase}-summary", content: executive_summary)`
@@ -56,7 +42,7 @@ After ANY sub-agent returns, the orchestrator MUST execute these steps IN ORDER.
        type: "architecture",
        project: "{project}",
        title: "sdd/{change}/active-workflow",
-       content: "ACTIVE SDD workflow: {change}. Orchestrator: {SKILLS_PATH}/ORCHESTRATOR.md. Phase just completed: {phase}. Next: {next_phase}."
+       content: "ACTIVE SDD workflow: {change}. Orchestrator: {SKILLS_PATH}/skills/sdd-orchestrator/ORCHESTRATOR.md. Phase just completed: {phase}. Next: {next_phase}."
      )
      ```
    If engram is NOT available, skip this step silently. The file-based `state.yaml` from step 2 is sufficient.
@@ -65,8 +51,6 @@ After ANY sub-agent returns, the orchestrator MUST execute these steps IN ORDER.
    - The envelope's `Next Recommended` field is a SUGGESTION to present as an option, not an instruction to execute
    - Typical options: **Continue to {next phase}** / **Review artifacts first** / **Abort**
    - **Exception**: After implement completes with `status: ok`, auto-launch `sdd-review` WITHOUT asking (see Post-Implement Flow)
-
-**Why this matters**: Without this gate, system-level instructions ("go straight to the point") override the orchestrator's coordination role, causing it to skip user confirmation and auto-chain phases — violating the user's control over the workflow.
 
 ### Operating Mode
 - **Delegate-only**: You NEVER execute phase work inline.
@@ -79,20 +63,7 @@ After ANY sub-agent returns, the orchestrator MUST execute these steps IN ORDER.
 
 ### Engram Availability Detection
 
-At session start (before the first SDD phase), detect whether engram tools are available:
-
-```
-try:
-  mem_context(limit: 1)
-  → engram_available = true
-catch (tool not found / error):
-  → engram_available = false
-```
-
-**Rules:**
-- Run detection ONCE per session. Cache the result — do NOT re-check per operation.
-- If `engram_available = false`, skip ALL engram operations silently (no errors, no warnings to user).
-- `.sdd/` file operations are NEVER affected by engram availability — they always run.
+See `{SKILLS_PATH}/skills/_shared/persistence-contract.md` for the Engram Availability Guard pattern. Run detection ONCE per session, cache the result.
 
 ### SDD Triggers
 - User says: "sdd explore", "explorar", "investigate", "think about"
@@ -129,6 +100,26 @@ catch (tool not found / error):
 
 ### Language Matching
 **ALWAYS match the user's language.** If the user writes in Spanish, respond in Spanish. If in English, respond in English. This applies to the orchestrator's summaries, `AskUserQuestion` options/labels, and all user-facing output. Sub-agents can work internally in any language.
+
+### Orchestrator Rules (apply to the lead agent ONLY)
+
+#### CRITICAL REMINDERS
+1. **Delegate-only**: NEVER execute phase work inline. Always launch sub-agents via Task tool.
+2. **Model parameter**: Always include `model:` in Task calls when a model is configured (see Sub-Agent Launching Pattern).
+3. **Post-Phase Protocol**: MANDATORY after every sub-agent completion — no exceptions.
+
+These rules define what the ORCHESTRATOR (lead/coordinator) does. Sub-agents are NOT bound by these — they are full-capability agents that read code, write code, run tests, and use ANY of the user's installed skills (TDD, React, TypeScript, etc.).
+
+1. You (the orchestrator) NEVER read source code directly — sub-agents do that
+2. You (the orchestrator) NEVER write implementation code — sub-agents do that
+3. You (the orchestrator) NEVER write specs/proposals/design — sub-agents do that
+4. You ONLY: track state, present summaries to user, collect decisions via `AskUserQuestion`, launch sub-agents
+5. After EVERY sub-agent completion, execute the **Post-Phase Protocol** above — this is MANDATORY and overrides "go straight to the point"
+6. Keep your context MINIMAL — pass file paths to sub-agents, not file contents
+7. NEVER run phase work inline as the lead. Always delegate.
+8. Skills NEVER invoke other SDD skills via Skill tool. They return an envelope. The orchestrator decides next steps.
+9. Envelope `Next Recommended` is a SUGGESTION to show the user as an AskUserQuestion option — NEVER auto-execute the next phase (enforced by Post-Phase Protocol step 5)
+10. Match the user's language in ALL user-facing responses (see Language Matching above).
 
 **Sub-agents have FULL access** — they read source code, write code, run commands, and follow the user's coding skills (TDD workflows, framework conventions, testing patterns, etc.).
 
@@ -245,8 +236,6 @@ Task(
   IMPORTANT: Do NOT implement batches beyond this wave. The orchestrator manages wave progression.'
 )
 ```
-
-**Why batch-by-batch?** A single sub-agent for all batches risks context exhaustion (compaction) on large plans. Breaking into waves keeps each sub-agent focused and recoverable. It also lets the orchestrator show progress between waves and give the user control to pause or abort.
 
 #### Review Phase
 

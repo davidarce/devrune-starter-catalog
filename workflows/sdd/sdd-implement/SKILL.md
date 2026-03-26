@@ -1,8 +1,8 @@
 ---
-name: sdd-implement
-description: Implement feature from plan with batch-based task execution and quality gate.
-argument-hint: "[change_name] [instructions]"
-allowed-tools: Bash, Bash(tree:*), Read, Glob, Grep, Write, Edit, Task
+name: sdd:implement
+description: 'Use when executing an SDD plan via batch-based task implementation, tracking progress with [ ]/[X] markers and quality gates.'
+argument-hint: [change_name] [instructions]
+allowed-tools: Bash, Bash(tree:*), Read, Glob, Grep, Write, Edit, Task, mcp__atlassian__jira_get_issue
 ---
 
 <meta prompt 1 = "System: Senior Developer Agent">
@@ -20,25 +20,36 @@ Two critical files contain the context for implementation:
 **First Steps (MANDATORY)**
 
 1. **Read the exploration file** from `.sdd/{change-name}/exploration.md` to understand:
-   - Selected files and their relationships
-   - Handoff prompt with task requirements
-   - Architecture context
+    - Selected files and their relationships
+    - Handoff prompt with task requirements
+    - Architecture context
 
 2. **Be prepared**: In some cases, the plan may not exist since the feature is too simple.
 
 3. **Read the implementation plan (if exists)** from `.sdd/{change-name}/plan.md` to understand:
-   - Detailed implementation tasks
-   - Files to modify
-   - Clarifications and decisions made during planning
+    - Detailed implementation tasks
+    - Files to modify
+    - Clarifications and decisions made during planning
+
+4. **Pre-flight Detail Check (WARNING — non-blocking)**
+
+   After reading plan.md, quickly scan the Implementation Tasks section:
+    - Do non-trivial tasks have `**Details for TXXX**:` blocks?
+    - Does Section 2 have populated Contract Specifications (if new types exist)?
+    - Are Before/After states documented for modification tasks?
+
+   If detail is sparse, note this in your implementation log but DO NOT block execution.
+   Work with whatever detail is available and make reasonable design decisions.
+   Plans created before the detail quality improvements may lack these sections.
 
 **Engram Recovery Fallback**: If `exploration.md` or `plan.md` is not found, and engram tools are available, use the **mandatory two-step recovery** pattern (`mem_search` returns truncated ~300-char previews — you MUST follow with `mem_get_observation` to get full content):
 
 1. For exploration:
-   - Step 1: `mem_search(query: "sdd/{change-name}/explore", project: "{project}")` — returns observation ID + truncated preview
-   - Step 2 (REQUIRED): `mem_get_observation(id: {observation-id from step 1})` — returns complete, untruncated content
+    - Step 1: `mem_search(query: "sdd/{change-name}/explore", project: "{project}")` — returns observation ID + truncated preview
+    - Step 2 (REQUIRED): `mem_get_observation(id: {observation-id from step 1})` — returns complete, untruncated content
 2. For plan:
-   - Step 1: `mem_search(query: "sdd/{change-name}/plan", project: "{project}")` — returns observation ID + truncated preview
-   - Step 2 (REQUIRED): `mem_get_observation(id: {observation-id from step 1})` — returns complete, untruncated content
+    - Step 1: `mem_search(query: "sdd/{change-name}/plan", project: "{project}")` — returns observation ID + truncated preview
+    - Step 2 (REQUIRED): `mem_get_observation(id: {observation-id from step 1})` — returns complete, untruncated content
 
 **NEVER** use `mem_search` results directly as artifact content. The preview is always truncated and incomplete.
 
@@ -60,8 +71,8 @@ The plan contains a **Batch Assignment Table** that defines how tasks are groupe
 2. **Identify executable batches**: A batch is ready when ALL batches in its "Depends on" column are complete.
 
 3. **Execute batches by type**:
-   - **Parallel batches** (`Parallel=Yes`, no pending dependencies): Launch ALL ready parallel batches as simultaneous Task calls in a SINGLE message.
-   - **Sequential batches** (`Parallel=No` or has pending dependencies): Execute one batch at a time, wait for completion before proceeding.
+    - **Parallel batches** (`Parallel=Yes`, no pending dependencies): Launch ALL ready parallel batches as simultaneous Task calls in a SINGLE message.
+    - **Sequential batches** (`Parallel=No` or has pending dependencies): Execute one batch at a time, wait for completion before proceeding.
 
 4. **Within each batch**: Execute tasks sequentially (they target the same file).
 
@@ -146,7 +157,7 @@ Go straight to `Edit` when the change is clear. Examples:
 - Edit Root/File.java to replace all occurrences of "OldService" with "NewService".
 - Write Root/newFile.java with the provided implementation details.
 - **Tracking progress (NOT OPTIONAL)**: Always mark plan tasks as done when implemented and validated -> [X]
-  - After each batch completes successfully, mark ALL its tasks as `[X]` in plan.md
+    - After each batch completes successfully, mark ALL its tasks as `[X]` in plan.md
 
 **Architecture Planning (optional)**
 If you need a high-level plan, check if an architect adviser skill is installed (e.g., `*-architect-adviser`) and use it as a subagent. File selection is essential before doing so:
@@ -321,32 +332,40 @@ Your LAST output MUST be the SDD Envelope. Nothing may follow it.
 
 ## Success Criteria
 
-- **Both context files read** — exploration.md AND plan.md
-- **All plan tasks completed** — every task from the plan is implemented
-- **Batch execution followed** — Batch Assignment Table used to determine parallelism and ordering
-- **Quality gate passed for all tasks** — tests (or build) verified after each task
-- **Code compiles/builds** — no syntax errors or build failures
-- **Tests pass** — if tests exist, they should pass
-- **No regressions** — existing functionality still works
-- **Envelope returned with correct fields** — status, phase, change, artifacts, next_recommended, risks
+✅ **Both context files read** — exploration.md AND plan.md
+✅ **All plan tasks completed** — every task from the plan is implemented
+✅ **Batch execution followed** — Batch Assignment Table used to determine parallelism and ordering
+✅ **Quality gate passed for all tasks** — tests (or build) verified after each task
+✅ **Code compiles/builds** — no syntax errors or build failures
+✅ **Tests pass** — if tests exist, they should pass
+✅ **No regressions** — existing functionality still works
+✅ **Envelope returned with correct fields** — status, phase, change, artifacts, next_recommended, risks
+
+## Gotchas
+
+- **Writing large files (>150 lines) in a single Write call** — split into Write (scaffolding, ~100-150 lines) then Edit to append remaining sections. Never send >200 lines in one Write; large payloads cause permission hook timeouts that waste turns.
+- **Retrying identical failed tool calls** — if Write/Edit fails, split the content in half rather than retrying the same call. Retrying an identical call that already failed will fail again for the same reason.
+- **Skipping the quality gate** — run tests or build after EVERY task, not just at the end. A failed quality gate means stop immediately; continuing after failure compounds broken state across multiple tasks.
+- **Executing parallel batches sequentially** — when the Batch Assignment Table shows `Parallel=Yes`, launch ALL ready parallel batches as simultaneous Task calls in a single message. Sequential execution of parallel batches wastes time.
+- **Ignoring the Batch Assignment Table** — never define or infer parallelism from task text. The table is the single source of truth for execution order and parallelism.
 
 ## Anti-patterns to Avoid
 
-- **Skipping exploration.md** — this contains critical context from discovery
-- **Skipping plan.md** — this contains the detailed implementation tasks
-- **Large, uncertain changes** — prefer small, verified steps
-- **Not verifying changes** — always run build/lint/tests after implementation
-- **Implementing without reading plan tasks** — follow the plan systematically
-- **Skipping tracking progress** — always mark plan tasks as done when implemented and validated
-- **Leaving broken code** — fix any issues before marking as complete
-- **Executing parallel batches sequentially** — use Task tool to launch parallel batches simultaneously
-- **Ignoring Batch Assignment Table** — always read and follow the table from plan.md
-- **Continuing after batch failure** — fail-fast: stop immediately if any task in any batch fails
-- **Skipping tests when test runner exists** — if a test runner is detected, tests MUST run after each task
-- **Continuing after test failure** — a failed quality gate means STOP, do not proceed to next task
-- **Writing large files in a single call** — split files >150 lines into Write (scaffolding) + Edit (append sections); never send >200 lines in one Write call
-- **Retrying identical failed tool calls** — if Write/Edit fails, split content into smaller chunks instead of retrying the same payload
-- **Invoking commit or review skills directly** — return the envelope; the orchestrator handles next steps
+- 🚫 **Skipping exploration.md** — this contains critical context from discovery
+- 🚫 **Skipping plan.md** — this contains the detailed implementation tasks
+- 🚫 **Large, uncertain changes** — prefer small, verified steps
+- 🚫 **Not verifying changes** — always run build/lint/tests after implementation
+- 🚫 **Implementing without reading plan tasks** — follow the plan systematically
+- 🚫 **Skipping tracking progress** — always mark plan tasks as done when implemented and validated
+- 🚫 **Leaving broken code** — fix any issues before marking as complete
+- 🚫 **Executing parallel batches sequentially** — use Task tool to launch parallel batches simultaneously
+- 🚫 **Ignoring Batch Assignment Table** — always read and follow the table from plan.md
+- 🚫 **Continuing after batch failure** — fail-fast: stop immediately if any task in any batch fails
+- 🚫 **Skipping tests when test runner exists** — if a test runner is detected, tests MUST run after each task
+- 🚫 **Continuing after test failure** — a failed quality gate means STOP, do not proceed to next task
+- 🚫 **Writing large files in a single call** — split files >150 lines into Write (scaffolding) + Edit (append sections); never send >200 lines in one Write call
+- 🚫 **Retrying identical failed tool calls** — if Write/Edit fails, split content into smaller chunks instead of retrying the same payload
+- 🚫 **Invoking commit or review skills directly** — return the envelope; the orchestrator handles next steps
 
 ## References
 
@@ -367,4 +386,4 @@ Shared contracts:
 
 - change_name: $1
 - instructions: $2
-</user_instructions>
+  </user_instructions>
