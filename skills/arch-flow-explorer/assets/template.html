@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flow Explorer — [FLOW_TITLE]</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .app { display: flex; height: 100vh; }
+    .diagram-panel { flex: 0 0 65%; position: relative; overflow: hidden; border-right: 1px solid #2d2f3a; cursor: grab; }
+    .diagram-panel.panning { cursor: grabbing; }
+    .diagram-viewport { position: relative; width: 100%; height: 100%; }
+    .detail-panel { flex: 0 0 35%; display: flex; flex-direction: column; overflow-y: auto; background: #13141c; }
+    .header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #2d2f3a;
+      background: #1a1b23;
+    }
+    .header h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+    .header p { font-size: 13px; color: #94a3b8; margin-top: 4px; line-height: 1.4; }
+
+    /* === Nodes === */
+    .node {
+      position: absolute;
+      padding: 14px 20px;
+      border-radius: 12px;
+      background: #1a1b23;
+      border: 1.5px solid #2d2f3a;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-width: 150px;
+      text-align: center;
+      z-index: 2;
+      user-select: none;
+    }
+    .node:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.4); border-color: var(--accent); }
+    .node.active { border-color: var(--accent); box-shadow: 0 0 25px color-mix(in srgb, var(--accent) 20%, transparent); transform: translateY(-2px); }
+    .node.highlighted { animation: pulse 1.5s ease-in-out infinite; }
+    .node.dimmed { opacity: 0.3; transition: opacity 0.3s ease; }
+    .node.pulse-target { animation: targetPulse 1.2s ease-in-out infinite; }
+    .node-label { font-size: 13px; font-weight: 600; letter-spacing: -0.2px; }
+    .node-type { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; opacity: 0.5; }
+    .node-icon {
+      width: 32px; height: 32px;
+      margin: 0 auto 8px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      background: color-mix(in srgb, var(--accent) 12%, transparent);
+      color: var(--accent);
+    }
+    .node[data-type="entry"] { --accent: #10b981; }
+    .node[data-type="service"] { --accent: #6366f1; }
+    .node[data-type="database"] { --accent: #f59e0b; }
+    .node[data-type="messaging"] { --accent: #ec4899; }
+    .node[data-type="cache"] { --accent: #06b6d4; }
+    .node[data-type="external"] { --accent: #8b5cf6; }
+    .node[data-type="worker"] { --accent: #f97316; }
+
+    /* === Connections === */
+    .connections-layer {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none; z-index: 1;
+    }
+    .connection { stroke: #2d2f3a; stroke-width: 1.5; fill: none; transition: stroke 0.3s, stroke-width 0.3s, opacity 0.3s; }
+    .connection.async { stroke-dasharray: 8 4; }
+    .connection.active {
+      stroke: #10b981; stroke-width: 3;
+      stroke-dasharray: 12 6;
+      animation: flowDash 1s linear infinite;
+    }
+    .connection.dimmed { opacity: 0.15; }
+
+    /* === Detail Panel === */
+    .detail-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #2d2f3a;
+      background: #1a1b23;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .detail-header h2 { font-size: 14px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+    .close-detail-btn {
+      background: transparent;
+      border: none;
+      color: #64748b;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: all 0.15s;
+      line-height: 1;
+    }
+    .close-detail-btn:hover { background: #2d2f3a; color: #e2e8f0; }
+    .detail-content { padding: 20px; flex: 1; overflow-y: auto; }
+    .detail-empty {
+      display: flex; align-items: center; justify-content: center;
+      height: 100%; color: #4a5168; font-size: 14px; text-align: center; padding: 40px;
+    }
+    .detail-empty div:first-child { font-size: 40px; margin-bottom: 16px; opacity: 0.5; }
+    .detail-title { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+    .detail-tech {
+      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 11px; color: #94a3b8;
+      background: #0f1117; padding: 5px 10px; border-radius: 6px;
+      display: inline-block; margin: 8px 0;
+      border: 1px solid #1e2030;
+    }
+    .detail-desc { font-size: 13px; line-height: 1.65; color: #b4bcd0; margin: 14px 0; }
+    .detail-list { list-style: none; margin: 14px 0; }
+    .detail-list li {
+      font-size: 11.5px;
+      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      padding: 7px 12px;
+      background: #0f1117;
+      border-radius: 6px;
+      margin-bottom: 4px;
+      color: #8892a8;
+      border-left: 2.5px solid var(--accent, #6366f1);
+      transition: background 0.15s;
+    }
+    .detail-list li:hover { background: #161722; }
+    .type-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 5px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+      background: color-mix(in srgb, var(--accent, #6366f1) 12%, transparent);
+      color: var(--accent, #6366f1);
+    }
+    .section-label {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px;
+      color: #4a5168; margin: 20px 0 8px; font-weight: 600;
+    }
+    .flow-item {
+      font-size: 12px; color: #b4bcd0; padding: 6px 0;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .flow-item .arrow { color: #4a5168; font-size: 10px; }
+
+    /* === Step Controls === */
+    .step-controls {
+      padding: 14px 20px;
+      border-top: 1px solid #2d2f3a;
+      background: #1a1b23;
+    }
+    .step-nav { display: flex; gap: 8px; margin-bottom: 10px; }
+    .step-btn {
+      padding: 7px 16px; border-radius: 7px;
+      border: 1px solid #2d2f3a; background: #0f1117;
+      color: #e2e8f0; font-size: 12px; font-weight: 500;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .step-btn:hover { border-color: #6366f1; background: color-mix(in srgb, #6366f1 8%, transparent); }
+    .step-btn.primary { background: #6366f1; border-color: #6366f1; color: white; }
+    .step-btn.primary:hover { background: #5558e6; }
+    .step-btn:disabled { opacity: 0.3; pointer-events: none; }
+    .step-info { font-size: 12px; color: #64748b; }
+
+    /* === Prompt Output === */
+    .prompt-output {
+      padding: 16px 20px;
+      border-top: 1px solid #2d2f3a;
+      background: #0d0e14;
+    }
+    .prompt-label {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px;
+      color: #4a5168; margin-bottom: 8px; font-weight: 600;
+    }
+    .prompt-text {
+      font-size: 11.5px;
+      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      color: #8892a8; background: #0f1117;
+      padding: 12px 14px; border-radius: 8px;
+      border: 1px solid #1e2030; line-height: 1.6;
+      min-height: 60px;
+    }
+    .copy-btn {
+      margin-top: 8px; padding: 7px 16px; border-radius: 7px;
+      border: 1px solid #2d2f3a; background: #1a1b23;
+      color: #e2e8f0; font-size: 12px; font-weight: 500;
+      cursor: pointer; transition: all 0.2s; width: 100%;
+    }
+    .copy-btn:hover { border-color: #10b981; color: #10b981; }
+    .copy-btn.copied { border-color: #10b981; color: #10b981; background: color-mix(in srgb, #10b981 8%, transparent); }
+
+    /* === Step Counter Overlay === */
+    .step-counter {
+      position: absolute;
+      top: 90px;
+      right: 16px;
+      background: #1a1b23ee;
+      padding: 10px 16px;
+      border-radius: 10px;
+      backdrop-filter: blur(12px);
+      border: 1px solid #2d2f3a;
+      font-size: 13px;
+      font-weight: 600;
+      color: #e2e8f0;
+      z-index: 3;
+      display: none;
+    }
+    .step-counter.visible { display: block; }
+
+    /* === Animations === */
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 30%, transparent); }
+      50% { box-shadow: 0 0 25px 6px color-mix(in srgb, var(--accent) 12%, transparent); }
+    }
+    @keyframes targetPulse {
+      0%, 100% {
+        box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 40%, transparent);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 0 30px 8px color-mix(in srgb, var(--accent) 20%, transparent);
+        transform: scale(1.05);
+      }
+    }
+    @keyframes flowDash { to { stroke-dashoffset: -18; } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .detail-content > div { animation: fadeIn 0.25s ease; }
+
+    /* === Legend === */
+    .legend {
+      position: absolute; bottom: 16px; left: 16px;
+      display: flex; gap: 14px; z-index: 3;
+      background: #1a1b23ee; padding: 10px 14px;
+      border-radius: 10px; backdrop-filter: blur(12px);
+      border: 1px solid #2d2f3a;
+    }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #64748b; font-weight: 500; }
+    .legend-dot { width: 8px; height: 8px; border-radius: 3px; }
+    .conn-legend { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #64748b; font-weight: 500; }
+    .conn-legend svg { width: 24px; height: 8px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="diagram-panel" id="diagram-panel">
+      <div class="header">
+        <h1 id="flow-title"></h1>
+        <p id="flow-desc"></p>
+      </div>
+      <div class="diagram-viewport" id="viewport">
+        <svg class="connections-layer" id="connections"></svg>
+        <div id="nodes-container"></div>
+      </div>
+      <div class="step-counter" id="step-counter"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="detail-panel">
+      <div class="detail-header" id="detail-header" style="display: none;">
+        <h2 id="detail-header-title">Component Details</h2>
+        <button class="close-detail-btn" onclick="resetView()" title="Close detail panel">×</button>
+      </div>
+      <div class="detail-content" id="detail-content">
+        <div class="detail-empty">
+          <div>
+            <div>🔍</div>
+            <div>Click any component to inspect it</div>
+            <div style="margin-top:8px;font-size:12px;color:#3a3f52">Or press <strong>Play Flow</strong> to walk through step by step</div>
+          </div>
+        </div>
+      </div>
+      <div class="step-controls">
+        <div class="step-nav">
+          <button class="step-btn" id="btn-prev" onclick="prevStep()" disabled>← Prev</button>
+          <button class="step-btn primary" id="btn-play" onclick="togglePlay()">▶ Play Flow</button>
+          <button class="step-btn" id="btn-next" onclick="nextStep()">Next →</button>
+          <button class="step-btn" id="btn-reset" onclick="resetView()" style="margin-left:auto">Reset</button>
+        </div>
+        <div class="step-info" id="step-info">Ready</div>
+      </div>
+      <div class="prompt-output">
+        <div class="prompt-label">📋 Prompt for Claude Code</div>
+        <div class="prompt-text" id="prompt-text">Select a component or step to generate a contextual prompt...</div>
+        <button class="copy-btn" id="copy-btn" onclick="copyPrompt()">Copy Prompt</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================
+    // FLOW DATA — Replace this section with your actual flow data
+    // ============================================================
+    // [FLOW_DATA_PLACEHOLDER]
+    // Example: window.FLOW = { title: "...", description: "...", components: [...], steps: [...] };
+    // See references/data-schema.md for the full schema.
+    // ============================================================
+
+    // ============================================================
+    // ENGINE — Do not modify unless customizing behavior
+    // ============================================================
+    const TYPE_ICONS = {
+      entry: "→", service: "⚙", database: "🗄", messaging: "⚡",
+      cache: "◎", external: "☁", worker: "⟳"
+    };
+    const TYPE_COLORS = {
+      entry: "#10b981", service: "#6366f1", database: "#f59e0b",
+      messaging: "#ec4899", cache: "#06b6d4", external: "#8b5cf6", worker: "#f97316"
+    };
+    let state = {
+      selected: null,
+      currentStep: -1,
+      playing: false,
+      playTimer: null,
+      pan: { x: 0, y: 0, isDragging: false, startX: 0, startY: 0 }
+    };
+
+    function init() {
+      if (!window.FLOW) { document.getElementById("flow-title").textContent = "No flow data"; return; }
+      document.getElementById("flow-title").textContent = FLOW.title;
+      document.getElementById("flow-desc").textContent = FLOW.description;
+      document.title = `Flow Explorer — ${FLOW.title}`;
+      applyAutoLayout();
+      renderNodes();
+      requestAnimationFrame(renderConnections);
+      renderLegend();
+      setupPanZoom();
+    }
+
+    function applyAutoLayout() {
+      const needsLayout = FLOW.components.some(c => c.x === undefined || c.y === undefined);
+      if (!needsLayout) return;
+
+      const graph = buildDependencyGraph();
+      const layers = assignLayers(graph);
+      const canvasWidth = document.getElementById("diagram-panel").offsetWidth - 100;
+
+      layers.forEach((nodeIds, layerIdx) => {
+        const y = layerIdx * 200 + 30;
+        const totalWidth = nodeIds.length * 200;
+        const startX = Math.max(60, (canvasWidth - totalWidth) / 2);
+
+        nodeIds.forEach((nodeId, idx) => {
+          const comp = FLOW.components.find(c => c.id === nodeId);
+          if (comp) {
+            comp.x = startX + idx * 220;
+            comp.y = y;
+          }
+        });
+      });
+    }
+
+    function buildDependencyGraph() {
+      const graph = {};
+      FLOW.components.forEach(c => {
+        graph[c.id] = { in: [], out: c.connections || [] };
+      });
+      FLOW.components.forEach(c => {
+        (c.connections || []).forEach(targetId => {
+          if (graph[targetId]) graph[targetId].in.push(c.id);
+        });
+      });
+      return graph;
+    }
+
+    function assignLayers(graph) {
+      const layers = [];
+      const visited = new Set();
+      const nodeDepth = {};
+
+      const entryNodes = FLOW.components.filter(c => c.type === 'entry' || !graph[c.id].in.length).map(c => c.id);
+
+      function dfs(nodeId, depth) {
+        if (visited.has(nodeId)) return;
+        visited.add(nodeId);
+        nodeDepth[nodeId] = Math.max(nodeDepth[nodeId] || 0, depth);
+        graph[nodeId].out.forEach(targetId => dfs(targetId, depth + 1));
+      }
+
+      entryNodes.forEach(id => dfs(id, 0));
+      FLOW.components.forEach(c => { if (!visited.has(c.id)) nodeDepth[c.id] = 0; });
+
+      const maxDepth = Math.max(...Object.values(nodeDepth));
+      for (let i = 0; i <= maxDepth; i++) {
+        layers[i] = Object.keys(nodeDepth).filter(id => nodeDepth[id] === i);
+      }
+
+      return layers;
+    }
+
+    function setupPanZoom() {
+      const panel = document.getElementById("diagram-panel");
+      const viewport = document.getElementById("viewport");
+
+      panel.addEventListener("mousedown", (e) => {
+        if (e.target.closest(".node") || e.target.closest(".legend")) return;
+        state.pan.isDragging = true;
+        state.pan.startX = e.clientX - state.pan.x;
+        state.pan.startY = e.clientY - state.pan.y;
+        panel.classList.add("panning");
+      });
+
+      panel.addEventListener("mousemove", (e) => {
+        if (!state.pan.isDragging) return;
+        state.pan.x = e.clientX - state.pan.startX;
+        state.pan.y = e.clientY - state.pan.startY;
+        viewport.style.transform = `translate(${state.pan.x}px, ${state.pan.y}px)`;
+      });
+
+      panel.addEventListener("mouseup", () => {
+        state.pan.isDragging = false;
+        panel.classList.remove("panning");
+      });
+
+      panel.addEventListener("mouseleave", () => {
+        if (state.pan.isDragging) {
+          state.pan.isDragging = false;
+          panel.classList.remove("panning");
+        }
+      });
+    }
+
+    function renderNodes() {
+      const c = document.getElementById("nodes-container");
+      c.innerHTML = "";
+      FLOW.components.forEach(comp => {
+        const n = document.createElement("div");
+        n.className = "node"; n.dataset.type = comp.type; n.dataset.id = comp.id;
+        n.style.cssText = `left:${comp.x}px;top:${comp.y+70}px;--accent:${TYPE_COLORS[comp.type]}`;
+        n.innerHTML = `<div class="node-icon">${TYPE_ICONS[comp.type]||"●"}</div><div class="node-label">${comp.label}</div><div class="node-type">${comp.type}</div>`;
+        n.onclick = () => selectComponent(comp);
+        c.appendChild(n);
+      });
+    }
+
+    function getCenter(comp) {
+      const el = document.querySelector(`[data-id="${comp.id}"]`);
+      if (!el) return { x: comp.x+75, y: comp.y+110 };
+      return { x: el.offsetLeft+el.offsetWidth/2, y: el.offsetTop+el.offsetHeight/2 };
+    }
+
+    function renderConnections() {
+      const svg = document.getElementById("connections");
+      svg.innerHTML = `<defs><marker id="arr" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="7" markerHeight="5" orient="auto"><path d="M0,.5 L9,3 L0,5.5" fill="#3a3f52"/></marker><marker id="arr-a" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="7" markerHeight="5" orient="auto"><path d="M0,.5 L9,3 L0,5.5" fill="#6366f1"/></marker></defs>`;
+      FLOW.components.forEach(comp => {
+        (comp.connections||[]).forEach(tid => {
+          const t = FLOW.components.find(c=>c.id===tid); if(!t) return;
+          const f = getCenter(comp), to = getCenter(t);
+          const dx=to.x-f.x, dy=to.y-f.y;
+          const p = document.createElementNS("http://www.w3.org/2000/svg","path");
+          p.setAttribute("d",`M${f.x},${f.y} C${f.x+dx*.1},${f.y+dy*.5} ${to.x-dx*.1},${to.y-dy*.5} ${to.x},${to.y}`);
+          p.setAttribute("class","connection"); p.setAttribute("marker-end","url(#arr)");
+          p.dataset.from=comp.id; p.dataset.to=tid;
+          const step = (FLOW.steps||[]).find(s=>s.from===comp.id&&s.to===tid);
+          if(step&&step.async) p.classList.add("async");
+          svg.appendChild(p);
+        });
+      });
+    }
+
+    function renderLegend() {
+      const l = document.getElementById("legend");
+      const types = [...new Set(FLOW.components.map(c=>c.type))];
+      l.innerHTML = types.map(t=>`<div class="legend-item"><div class="legend-dot" style="background:${TYPE_COLORS[t]}"></div>${t}</div>`).join("")
+        +`<div class="conn-legend"><svg><line x1="0" y1="4" x2="24" y2="4" stroke="#64748b" stroke-width="1.5"/></svg>sync</div>`
+        +`<div class="conn-legend"><svg><line x1="0" y1="4" x2="24" y2="4" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4 2"/></svg>async</div>`;
+    }
+
+    function selectComponent(comp) {
+      state.selected=comp; state.currentStep=-1; stopPlay();
+      document.querySelectorAll(".node").forEach(n=>{n.classList.toggle("active",n.dataset.id===comp.id);n.classList.remove("highlighted","dimmed","pulse-target");});
+      document.querySelectorAll(".connection").forEach(c=>{c.classList.remove("active","dimmed");c.setAttribute("marker-end","url(#arr)");});
+      document.getElementById("step-counter").classList.remove("visible");
+      document.getElementById("detail-header").style.display = "flex";
+      document.getElementById("detail-header-title").textContent = "Component Details";
+      const out=(FLOW.steps||[]).filter(s=>s.from===comp.id), inc=(FLOW.steps||[]).filter(s=>s.to===comp.id);
+      document.getElementById("detail-content").innerHTML=`<div style="--accent:${TYPE_COLORS[comp.type]}"><div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div style="width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;background:color-mix(in srgb,${TYPE_COLORS[comp.type]} 15%,transparent);color:${TYPE_COLORS[comp.type]}">${TYPE_ICONS[comp.type]}</div><div><div class="detail-title">${comp.label}</div><span class="type-badge" style="--accent:${TYPE_COLORS[comp.type]};margin-top:4px">${comp.type}</span></div></div><div class="detail-tech">${comp.tech}</div><div class="detail-desc">${comp.description}</div>${comp.details?`<div class="section-label">Details</div><ul class="detail-list" style="--accent:${TYPE_COLORS[comp.type]}">${comp.details.map(d=>`<li>${d}</li>`).join("")}</ul>`:""}${out.length?`<div class="section-label">Outgoing</div>${out.map(s=>`<div class="flow-item"><span class="arrow">→</span><span class="type-badge" style="--accent:${TYPE_COLORS[FLOW.components.find(c=>c.id===s.to)?.type]};font-size:9px;padding:2px 6px">${FLOW.components.find(c=>c.id===s.to)?.label}</span><span style="color:#64748b;font-size:11px">${s.label}</span></div>`).join("")}`:""}${inc.length?`<div class="section-label">Incoming</div>${inc.map(s=>`<div class="flow-item"><span class="arrow">←</span><span class="type-badge" style="--accent:${TYPE_COLORS[FLOW.components.find(c=>c.id===s.from)?.type]};font-size:9px;padding:2px 6px">${FLOW.components.find(c=>c.id===s.from)?.label}</span><span style="color:#64748b;font-size:11px">${s.label}</span></div>`).join("")}`:""}}</div>`;
+      updatePrompt(`Explain in detail how the ${comp.label} works in the ${FLOW.title}. Show me the relevant source code files, focusing on: ${comp.details?comp.details.slice(0,2).join(", "):comp.description}`);
+      updateBtns();
+    }
+
+    function showStep(idx) {
+      if(!FLOW.steps||idx<0||idx>=FLOW.steps.length) return;
+      state.currentStep=idx; state.selected=null;
+      const step=FLOW.steps[idx],fc=FLOW.components.find(c=>c.id===step.from),tc=FLOW.components.find(c=>c.id===step.to);
+
+      document.querySelectorAll(".node").forEach(n=>{
+        const isActive = n.dataset.id === step.from || n.dataset.id === step.to;
+        n.classList.remove("active");
+        n.classList.toggle("highlighted", n.dataset.id === step.from);
+        n.classList.toggle("pulse-target", n.dataset.id === step.to);
+        n.classList.toggle("dimmed", !isActive);
+      });
+
+      document.querySelectorAll(".connection").forEach(c=>{
+        const a=c.dataset.from===step.from&&c.dataset.to===step.to;
+        c.classList.toggle("active",a);
+        c.classList.toggle("dimmed",!a);
+        c.setAttribute("marker-end",a?"url(#arr-a)":"url(#arr)");
+      });
+
+      document.getElementById("step-counter").textContent = `Step ${idx+1}/${FLOW.steps.length}`;
+      document.getElementById("step-counter").classList.add("visible");
+      document.getElementById("detail-header").style.display = "flex";
+      document.getElementById("detail-header-title").textContent = `Step ${idx+1} of ${FLOW.steps.length}`;
+
+      autoPanToStep(step);
+
+      const badge=step.async?'<div style="font-size:9px;padding:2px 8px;border-radius:4px;background:#ec489922;color:#ec4899;font-weight:600;text-transform:uppercase;letter-spacing:.5px">async</div>':'<div style="font-size:9px;padding:2px 8px;border-radius:4px;background:#10b98122;color:#10b981;font-weight:600;text-transform:uppercase;letter-spacing:.5px">sync</div>';
+      document.getElementById("detail-content").innerHTML=`<div><div style="display:flex;align-items:center;gap:8px;margin-bottom:16px"><div style="width:28px;height:28px;border-radius:50%;background:#6366f1;color:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">${idx+1}</div><div style="font-size:11px;color:#64748b">Step ${idx+1} of ${FLOW.steps.length}</div>${badge}</div><div class="detail-title" style="margin-bottom:14px">${step.label}</div><div style="display:flex;align-items:center;gap:10px;margin:16px 0;padding:12px;background:#0f1117;border-radius:8px;border:1px solid #1e2030"><span class="type-badge" style="--accent:${TYPE_COLORS[fc?.type]}">${fc?.label}</span><span style="color:#4a5168;font-size:16px">→</span><span class="type-badge" style="--accent:${TYPE_COLORS[tc?.type]}">${tc?.label}</span></div><div class="detail-desc">${step.description}</div></div>`;
+      document.getElementById("step-info").innerHTML=`<strong style="color:#e2e8f0">Step ${idx+1}/${FLOW.steps.length}</strong> · ${step.label}`;
+      updatePrompt(`Show me the code where ${fc?.label} ${step.label.toLowerCase()} to ${tc?.label}. ${step.description} Include error handling and edge cases.`);
+      updateBtns();
+    }
+
+    function autoPanToStep(step) {
+      const fromNode = document.querySelector(`[data-id="${step.from}"]`);
+      const toNode = document.querySelector(`[data-id="${step.to}"]`);
+      if (!fromNode || !toNode) return;
+
+      const panel = document.getElementById("diagram-panel");
+      const panelRect = panel.getBoundingClientRect();
+      const fromRect = fromNode.getBoundingClientRect();
+      const toRect = toNode.getBoundingClientRect();
+
+      const centerX = (fromRect.left + fromRect.right + toRect.left + toRect.right) / 4;
+      const centerY = (fromRect.top + fromRect.bottom + toRect.top + toRect.bottom) / 4;
+
+      const targetX = panelRect.left + panelRect.width / 2;
+      const targetY = panelRect.top + panelRect.height / 2;
+
+      const offsetX = targetX - centerX;
+      const offsetY = targetY - centerY;
+
+      state.pan.x += offsetX;
+      state.pan.y += offsetY;
+
+      const viewport = document.getElementById("viewport");
+      viewport.style.transition = "transform 0.5s ease";
+      viewport.style.transform = `translate(${state.pan.x}px, ${state.pan.y}px)`;
+      setTimeout(() => { viewport.style.transition = ""; }, 500);
+    }
+
+    function updateBtns() {
+      document.getElementById("btn-prev").disabled=state.currentStep<=0;
+      document.getElementById("btn-next").disabled=!FLOW.steps||state.currentStep>=FLOW.steps.length-1;
+    }
+    function nextStep(){ const n=state.currentStep+1; if(FLOW.steps&&n<FLOW.steps.length) showStep(n); else stopPlay(); }
+    function prevStep(){ if(state.currentStep>0) showStep(state.currentStep-1); }
+    function togglePlay(){
+      if(state.playing){stopPlay();return;}
+      state.playing=true; document.getElementById("btn-play").textContent="⏸ Pause";
+      if(state.currentStep<0) showStep(0); else nextStep();
+      state.playTimer=setInterval(()=>{const n=state.currentStep+1;if(FLOW.steps&&n<FLOW.steps.length) showStep(n);else stopPlay();},2800);
+    }
+    function stopPlay(){
+      state.playing=false; if(state.playTimer)clearInterval(state.playTimer); state.playTimer=null;
+      document.getElementById("btn-play").textContent="▶ Play Flow";
+    }
+    function resetView(){
+      stopPlay(); state.selected=null; state.currentStep=-1;
+      document.querySelectorAll(".node").forEach(n=>{n.classList.remove("active","highlighted","dimmed","pulse-target");});
+      document.querySelectorAll(".connection").forEach(c=>{c.classList.remove("active","dimmed");c.setAttribute("marker-end","url(#arr)");});
+      document.getElementById("step-counter").classList.remove("visible");
+      document.getElementById("detail-header").style.display = "none";
+      document.getElementById("detail-content").innerHTML=`<div class="detail-empty"><div><div>🔍</div><div>Click any component to inspect it</div><div style="margin-top:8px;font-size:12px;color:#3a3f52">Or press <strong>Play Flow</strong> to walk through step by step</div></div></div>`;
+      document.getElementById("step-info").textContent="Ready";
+      document.getElementById("prompt-text").textContent="Select a component or step to generate a contextual prompt...";
+      updateBtns();
+    }
+    function updatePrompt(t){
+      document.getElementById("prompt-text").textContent=t;
+      document.getElementById("copy-btn").textContent="Copy Prompt";
+      document.getElementById("copy-btn").classList.remove("copied");
+    }
+    function copyPrompt(){
+      navigator.clipboard.writeText(document.getElementById("prompt-text").textContent).then(()=>{
+        const b=document.getElementById("copy-btn"); b.textContent="✓ Copied!"; b.classList.add("copied");
+        setTimeout(()=>{b.textContent="Copy Prompt";b.classList.remove("copied");},2000);
+      });
+    }
+    init();
+  </script>
+</body>
+</html>
