@@ -91,3 +91,5 @@ Every test class should cover:
 - No assertions after the "When" section.
 - Mocking value objects or DTOs.
 - `assertTrue(result != null)` — use `assertThat(result).isNotNull()`.
+
+Before finalizing your review, check `gotchas.md` for common Claude mistakes in this domain.

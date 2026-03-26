@@ -2,3 +2,12 @@
 *.swp
 *.swo
 .sdd/
+
+# >>> devrune managed — do not edit
+.devrune/
+.claude/
+.opencode/
+.github/
+.factory/
+.mcp.json
+# <<< devrune managed

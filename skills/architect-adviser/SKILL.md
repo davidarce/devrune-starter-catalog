@@ -92,3 +92,5 @@ Structure findings as:
 ### Recommendations
 - ...
 ```
+
+Before finalizing your review, check `gotchas.md` for common Claude mistakes in this domain.

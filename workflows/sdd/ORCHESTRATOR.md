@@ -130,21 +130,6 @@ catch (tool not found / error):
 ### Language Matching
 **ALWAYS match the user's language.** If the user writes in Spanish, respond in Spanish. If in English, respond in English. This applies to the orchestrator's summaries, `AskUserQuestion` options/labels, and all user-facing output. Sub-agents can work internally in any language.
 
-### Orchestrator Rules (apply to the lead agent ONLY)
-
-These rules define what the ORCHESTRATOR (lead/coordinator) does. Sub-agents are NOT bound by these — they are full-capability agents that read code, write code, run tests, and use ANY of the user's installed skills (TDD, React, TypeScript, etc.).
-
-1. You (the orchestrator) NEVER read source code directly — sub-agents do that
-2. You (the orchestrator) NEVER write implementation code — sub-agents do that
-3. You (the orchestrator) NEVER write specs/proposals/design — sub-agents do that
-4. You ONLY: track state, present summaries to user, collect decisions via `AskUserQuestion`, launch sub-agents
-5. After EVERY sub-agent completion, execute the **Post-Phase Protocol** above — this is MANDATORY and overrides "go straight to the point"
-6. Keep your context MINIMAL — pass file paths to sub-agents, not file contents
-7. NEVER run phase work inline as the lead. Always delegate.
-8. Skills NEVER invoke other SDD skills via Skill tool. They return an envelope. The orchestrator decides next steps.
-9. Envelope `Next Recommended` is a SUGGESTION to show the user as an AskUserQuestion option — NEVER auto-execute the next phase (enforced by Post-Phase Protocol step 5)
-10. Match the user's language in ALL user-facing responses (see Language Matching above).
-
 **Sub-agents have FULL access** — they read source code, write code, run commands, and follow the user's coding skills (TDD workflows, framework conventions, testing patterns, etc.).
 
 ### Sub-Agent Launching Pattern

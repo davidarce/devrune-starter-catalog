@@ -52,3 +52,5 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - Reference JIRA ticket in scope when available: `feat(PROJECT-123): add login`.
 - Never skip hooks (`--no-verify`) unless the user explicitly asks.
 - Never commit `.env` files or credentials.
+
+Before finalizing your commit, check `gotchas.md` for common Claude mistakes when committing.

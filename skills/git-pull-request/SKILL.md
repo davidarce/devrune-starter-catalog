@@ -59,3 +59,5 @@ Invoke this skill when the user requests "create PR", "create pull request", or 
 - Always push the current branch first (`git push -u origin HEAD`).
 - Never use `--force` unless the user explicitly requests it.
 - Return the PR URL when done.
+
+Before finalizing your PR, check `gotchas.md` for common Claude mistakes when creating pull requests.
