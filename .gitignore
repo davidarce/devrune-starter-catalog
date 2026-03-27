@@ -1,7 +1,13 @@
 .DS_Store
+Thumbs.db
 *.swp
 *.swo
+*.log
 .sdd/
+.idea/
+.vscode/
+.env*
+node_modules/
 
 # >>> devrune managed — do not edit
 .devrune/
