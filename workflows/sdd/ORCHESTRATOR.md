@@ -147,7 +147,7 @@ Before launching a sub-agent, the orchestrator MUST:
 Task(
   description: 'explore for {change-name}',
   subagent_type: 'general',
-  model: '{SDD_MODEL_EXPLORE}',
+  model: '{WORKFLOW_MODEL_EXPLORER}',
   prompt: 'You are an SDD sub-agent. Read the skill file at {project path}/{SKILLS_PATH}/sdd-explore/SKILL.md FIRST, then follow its instructions exactly.
 
   CONTEXT:
@@ -175,7 +175,7 @@ Task(
 Task(
   description: 'plan for {change-name}',
   subagent_type: 'general',
-  model: '{SDD_MODEL_PLAN}',
+  model: '{WORKFLOW_MODEL_PLANNER}',
   prompt: 'You are an SDD sub-agent. Read the skill file at {project path}/{SKILLS_PATH}/sdd-plan/SKILL.md FIRST, then follow its instructions exactly.
 
   CONTEXT:
@@ -213,7 +213,7 @@ Task(
 Task(
   description: 'implement wave {N} for {change-name}',
   subagent_type: 'general',
-  model: '{SDD_MODEL_IMPLEMENT}',
+  model: '{WORKFLOW_MODEL_IMPLEMENTER}',
   prompt: 'You are an SDD sub-agent. Read the skill file at {project path}/{SKILLS_PATH}/sdd-implement/SKILL.md FIRST, then follow its instructions.
 
   CONTEXT:
@@ -243,7 +243,7 @@ Task(
 Task(
   description: 'review for {change-name}',
   subagent_type: 'general',
-  model: '{SDD_MODEL_REVIEW}',
+  model: '{WORKFLOW_MODEL_REVIEWER}',
   prompt: 'You are an SDD sub-agent. Read the skill file at {project path}/{SKILLS_PATH}/sdd-review/SKILL.md FIRST, then follow its instructions exactly.
 
   CONTEXT:
