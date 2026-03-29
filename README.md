@@ -1,6 +1,6 @@
 # DevRune Starter Catalog
 
-A curated collection of skills, rules, MCP server definitions, and workflows for AI development agents. This is the default catalog used by [DevRune](https://github.com/davidarce/devrune), a package manager for AI agent instructions.
+A curated collection of skills, rules, MCP server definitions, workflows, and developer tools for AI development agents. This is the default catalog used by [DevRune](https://github.com/davidarce/devrune), a package manager for AI agent instructions.
 
 ## Structure
 
@@ -9,6 +9,7 @@ skills/       Reusable AI agent skills (advisers, automation)
 rules/        Technology-specific coding standards and patterns
 mcps/         MCP server definitions for tool integrations
 workflows/    Multi-phase development workflows
+tools/        Developer CLI tools auto-installed via Homebrew
 ```
 
 ## Skills
@@ -59,6 +60,15 @@ workflows/    Multi-phase development workflows
 |----------|-------------|
 | `sdd` | Spec-Driven Development -- explore, plan, implement, review |
 
+## Tools
+
+Developer CLI tools that complement your agent setup. During `devrune init`, the wizard detects which tools are relevant based on your selected MCPs and workflows, checks if they're already installed, and offers to install the rest via Homebrew.
+
+| Tool | Description | Installed When |
+|------|-------------|----------------|
+| `crit` | Code review tool for SDD workflows | Workflow `sdd` is selected |
+| `engram` | Persistent memory for AI agents | MCP `engram` or workflow `sdd` is selected |
+
 ## Usage
 
 Add this catalog to your `devrune.yaml`:
@@ -73,7 +83,7 @@ Then install with DevRune:
 devrune install
 ```
 
-Skills, rules, MCPs, and workflows from this catalog will be available to your AI development agent.
+Skills, rules, MCPs, workflows, and tools from this catalog will be available to your AI development agent.
 
 ## License
 
