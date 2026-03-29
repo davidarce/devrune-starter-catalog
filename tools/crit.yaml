@@ -1,0 +1,6 @@
+name: crit
+description: "Code review tool for SDD workflows"
+command: "brew install tomasz-tomczyk/tap/crit"
+binary: crit
+depends_on:
+  workflow: sdd
