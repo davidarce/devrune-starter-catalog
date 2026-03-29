@@ -83,7 +83,7 @@ _No advice received yet. Skills will be invoked after team selection._
 
 <!--
 ============================================================================
-TASK FORMAT SPECIFICATION (MANDATORY — machine-parsed by sdd:implement)
+TASK FORMAT SPECIFICATION (MANDATORY — machine-parsed by sdd-implement)
 
 Pattern: - [STATUS] TXXX [TAGS]? Description — file_path
 
@@ -100,7 +100,7 @@ Valid examples:
 - [ ] T003 [US1] Create endpoint — src/controllers/UserController.java
 - [X] T004 Setup project structure — build.gradle
 
-Invalid (WILL BREAK sdd:implement parsing and session resumption):
+Invalid (WILL BREAK sdd-implement parsing and session resumption):
 - [ ] Create User entity ← missing TXXX id
 - [x] T001 Create entity ← lowercase x (must be uppercase X)
 - [ ] T1 Create entity ← T1 not T001 (must be 3 digits)
@@ -110,7 +110,7 @@ Invalid (WILL BREAK sdd:implement parsing and session resumption):
 - [ ] T002 [P] Add validation ← using [P] markers (parallelism is defined in Batch Assignment Table only)
 
 WHY THIS MATTERS:
-sdd:implement reads the Batch Assignment Table (see below) to determine
+sdd-implement reads the Batch Assignment Table (see below) to determine
 execution order and parallelism, and tracks progress via [ ] → [X]
 transitions. Broken format = broken implementation tracking and session
 resumption.
@@ -245,7 +245,7 @@ _Continue sequential IDs from previous phases (e.g., if last task was T012, star
 
 <!--
 MANDATORY — this table is the SINGLE source of truth for parallelism and execution order.
-sdd:implement reads this table to decide how to execute tasks.
+sdd-implement reads this table to decide how to execute tasks.
 Rules:
   - Group by target file: all tasks on the same file → same batch (sequential within)
   - Batches on different files with no cross-dependencies → Parallel=Yes

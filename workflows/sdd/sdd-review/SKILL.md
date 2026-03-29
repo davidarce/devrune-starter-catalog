@@ -1,7 +1,8 @@
 ---
-name: sdd:review
+name: sdd-review
 description: 'Use when reviewing code changes before commit, comparing implementation against SDD plan, or doing standalone code review with adviser consultation.'
 argument-hint: "[change_name?]"
+disable-model-invocation: false
 allowed-tools: Bash(git diff:*), Bash(git status:*), Bash(git log:*), Read, Glob, Grep, AskUserQuestion, Skill
 ---
 
@@ -87,6 +88,8 @@ Use the full content from Step 2 as the plan context for your review. If neither
    - Breaking changes to internal APIs
 
 ### Step 3: Report Findings
+
+**Quick path**: If `git diff --stat` shows ≤50 lines changed across ≤3 files, skip adviser skill consultation and proceed directly to the review report. Document 'Adviser consultation skipped — small change (≤50 lines, ≤3 files)' in the report.
 
 Format your review as:
 

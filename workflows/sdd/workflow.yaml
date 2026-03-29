@@ -52,4 +52,6 @@ components:
   registry: "REGISTRY.md"
   permissions:
     - "Bash(mkdir -p .sdd*)"
+    - "Bash(mkdir -p *.sdd*)"
     - "Bash(tree:*)"
+    - "Bash(which crit*)"

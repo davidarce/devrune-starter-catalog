@@ -1,7 +1,8 @@
 ---
-name: sdd:implement
+name: sdd-implement
 description: 'Use when executing an SDD plan via batch-based task implementation, tracking progress with [ ]/[X] markers and quality gates.'
 argument-hint: "[change_name] [instructions]"
+disable-model-invocation: false
 allowed-tools: Bash, Bash(tree:*), Read, Glob, Grep, Write, Edit, Task, mcp__atlassian__jira_get_issue
 ---
 
@@ -348,6 +349,7 @@ Your LAST output MUST be the SDD Envelope. Nothing may follow it.
 - **Skipping the quality gate** — run tests or build after EVERY task, not just at the end. A failed quality gate means stop immediately; continuing after failure compounds broken state across multiple tasks.
 - **Executing parallel batches sequentially** — when the Batch Assignment Table shows `Parallel=Yes`, launch ALL ready parallel batches as simultaneous Task calls in a single message. Sequential execution of parallel batches wastes time.
 - **Ignoring the Batch Assignment Table** — never define or infer parallelism from task text. The table is the single source of truth for execution order and parallelism.
+- **Forgetting to mark [X]**: Sub-agents frequently skip marking tasks as [X] in plan.md after completing them. This breaks traceability and forces manual cleanup. After EVERY successfully completed task, immediately Edit plan.md to change [ ] to [X] for that task. Do this per-task, not at the end.
 
 ## Anti-patterns to Avoid
 
@@ -365,6 +367,7 @@ Your LAST output MUST be the SDD Envelope. Nothing may follow it.
 - 🚫 **Continuing after test failure** — a failed quality gate means STOP, do not proceed to next task
 - 🚫 **Writing large files in a single call** — split files >150 lines into Write (scaffolding) + Edit (append sections); never send >200 lines in one Write call
 - 🚫 **Retrying identical failed tool calls** — if Write/Edit fails, split content into smaller chunks instead of retrying the same payload
+- 🚫 **Completing tasks without marking [X] in plan.md** — this is the #1 traceability failure. Mark EACH task as [X] immediately after it passes quality gate, not in bulk at the end. The orchestrator and future sessions rely on [X] markers to know what was done.
 - 🚫 **Invoking commit or review skills directly** — return the envelope; the orchestrator handles next steps
 
 ## References
