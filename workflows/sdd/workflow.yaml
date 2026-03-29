@@ -49,6 +49,8 @@ components:
   invocationControls:
     - skills: "git:commit, git:pull-request"
       description: "When user requests commit/PR operations (see Decision Rules)"
+    - skills: "sdd-explore, sdd-plan, sdd-implement, sdd-review"
+      description: "When user requests SDD phase execution (see SDD Evaluation Gate)"
   registry: "REGISTRY.md"
   permissions:
     - "Bash(mkdir -p .sdd*)"
