@@ -58,6 +58,9 @@ artifacts:
   - .sdd/{change}/plan.md
   # ... list all artifact files that exist at this point
 last_updated: {ISO 8601 datetime}
+plan_review_round: 1  # Optional. Tracks the number of Crit review rounds completed for the plan phase.
+                      # Omitted if no Crit review was performed. Incremented by the orchestrator
+                      # each time the plan is re-entered with Crit feedback.
 ```
 
 ### Write Rules

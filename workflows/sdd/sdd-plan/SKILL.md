@@ -1,8 +1,9 @@
 ---
-name: sdd:plan
+name: sdd-plan
 description: 'Use when creating an SDD implementation plan from exploration.md, with deep interview, task breakdown, and batch assignments.'
 argument-hint: "[change_name] [instructions]"
-allowed-tools: Bash, Bash(tree:*), Read, Glob, Grep, Write, Edit, AskUserQuestion, Skill, Task, mcp__atlassian__jira_get_issue
+disable-model-invocation: false
+allowed-tools: Bash, Bash(tree:*), Read, Glob, Grep, Write, Edit, AskUserQuestion, Skill, Task, mcp__atlassian__jira_get_issue, Bash(crit:*)
 ---
 
 <meta prompt 1 = "System: Architect">
@@ -15,10 +16,25 @@ You are a senior software architect specializing in code design and implementati
    2. `mem_get_observation(id: {observation-id})` → full, untruncated exploration summary (REQUIRED — always follow search with get)
       Use this recovered content as your exploration context. If neither file nor engram has the exploration, return envelope with `status: blocked` and explain the missing dependency.
 
+   **Crit Feedback Re-entry**: If the launch prompt contains a `CRIT_FEEDBACK:` block:
+   1. Read the existing `.sdd/{change}/plan.md` (do NOT start from scratch)
+   2. For each unresolved comment in the CRIT_FEEDBACK block:
+      a. Locate the referenced section/lines in plan.md
+      b. Revise the plan to address the feedback
+      c. Reply to the comment: `crit comment --plan {change} --reply-to {id} --author 'Claude Code' '<what was changed>'`
+   3. Skip the Deep Interview (already completed in the initial plan pass)
+   4. Skip Team Selection and Advice Phase (already completed)
+   5. Re-run the Detail Quality Gate on the revised plan
+   6. Update plan status and return envelope
+
+   The `Bash` tool with `crit comment --plan` is required for replying. `Bash(crit:*)` is included in allowed-tools for this purpose.
+
 2. Create plan file `.sdd/{change-name}/plan.md`
    - Use the plan template from [templates/plan_template.md](templates/plan_template.md) as a template do not omit any section
 3. Deep Interview Phase (MANDATORY — Using AskUserQuestion Tool)
-
+   
+   Complexity check: If the exploration.md describes a change touching ≤3 files with no cross-layer impact, skip the Deep Interview and proceed directly to Architecture Analysis (step 4). Document 'Interview skipped — simple change (≤3 files, single layer)' in the Clarifications section (## 4. Clarifications).
+   
    Before analyzing architecture or selecting advisors, conduct an in-depth interview with the user to surface requirements, constraints, tradeoffs, and design decisions that exploration.md alone cannot capture.
 
    Follow the complete interview methodology in [references/interview_guide.md](references/interview_guide.md), which covers:
@@ -56,7 +72,7 @@ You are a senior software architect specializing in code design and implementati
    - Interface changes
    - Configuration updates
 
-   **Task Format (CRITICAL — machine-parsed by sdd:implement)**:
+   **Task Format (CRITICAL — machine-parsed by sdd-implement)**:
    Every task in the plan MUST follow this exact format:
    `- [ ] TXXX [TAGS]? Description — file_path`
 
@@ -66,7 +82,7 @@ You are a senior software architect specializing in code design and implementati
    - Each task MUST reference its target file path after an em-dash (—, not hyphen -)
    - See [templates/plan_template.md](templates/plan_template.md) for the complete specification with valid/invalid examples
 
-   This format is NOT optional. The `sdd:implement` skill parses these markers to:
+   This format is NOT optional. The `sdd-implement` skill parses these markers to:
    1. Track progress via `[ ]` → `[X]` transitions
    2. Resume implementation across sessions
    3. Execute tasks in batch order (see Batch Assignment Table below)
@@ -88,7 +104,7 @@ You are a senior software architect specializing in code design and implementati
    - Batches on different files with no cross-dependencies can run in parallel (`Parallel=Yes`)
    - If ALL batches are sequential (single file or linear deps), the table still documents execution order
    - The table is DERIVED from the tasks — not new information. After defining tasks, scan file paths and group automatically
-   - `sdd:implement` reads this table to decide batch execution strategy
+   - `sdd-implement` reads this table to decide batch execution strategy
 
    **Detail Quality Gate (MANDATORY — self-check before proceeding to step 7)**:
 
@@ -252,7 +268,7 @@ See [envelope contract](../_shared/envelope-contract.md) for format.
 
 **Rules:**
 1. The envelope is your FINAL output. Nothing after it.
-2. Do NOT invoke `sdd:implement` or any other SDD skill. Return the envelope; the orchestrator decides next steps.
+2. Do NOT invoke `sdd-implement` or any other SDD skill. Return the envelope; the orchestrator decides next steps.
 
 ---
 
@@ -263,7 +279,7 @@ See [envelope contract](../_shared/envelope-contract.md) for format.
 ✅ **Deep interview completed** — minimum 2 rounds of AskUserQuestion, relevant dimensions explored
 ✅ **All sections filled** — no [PENDING] placeholders remain
 ✅ **Clarifications recorded** — all interview responses documented in ## 4. Clarifications with dimension labels
-✅ **Tasks follow strict format** — every task uses `- [ ] TXXX Description — file_path` format (machine-parsed by sdd:implement)
+✅ **Tasks follow strict format** — every task uses `- [ ] TXXX Description — file_path` format (machine-parsed by sdd-implement)
 ✅ **Architecture decisions documented** — trade-offs and reasoning included
 ✅ **Status updated** — marked as "✅ Complete"
 ✅ **Envelope returned with correct fields** — SDD Envelope is the last output with status, phase, artifacts, next_recommended, and risks
@@ -274,7 +290,7 @@ See [envelope contract](../_shared/envelope-contract.md) for format.
 
 ## Gotchas
 
-- **Breaking task format** — every task MUST use `- [ ] TXXX Description — file_path`. Missing IDs or non-standard formats break `sdd:implement` parsing and session resumption. Validate each task line before finalizing.
+- **Breaking task format** — every task MUST use `- [ ] TXXX Description — file_path`. Missing IDs or non-standard formats break `sdd-implement` parsing and session resumption. Validate each task line before finalizing.
 - **Using lowercase `[x]` instead of uppercase `[X]`** — the implement phase parser only recognizes uppercase `[X]` as complete. A lowercase `[x]` will be treated as an incomplete task, causing the implement agent to re-execute already-done work.
 - **Writing the entire plan in one Write call** — large single-call writes cause timeout or permission hook failures. Use incremental Edit calls, one section per Edit; each section stays under 50 lines.
 - **Empty Contract Specifications when new types are introduced** — if the plan adds new interfaces, types, or schemas, Section 2 must list them with exact signatures. Omitting forces the implementer to invent definitions during coding.
@@ -287,7 +303,7 @@ See [envelope contract](../_shared/envelope-contract.md) for format.
 - 🚫 **Asking obvious questions** — every question must pass the non-obvious filter (not answerable from exploration.md, exposes hidden decisions, challenges assumptions)
 - 🚫 **Single round of questions** — minimum 2 rounds; the interview is iterative, not one-shot
 - 🚫 **Assuming requirements** — conduct Deep Interview Phase before making architectural decisions
-- 🚫 **Breaking task format** — every task MUST use `- [ ] TXXX Description — file_path`; missing IDs, lowercase `[x]`, or non-standard formats break sdd:implement parsing and session resumption
+- 🚫 **Breaking task format** — every task MUST use `- [ ] TXXX Description — file_path`; missing IDs, lowercase `[x]`, or non-standard formats break sdd-implement parsing and session resumption
 - 🚫 **Vague or generic tasks** — each task must specify exact files AND include a Detail Block with type signatures, function prototypes, schema definitions, or config values. A task like 'Create domain entity — src/Entity.java' without specifying fields, types, and validation rules is vague.
 - 🚫 **One-line tasks without Detail Blocks** — non-trivial tasks (creating types, implementing logic, writing tests) MUST have a Detail Block with signatures, schemas, or verification criteria. One-line descriptions force the implementer to design during coding.
 - 🚫 **Missing Before/After for modification tasks** — any task that modifies existing code MUST include before/after state in Section 2's Before/After Analysis. The implementer cannot reverse-engineer the current state from a one-line description.
@@ -299,7 +315,7 @@ See [envelope contract](../_shared/envelope-contract.md) for format.
 - 🚫 **Ignoring risks section** — always document potential issues and mitigations
 - 🚫 **Omitting test scope from the plan** — always identify required unit and integration tests, even if test code is written in a later phase
 - 🚫 **Leaving [PENDING] placeholders unfilled** — every section must have real content before status is marked Complete
-- 🚫 **Invoking next skill instead of returning envelope** — never call `Skill("sdd:implement")` or any SDD skill; return the envelope and let the orchestrator decide
+- 🚫 **Invoking next skill instead of returning envelope** — never call `Skill("sdd-implement")` or any SDD skill; return the envelope and let the orchestrator decide
 - 🚫 **Adding text after the envelope** — the SDD Envelope must be the absolute last output
 - 🚫 **Defining parallelism anywhere other than the Batch table** — do not use `[P]` markers or inline parallelism hints in tasks; the Batch Assignment Table is the single source of truth
 - 🚫 **Missing Batch Assignment Table** — every plan MUST include the batch table after all tasks are defined, even when all execution is sequential

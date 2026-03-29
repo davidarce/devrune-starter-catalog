@@ -1,0 +1,7 @@
+name: engram
+description: "Persistent memory for AI agents"
+command: "brew install gentleman-programming/tap/engram"
+binary: engram
+depends_on:
+  mcp: engram
+  workflow: sdd

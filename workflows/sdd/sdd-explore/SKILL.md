@@ -1,8 +1,8 @@
 ---
-name: sdd:explore
+name: sdd-explore
 description: 'Use when starting an SDD workflow to discover codebase context, curate relevant files, and prepare exploration.md for planning.'
 argument-hint: "[change_name] [instructions]"
-disable-model-invocation: true
+disable-model-invocation: false
 allowed-tools: Bash, Bash(tree:*), Read, Glob, Grep, Write, Edit, AskUserQuestion, Skill, mcp__atlassian__jira_get_issue
 ---
 
@@ -82,7 +82,7 @@ NEVER accumulate all findings to write exploration.md in one giant Write call at
    - `### Relationships:` — call chains and data flow
    - `### Ambiguities:` — open questions or "None"
 
-   **Handoff Contract** — sdd:plan reads exploration.md expecting these exact headings. Use them verbatim:
+   **Handoff Contract** — sdd-plan reads exploration.md expecting these exact headings. Use them verbatim:
    - `## Objective` — what the feature must achieve
    - `## User Requirements` — contains the sub-sections below
       - `### Task:` — clear restatement of what needs to be done
@@ -154,6 +154,9 @@ If engram tools are NOT available, skip silently. This is complementary to the .
 - **Writing implementation proposals into exploration.md** — this file is context only; the plan phase decides approach. Including proposed solutions biases the planning model and narrows its solution space.
 - **Leaving the handoff prompt empty or vague** — the next model's entire world is what you curate. A missing or generic handoff prompt forces the planning model to re-derive context that exploration already resolved.
 - **Narrow file selection based on your assumed solution** — include complete context for different approaches. The planning model may solve it differently; files omitted here are invisible to it.
+- **Adding pipes, redirects, or head/tail to tree commands** — `tree --gitignore -L 6` is all you need. Adding `2>/dev/null`, `| head`, or `| grep` triggers permission prompts because the shell sees output redirection. Use Glob/Grep tools for filtering instead.
+- **Using Bash for file discovery instead of Glob/Grep** — never use `ls | grep` or `find`. Use `Glob` to find files by pattern and `Grep` to search content. Bash is only for `tree` commands.
+- **Reading SKILL.md files from other SDD phases** — you only need YOUR skill instructions (sdd-explore). Do not read sdd-plan, sdd-implement, sdd-review, or launch-templates.md. This wastes context tokens.
 
 ---
 
