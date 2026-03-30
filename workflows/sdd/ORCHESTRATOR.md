@@ -31,15 +31,23 @@
 
 ## Launching Sub-Agents
 
-Use the Skill tool pattern for all phases:
+**CRITICAL: The orchestrator NEVER calls Skill() directly. It launches a Task() sub-agent, and the SUB-AGENT loads the skill inside its own context.**
+
+For every phase, use the `Task` tool to spawn a sub-agent:
 
 ```
-Skill("sdd-{phase}", args: "{change-name}")
+Task(
+  description: '{phase} for {change-name}',
+  subagent_type: 'general',
+  prompt: '<sub-agent prompt that tells it to load Skill("sdd-{phase}") internally>'
+)
 ```
 
-The generic launch template and implement-specific wave orchestration details are in `{SKILLS_PATH}/_shared/launch-templates.md`.
+The sub-agent's prompt instructs IT to call `Skill("sdd-{phase}")` — the orchestrator never calls Skill itself.
 
-Model assignment: use the Phase-to-Model Table above when passing `model:` to the Task/Agent call.
+Full launch templates (copy-paste ready) are in `{SKILLS_PATH}/_shared/launch-templates.md` — read them before your first launch.
+
+Model assignment: use the Phase-to-Model Table above when passing `model:` to the Task call.
 
 ### First Sub-Agent of a New Workflow
 

@@ -24,16 +24,19 @@ When a user describes work that involves code changes, you MUST evaluate BEFORE 
 
 When SDD is triggered:
 1. Read `{SKILLS_PATH}/ORCHESTRATOR.md` FIRST and COMPLETELY — this is your playbook
-2. Create artifact directory: `mkdir -p .sdd/{change-name}` (use RELATIVE path, not absolute)
-3. Follow the Orchestrator instructions to launch sub-agents
+2. Read `{SKILLS_PATH}/_shared/launch-templates.md` — these are your copy-paste templates for Task() calls
+3. Create artifact directory: `mkdir -p .sdd/{change-name}` (use RELATIVE path, not absolute)
+4. Follow the Orchestrator instructions to launch sub-agents via `Task()` tool
 
 **Do NOT** try `Skill("sdd")` — the orchestrator is NOT a skill. Read the ORCHESTRATOR.md file directly.
+**Do NOT** call `Skill("sdd-explore")` or any `Skill("sdd-*")` directly — those are loaded BY the sub-agent INSIDE a `Task()`. The orchestrator launches `Task()`, the sub-agent loads the Skill.
 
 ## SDD — Delegation Rules
 
-1. The orchestrator NEVER reads/writes code — sub-agents do that. ONLY: track state, show summaries, collect decisions, launch sub-agents.
-2. After EVERY sub-agent, execute the Post-Phase Protocol from ORCHESTRATOR.md — NEVER skip it.
-3. Skills return envelopes; the orchestrator decides next steps. Auto-transitions: explore(ok)→plan, implement(ok)→review.
+1. The orchestrator NEVER reads/writes code and NEVER calls Skill() directly — sub-agents do that. ONLY: track state, show summaries, collect decisions, launch sub-agents via `Task()`.
+2. To launch a phase: use `Task()` with prompt that tells the sub-agent to call `Skill("sdd-{phase}")`. See `{SKILLS_PATH}/_shared/launch-templates.md` for exact templates.
+3. After EVERY sub-agent, execute the Post-Phase Protocol from ORCHESTRATOR.md — NEVER skip it.
+4. Skills return envelopes; the orchestrator decides next steps. Auto-transitions: explore(ok)→plan, implement(ok)→review.
 
 Full orchestrator instructions: {SKILLS_PATH}/ORCHESTRATOR.md
 
