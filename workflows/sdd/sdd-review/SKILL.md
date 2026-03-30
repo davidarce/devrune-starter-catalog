@@ -158,6 +158,10 @@ After completing the review, return the SDD Envelope as your **LAST output**. Se
 
 Your **LAST output MUST be the SDD Envelope**. Nothing may follow the envelope.
 
+**Rules:**
+1. The envelope is your FINAL output. Nothing after it.
+2. Do NOT invoke any other SDD skill (via Skill tool or by reading another SKILL.md). Return the envelope; the orchestrator decides next steps.
+
 ---
 
 ## Success Criteria

@@ -316,6 +316,10 @@ See [envelope contract](../_shared/envelope-contract.md) for format.
 
 Your LAST output MUST be the SDD Envelope. Nothing may follow it.
 
+**Rules:**
+1. The envelope is your FINAL output. Nothing after it.
+2. Do NOT invoke any other SDD skill (via Skill tool or by reading another SKILL.md). Return the envelope; the orchestrator decides next steps.
+
 **Phase-specific guidance for implement:**
 
 | Field | Value |

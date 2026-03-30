@@ -157,6 +157,7 @@ If engram tools are NOT available, skip silently. This is complementary to the .
 - **Adding pipes, redirects, or head/tail to tree commands** — `tree --gitignore -L 6` is all you need. Adding `2>/dev/null`, `| head`, or `| grep` triggers permission prompts because the shell sees output redirection. Use Glob/Grep tools for filtering instead.
 - **Using Bash for file discovery instead of Glob/Grep** — never use `ls | grep` or `find`. Use `Glob` to find files by pattern and `Grep` to search content. Bash is only for `tree` commands.
 - **Reading SKILL.md files from other SDD phases** — you only need YOUR skill instructions (sdd-explore). Do not read sdd-plan, sdd-implement, sdd-review, or launch-templates.md. This wastes context tokens.
+- **Invoking sdd-plan or any other SDD phase after returning your envelope** — your job ends with the envelope. The orchestrator handles phase transitions, Post-Phase Protocol, and Crit detection. Executing the next phase yourself bypasses all of this.
 
 ---
 
@@ -212,6 +213,10 @@ When budget-constrained, use slices to include targeted sections instead of full
 See [envelope contract](../_shared/envelope-contract.md) for format.
 
 After completing all exploration steps, your **LAST output** MUST be the SDD Envelope. Nothing may follow it.
+
+**Rules:**
+1. The envelope is your FINAL output. Nothing after it.
+2. Do NOT invoke any other SDD skill (via Skill tool or by reading another SKILL.md). Return the envelope; the orchestrator decides next steps.
 
 **Phase-specific guidance:**
 - **Status**: `ok` after successful exploration; `warning` if ambiguities remain unresolved; `blocked` if critical context is missing
