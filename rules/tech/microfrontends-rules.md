@@ -2,7 +2,6 @@
 name: microfrontends
 scope: tech
 applies-to:
-  - microfrontend-adviser
   - component-adviser
 description: 'Microfrontend architecture: host/shell mediator pattern, EventBus communication, no MFE versioning, zero breaking changes.'
 paths:

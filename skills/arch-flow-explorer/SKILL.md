@@ -1,6 +1,6 @@
 ---
 name: arch:flow-explorer
-description: Generate interactive HTML playgrounds that visualize backend architecture flows as clickable node diagrams with pan/zoom and animated walkthroughs. Use when the user wants to understand, explain, document, or explore system flows, architectures, or component interactions. Triggers on natural language like "explícame el flujo de X", "muéstrame cómo funciona X", "show me the X flow", "visualize the X architecture", "how does X work", "explain the X pipeline", "diagram the X system". Produces a single self-contained HTML file with interactive nodes, animated connections, step-by-step playback, and contextual prompts.
+description: Generate interactive HTML visualizations of architecture flows with clickable nodes, pan/zoom, and animated walkthroughs.
 metadata:
   version: "1.1"
   scope: [architecture, documentation, learning, exploration]

@@ -2,7 +2,7 @@
 name: a11y
 scope: tech
 applies-to:
-  - a11y-adviser
+  - web-accessibility-adviser
   - component-adviser
   - frontend-test-adviser
 description: 'Web accessibility standards: WCAG 2.2 AA, ARIA patterns, keyboard navigation, semantic HTML.'
