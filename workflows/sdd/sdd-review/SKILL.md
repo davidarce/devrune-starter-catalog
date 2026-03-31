@@ -13,9 +13,9 @@ You are reviewing code changes with git diffs. Focus on ensuring changes are sou
 
 - **Base branch**: !`git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's|refs/remotes/origin/||' || echo "main"`
 - **Status**: !`git status --short 2>/dev/null || echo "__NO_GIT__"`
-- **Diff stat (vs base)**: !`BASE=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's|refs/remotes/origin/||' || echo main) && git diff --stat $BASE...HEAD 2>/dev/null || echo "__NO_GIT__"`
-- **Diff (vs base)**: !`BASE=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's|refs/remotes/origin/||' || echo main) && git diff $BASE...HEAD 2>/dev/null || echo "__NO_GIT__"`
-- **Recent log**: !`BASE=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's|refs/remotes/origin/||' || echo main) && git log --oneline $BASE..HEAD 2>/dev/null || echo "__NO_GIT__"`
+- **Diff stat (vs base)**: !`git diff --stat origin/HEAD...HEAD 2>/dev/null || echo "__NO_GIT__"`
+- **Diff (vs base)**: !`git diff origin/HEAD...HEAD 2>/dev/null || echo "__NO_GIT__"`
+- **Recent log**: !`git log --oneline origin/HEAD..HEAD 2>/dev/null || echo "__NO_GIT__"`
 
 > If any value above shows `__NO_GIT__`, the working directory is not a git repository. Ask the user which project to target, then run the git commands from that directory using `git -C <path>`.
 
@@ -157,6 +157,10 @@ After completing the review, return the SDD Envelope as your **LAST output**. Se
 | **Engram Ref** | If you persisted to engram in the previous step, include the observation ID as `engram_ref` in the envelope table. Omit if engram was not used. |
 
 Your **LAST output MUST be the SDD Envelope**. Nothing may follow the envelope.
+
+**Rules:**
+1. The envelope is your FINAL output. Nothing after it.
+2. Do NOT invoke any other SDD skill (via Skill tool or by reading another SKILL.md). Return the envelope; the orchestrator decides next steps.
 
 ---
 

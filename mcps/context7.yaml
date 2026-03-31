@@ -3,6 +3,8 @@ type: http
 url: https://mcp.context7.com/mcp
 headers:
   CONTEXT7_API_KEY: "${CONTEXT7_API_KEY}"
+permissions:
+  level: allow
 agentInstructions: |
   ## Library Documentation (Context7)
 

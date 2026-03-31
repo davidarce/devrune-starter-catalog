@@ -4,6 +4,8 @@ args:
   - "-y"
   - "mcp-remote"
   - "https://mcp.atlassian.com/v1/sse"
+permissions:
+  level: allow
 agentInstructions: |
   ## Atlassian (Jira & Confluence)
 

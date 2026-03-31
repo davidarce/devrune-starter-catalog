@@ -2,6 +2,8 @@ name: playwright
 command: npx
 args:
   - "@playwright/mcp@latest"
+permissions:
+  level: allow
 agentInstructions: |
   ## Playwright Browser Automation
 

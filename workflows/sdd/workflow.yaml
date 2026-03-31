@@ -1,7 +1,7 @@
 apiVersion: devrune/workflow/v1
 metadata:
-  name: sdd
-  description: "Spec-Driven Development workflow: explore, plan, implement, review."
+  name: "SDD (Spec-Driven Development)"
+  description: "Structured workflow: explore → plan → implement → review. Evaluate BEFORE coding."
   version: "1.0.0"
 components:
   skills:
@@ -31,9 +31,9 @@ components:
       kind: orchestrator
   decisionRules:
     - scenario: '"commit", "commit my changes", "create commit"'
-      resolution: "Use `git:commit`"
+      resolution: "Use `git-commit`"
     - scenario: '"create PR", "pull request", "create pull request"'
-      resolution: "Use `git:pull-request`"
+      resolution: "Use `git-pull-request`"
     - scenario: '"Review my tests" + integration test files'
       resolution: "Use `integration-test-adviser`"
     - scenario: '"Review my tests" + domain unit test files'
@@ -47,13 +47,30 @@ components:
     - scenario: '"Review my tests" + frontend test files'
       resolution: "Use `frontend-test-adviser`"
   invocationControls:
-    - skills: "git:commit, git:pull-request"
+    - skills: "git-commit, git-pull-request"
       description: "When user requests commit/PR operations (see Decision Rules)"
     - skills: "sdd-explore, sdd-plan, sdd-implement, sdd-review"
       description: "When user requests SDD phase execution (see SDD Evaluation Gate)"
   registry: "REGISTRY.md"
   permissions:
+    # SDD artifact management
     - "Bash(mkdir -p .sdd*)"
     - "Bash(mkdir -p *.sdd*)"
     - "Bash(tree:*)"
+    # Crit plan review integration
     - "Bash(which crit*)"
+    - "Bash(crit plan:*)"
+    - "Bash(crit comment:*)"
+    # Workspace navigation
+    - "Bash(cd:*)"
+    - "Bash(cat:*)"
+    - "Bash(open:*)"
+    # SDD phase skills
+    - "Skill(sdd-explore)"
+    - "Skill(sdd-plan)"
+    - "Skill(sdd-implement)"
+    - "Skill(sdd-review)"
+    # Git operations (commit/PR skills)
+    - "Bash(git status:*)"
+    - "Skill(git-commit)"
+    - "Skill(git-pull-request)"

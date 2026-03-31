@@ -2,6 +2,8 @@ name: engram
 command: engram
 args:
   - "mcp"
+permissions:
+  level: allow
 agentInstructions: |
   ## Memory
 
