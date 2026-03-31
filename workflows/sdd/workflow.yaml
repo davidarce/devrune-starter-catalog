@@ -65,6 +65,11 @@ components:
     - "Bash(cd:*)"
     - "Bash(cat:*)"
     - "Bash(open:*)"
+    # SDD phase skills
+    - "Skill(sdd-explore)"
+    - "Skill(sdd-plan)"
+    - "Skill(sdd-implement)"
+    - "Skill(sdd-review)"
     # Git operations (commit/PR skills)
     - "Bash(git status:*)"
     - "Skill(git-commit)"
