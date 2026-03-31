@@ -1,5 +1,5 @@
 ---
-name: git:commit
+name: git-commit
 description: "Automate git commits following Conventional Commits with JIRA ticket integration."
 allowed-tools:
   - Bash(git:*)

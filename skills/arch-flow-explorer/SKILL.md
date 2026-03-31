@@ -1,5 +1,5 @@
 ---
-name: arch:flow-explorer
+name: arch-flow-explorer
 description: Generate interactive HTML visualizations of architecture flows with clickable nodes, pan/zoom, and animated walkthroughs.
 metadata:
   version: "1.1"

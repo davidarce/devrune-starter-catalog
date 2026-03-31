@@ -1,5 +1,5 @@
 ---
-name: git:pull-request
+name: git-pull-request
 description: "Create pull requests with template selection and platform auto-detection (GitHub/GitLab)."
 allowed-tools:
   - Bash(git:*)
