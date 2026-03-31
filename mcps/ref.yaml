@@ -3,6 +3,8 @@ type: http
 url: https://api.ref.tools/mcp
 headers:
   x-ref-api-key: "${REF_API_KEY}"
+permissions:
+  level: allow
 agentInstructions: |
   ## Documentation Search
 

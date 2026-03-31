@@ -53,7 +53,19 @@ components:
       description: "When user requests SDD phase execution (see SDD Evaluation Gate)"
   registry: "REGISTRY.md"
   permissions:
+    # SDD artifact management
     - "Bash(mkdir -p .sdd*)"
     - "Bash(mkdir -p *.sdd*)"
     - "Bash(tree:*)"
+    # Crit plan review integration
     - "Bash(which crit*)"
+    - "Bash(crit plan:*)"
+    - "Bash(crit comment:*)"
+    # Workspace navigation
+    - "Bash(cd:*)"
+    - "Bash(cat:*)"
+    - "Bash(open:*)"
+    # Git operations (commit/PR skills)
+    - "Bash(git status:*)"
+    - "Skill(git-commit)"
+    - "Skill(git-pull-request)"

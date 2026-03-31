@@ -5,3 +5,5 @@ args:
   - "exa-mcp-server"
 env:
   EXA_API_KEY: "${EXA_API_KEY}"
+permissions:
+  level: allow
