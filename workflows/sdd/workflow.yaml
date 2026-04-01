@@ -74,3 +74,5 @@ components:
     - "Bash(git status:*)"
     - "Skill(git-commit)"
     - "Skill(git-pull-request)"
+  gitignore:
+    - ".sdd/"
