@@ -45,7 +45,7 @@ Task(
 
 The sub-agent's prompt instructs IT to call `Skill("sdd-{phase}")` — the orchestrator never calls Skill itself.
 
-Full launch templates (copy-paste ready) are in `{SKILLS_PATH}/_shared/launch-templates.md` — read them before your first launch.
+Full launch templates (copy-paste ready) are in `{WORKFLOW_DIR}/_shared/launch-templates.md` — read them before your first launch.
 
 Model assignment: use the Phase-to-Model Table above when passing `model:` to the Task call.
 
@@ -55,13 +55,13 @@ Before the first launch, save the active-workflow marker to engram (if available
 ```
 mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-workflow",
   type: "architecture", project: "{project}",
-  content: "ACTIVE SDD workflow: {change}. Orchestrator: {SKILLS_PATH}/ORCHESTRATOR.md. Phase: starting explore.")
+  content: "ACTIVE SDD workflow: {change}. Orchestrator: {WORKFLOW_DIR}/ORCHESTRATOR.md. Phase: starting explore.")
 ```
 
 ## Post-Phase Protocol (MANDATORY after EVERY sub-agent)
 
-1. **Parse** the SDD Envelope from sub-agent output (format: `{SKILLS_PATH}/_shared/envelope-contract.md`)
-2. **Write state.yaml**: `.sdd/{change}/state.yaml` per schema in `{SKILLS_PATH}/_shared/persistence-contract.md`
+1. **Parse** the SDD Envelope from sub-agent output (format: `{WORKFLOW_DIR}/_shared/envelope-contract.md`)
+2. **Write state.yaml**: `.sdd/{change}/state.yaml` per schema in `{WORKFLOW_DIR}/_shared/persistence-contract.md`
 3. **Engram** (if available): save `{phase}-summary`, `state`, and update `active-workflow` marker
 4. **Show** executive summary to user (verbatim from envelope)
 5. **Crit detection** (plan phase only): After `plan` phase with `status: ok`, run `which crit` (Bash).
@@ -83,7 +83,7 @@ Triggered automatically by Post-Phase Protocol step 5 when `which crit` succeeds
 3. **Read feedback**: Read `~/.crit/plans/{change}/.crit.json` using the Read tool. Note: plan mode stores `.crit.json` in `~/.crit/plans/{change}/`, NOT in the project root.
 4. **Parse**: Extract all comments where `resolved` is `false` or missing.
 5. **Branch**:
-   - **Has unresolved comments**: Format as CRIT_FEEDBACK markdown (see format below). Re-launch `sdd-plan` sub-agent using the Plan Re-entry template from `{SKILLS_PATH}/_shared/launch-templates.md`. After sub-agent returns envelope, increment `plan_review_round` in `state.yaml` and loop back to step 1 (run crit again for next round).
+   - **Has unresolved comments**: Format as CRIT_FEEDBACK markdown (see format below). Re-launch `sdd-plan` sub-agent using the Plan Re-entry template from `{WORKFLOW_DIR}/_shared/launch-templates.md`. After sub-agent returns envelope, increment `plan_review_round` in `state.yaml` and loop back to step 1 (run crit again for next round).
    - **No unresolved comments**: Plan approved. Show "Plan approved via Crit review." Proceed to Post-Phase step 6 (`AskUserQuestion`: **Continue to implement** / **Review artifacts** / **Abort**).
 
 **CRIT_FEEDBACK format** (injected into sdd-plan re-entry prompt):
@@ -109,7 +109,7 @@ A large plan exhausts a single sub-agent's context. The orchestrator drives wave
 
 1. Read the Batch Assignment Table from `.sdd/{change}/plan.md` (metadata only, not source code)
 2. Group batches into waves by dependency satisfaction; `Parallel=Yes` batches run simultaneously
-3. Launch one sub-agent per wave (see `{SKILLS_PATH}/_shared/launch-templates.md` for template)
+3. Launch one sub-agent per wave (see `{WORKFLOW_DIR}/_shared/launch-templates.md` for template)
 4. After each wave:
    - `status: ok` -> verify `[X]` markers in plan.md, show progress via `AskUserQuestion`, launch next wave
    - `status: failed` -> STOP, show failure: **Retry wave** / **Abort** / **Skip to next wave**
@@ -138,11 +138,11 @@ mem_save(topic_key: "sdd/{change}/active-workflow", ..., content: "COMPLETED|ABO
 
 ## Edge Cases and Recovery
 
-Compaction recovery, fail-fast error handling, abort/complete cleanup, and non-SDD context injection are in `{SKILLS_PATH}/_shared/recovery.md`.
+Compaction recovery, fail-fast error handling, abort/complete cleanup, and non-SDD context injection are in `{WORKFLOW_DIR}/_shared/recovery.md`.
 
 ## References
 
-- Envelope format: `{SKILLS_PATH}/_shared/envelope-contract.md`
-- Persistence rules: `{SKILLS_PATH}/_shared/persistence-contract.md`
-- Launch templates: `{SKILLS_PATH}/_shared/launch-templates.md`
-- Recovery flows: `{SKILLS_PATH}/_shared/recovery.md`
+- Envelope format: `{WORKFLOW_DIR}/_shared/envelope-contract.md`
+- Persistence rules: `{WORKFLOW_DIR}/_shared/persistence-contract.md`
+- Launch templates: `{WORKFLOW_DIR}/_shared/launch-templates.md`
+- Recovery flows: `{WORKFLOW_DIR}/_shared/recovery.md`

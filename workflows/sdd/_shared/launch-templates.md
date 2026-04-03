@@ -4,10 +4,18 @@
 
 All SDD phases use this template. Replace `{phase}` with explore/plan/implement/review.
 
+Subagent type mapping per phase:
+| Phase | Subagent Type |
+|-------|---------------|
+| explore | `{WORKFLOW_SUBAGENT_EXPLORER}` |
+| plan | `{WORKFLOW_SUBAGENT_PLANNER}` |
+| implement | `{WORKFLOW_SUBAGENT_IMPLEMENTER}` |
+| review | `{WORKFLOW_SUBAGENT_REVIEWER}` |
+
 ```
 Task(
   description: '{phase} for {change-name}',
-  subagent_type: 'general',
+  subagent_type: '{subagent type from table above}',
   model: '{model from Phase-to-Model Table}',
   prompt: 'You are an SDD sub-agent. Your first action MUST be to try loading your phase instructions via the Skill tool:
 
@@ -25,7 +33,7 @@ Task(
   TASK:
   {specific task description}
 
-  PERSISTENCE: See {project path}/{SKILLS_PATH}/_shared/persistence-contract.md
+  PERSISTENCE: See {project path}/{WORKFLOW_DIR}/_shared/persistence-contract.md
   - Primary: always write to .sdd/{change-name}/
   - Engram: save summary if available, skip silently if not
   - Save significant discoveries/decisions/bugfixes to engram independently of phase artifacts
@@ -41,7 +49,7 @@ The implement phase is special: the orchestrator reads plan.md and launches one 
 ```
 Task(
   description: 'implement wave {N} for {change-name}',
-  subagent_type: 'general',
+  subagent_type: '{WORKFLOW_SUBAGENT_IMPLEMENTER}',
   model: '{WORKFLOW_MODEL_IMPLEMENTER}',
   prompt: 'You are an SDD sub-agent. Your first action MUST be to try loading:
 
@@ -68,7 +76,7 @@ Task(
 
   Do NOT implement batches beyond this wave. The orchestrator manages wave progression.
 
-  PERSISTENCE: See {project path}/{SKILLS_PATH}/_shared/persistence-contract.md'
+  PERSISTENCE: See {project path}/{WORKFLOW_DIR}/_shared/persistence-contract.md'
 )
 ```
 
@@ -79,7 +87,7 @@ When the orchestrator re-enters `sdd-plan` after a Crit review round:
 ```
 Task(
   description: 'plan re-entry (crit round {N}) for {change-name}',
-  subagent_type: 'general',
+  subagent_type: '{WORKFLOW_SUBAGENT_PLANNER}',
   model: 'opus',
   prompt: 'You are an SDD sub-agent. Your first action MUST be to try loading your phase instructions via the Skill tool:
 
@@ -104,7 +112,7 @@ Task(
   Re-run the Detail Quality Gate.
   Return the SDD Envelope.
 
-  PERSISTENCE: See {project path}/{SKILLS_PATH}/_shared/persistence-contract.md
+  PERSISTENCE: See {project path}/{WORKFLOW_DIR}/_shared/persistence-contract.md
   - Primary: always write to .sdd/{change-name}/
   - Engram: save summary if available, skip silently if not
   - Save significant discoveries/decisions/bugfixes to engram independently of phase artifacts
@@ -124,7 +132,7 @@ mem_save(
   topic_key: "sdd/{change}/active-workflow",
   type: "architecture", project: "{project}",
   title: "sdd/{change}/active-workflow",
-  content: "ACTIVE SDD workflow: {change}. Orchestrator: {SKILLS_PATH}/ORCHESTRATOR.md. Phase: starting explore."
+  content: "ACTIVE SDD workflow: {change}. Orchestrator: {WORKFLOW_DIR}/ORCHESTRATOR.md. Phase: starting explore."
 )
 ```
 
