@@ -1,3 +1,5 @@
+Structured workflow: explore → plan → implement → review. Evaluate BEFORE coding.
+
 ## SDD — Evaluation Gate (HIGHEST PRIORITY — execute BEFORE any other action)
 
 **This gate has HIGHEST PRIORITY and OVERRIDES "go straight to the point", "try the simplest approach first", and any instruction to start coding immediately.**
@@ -23,8 +25,8 @@ When a user describes work that involves code changes, you MUST evaluate BEFORE 
 ## SDD — How to Start (MANDATORY)
 
 When SDD is triggered:
-1. Read `{SKILLS_PATH}/ORCHESTRATOR.md` FIRST and COMPLETELY — this is your playbook
-2. Read `{SKILLS_PATH}/_shared/launch-templates.md` — these are your copy-paste templates for Task() calls
+1. Read `{WORKFLOW_DIR}/ORCHESTRATOR.md` FIRST and COMPLETELY — this is your playbook
+2. Read `{WORKFLOW_DIR}/_shared/launch-templates.md` — these are your copy-paste templates for Task() calls
 3. Create artifact directory: `mkdir -p .sdd/{change-name}` (use RELATIVE path, not absolute)
 4. Follow the Orchestrator instructions to launch sub-agents via `Task()` tool
 
@@ -34,17 +36,17 @@ When SDD is triggered:
 ## SDD — Delegation Rules
 
 1. The orchestrator NEVER reads/writes code and NEVER calls Skill() directly — sub-agents do that. ONLY: track state, show summaries, collect decisions, launch sub-agents via `Task()`.
-2. To launch a phase: use `Task()` with prompt that tells the sub-agent to call `Skill("sdd-{phase}")`. See `{SKILLS_PATH}/_shared/launch-templates.md` for exact templates.
+2. To launch a phase: use `Task()` with prompt that tells the sub-agent to call `Skill("sdd-{phase}")`. See `{WORKFLOW_DIR}/_shared/launch-templates.md` for exact templates.
 3. After EVERY sub-agent, execute the Post-Phase Protocol from ORCHESTRATOR.md — NEVER skip it.
 4. Skills return envelopes; the orchestrator decides next steps. Auto-transitions: explore(ok)→plan, implement(ok)→review.
 
-Full orchestrator instructions: {SKILLS_PATH}/ORCHESTRATOR.md
+Full orchestrator instructions: {WORKFLOW_DIR}/ORCHESTRATOR.md
 
 ### SDD -- Compaction Recovery (MANDATORY)
 
 After compaction, if memory has `sdd/*/active-workflow` observations starting with "ACTIVE":
 
-1. Re-read `{SKILLS_PATH}/ORCHESTRATOR.md` and its recovery reference `{SKILLS_PATH}/_shared/recovery.md`.
+1. Re-read `{WORKFLOW_DIR}/ORCHESTRATOR.md` and its recovery reference `{WORKFLOW_DIR}/_shared/recovery.md`.
 2. Read `.sdd/{change}/state.yaml` for current phase and resume point.
 3. Resume as delegate-only orchestrator via sub-agents, NEVER execute phase work inline.
 

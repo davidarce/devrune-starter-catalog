@@ -1,8 +1,9 @@
 apiVersion: devrune/workflow/v1
 metadata:
-  name: "SDD (Spec-Driven Development)"
-  description: "Structured workflow: explore → plan → implement → review. Evaluate BEFORE coding."
+  name: sdd
+  displayName: "SDD (Spec-Driven Development)"
   version: "1.0.0"
+  workingDir: sdd-orchestrator
 components:
   skills:
     - sdd-explore

@@ -8,7 +8,7 @@ You arrived here because the catalog's Compaction Recovery directive detected an
 
 1. **Primary -- Read `.sdd/{change}/state.yaml`** (always works, file-based):
    - Parse YAML to get `current_phase`, `phases` map, and `artifacts` list
-   - Schema defined in `{SKILLS_PATH}/_shared/persistence-contract.md`
+   - Schema defined in `{WORKFLOW_DIR}/_shared/persistence-contract.md`
 
 2. **Fallback -- Engram** (only if state.yaml is missing AND engram is available):
    ```
@@ -17,7 +17,7 @@ You arrived here because the catalog's Compaction Recovery directive detected an
    ```
    NEVER use `mem_search` previews directly -- they are truncated.
 
-3. **Resume**: Continue from the next pending phase. Delegate via sub-agents using launch templates in `{SKILLS_PATH}/_shared/launch-templates.md`. If no state is recoverable, inform the user: **Restart** / **Abort**.
+3. **Resume**: Continue from the next pending phase. Delegate via sub-agents using launch templates in `{WORKFLOW_DIR}/_shared/launch-templates.md`. If no state is recoverable, inform the user: **Restart** / **Abort**.
 
 ## Fail-Fast Error Handling
 
