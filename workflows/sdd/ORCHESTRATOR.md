@@ -134,11 +134,14 @@ A large plan exhausts a single sub-agent's context. The orchestrator drives wave
 ## Post-Review Fix Cycle
 
 After review completes, options depend on status:
-- `ok` -> **Commit** / **Done (no commit)**
-- `warning` -> **Commit anyway** / **Fix issues first** / **Done**
+- `ok` -> **Commit** (via `git-commit` skill) / **Done (no commit)**
+- `warning` -> **Commit anyway** (via `git-commit` skill) / **Fix issues first** / **Done**
 - `failed` -> **Fix issues** / **Done** (NO commit option)
 
+When user chooses "Commit": invoke `Skill("git-commit")` — do NOT run git commands directly.
 When user chooses "Fix issues": delegate fixes to a sub-agent (orchestrator NEVER fixes code), then auto-launch review again.
+
+On workflow completion with commit: offer PR creation via `Skill("git-pull-request")`.
 
 On workflow completion or abort, clear the marker:
 ```
