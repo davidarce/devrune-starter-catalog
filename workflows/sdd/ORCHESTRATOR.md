@@ -60,10 +60,10 @@ mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-
 
 ## Post-Phase Protocol (MANDATORY after EVERY sub-agent)
 
-1. **Parse** the SDD Envelope from sub-agent output (format: `{WORKFLOW_DIR}/_shared/envelope-contract.md`)
-2. **Write state.yaml**: `.sdd/{change}/state.yaml` per schema in `{WORKFLOW_DIR}/_shared/persistence-contract.md`
+1. **Parse** the SDD Envelope from sub-agent output (format: `{WORKFLOW_DIR}/_shared/envelope-contract.md`). For parallel implement waves: run steps 1–3 for EACH sub-agent envelope in the wave. Aggregate status: if all `ok` → wave is `ok`; if any `failed` → wave is `failed`; if any `warning` but none `failed` → wave is `warning`.
+2. **Write state.yaml**: `.sdd/{change}/state.yaml` per schema in `{WORKFLOW_DIR}/_shared/persistence-contract.md`. For parallel waves: write the highest-severity status from all sub-agents in the wave.
 3. **Engram** (if available): save `{phase}-summary`, `state`, and update `active-workflow` marker
-4. **Show** executive summary to user (verbatim from envelope)
+4. **Show** executive summary to user (verbatim from envelope). For parallel implement waves: show per-batch status first, then the aggregated wave status.
 5. **Crit detection** (plan phase only): After `plan` phase with `status: ok`, run `which crit` (Bash).
    - If crit is found: auto-launch Crit Plan Review Protocol (see dedicated section below). Skip step 6.
    - If crit is NOT found: proceed to step 6 (existing flow, no behavioral change).
@@ -105,15 +105,31 @@ crit comment --plan {change} --reply-to {id} --author 'Claude Code' 'What you di
 
 ## Implement: Batch-by-Batch Orchestration
 
+> **Agent Compatibility**: `run_in_background` is supported natively by Claude Code. Other agents (Codex, OpenCode, Copilot, Factory Droid) should execute all batches sequentially in foreground mode. If the agent does not support background Task() execution, skip step 3b and launch ALL batches as foreground Task() one at a time.
+
 A large plan exhausts a single sub-agent's context. The orchestrator drives waves:
 
 1. Read the Batch Assignment Table from `.sdd/{change}/plan.md` (metadata only, not source code)
-2. Group batches into waves by dependency satisfaction; `Parallel=Yes` batches run simultaneously
-3. Launch one sub-agent per wave (see `{WORKFLOW_DIR}/_shared/launch-templates.md` for template)
-4. After each wave:
-   - `status: ok` -> verify `[X]` markers in plan.md, show progress via `AskUserQuestion`, launch next wave
-   - `status: failed` -> STOP, show failure: **Retry wave** / **Abort** / **Skip to next wave**
-5. After all waves -> auto-launch review
+2. Group batches into waves by dependency satisfaction
+3. For each wave:
+   a. Identify batches: separate `Parallel=Yes` (no unmet deps) from sequential
+   b. Launch all `Parallel=Yes` batches as background Task() (use Parallel Batch Template from `{WORKFLOW_DIR}/_shared/launch-templates.md`)
+   c. Launch sequential batches as foreground Task() one at a time (use Sequential Batch Template)
+   d. Wait for all background tasks to complete (Claude Code sends notification on completion)
+   e. For each completed sub-agent (foreground and background): run Post-Phase Protocol
+   f. Verify `[X]` markers in plan.md for all batches in this wave
+   g. All `status: ok` -> proceed to next wave
+   h. Any `status: failed` -> STOP, show failure: **Retry wave** / **Abort** / **Skip to next wave**
+4. After all waves -> auto-launch review
+
+### Background Task Handling
+
+- Background tasks are launched with `run_in_background: true` on the Task() call.
+- The orchestrator does NOT poll or sleep-wait. Claude Code delivers a notification when each background task completes.
+- After notification, read the sub-agent output (envelope) from the Task() return — same as foreground.
+- Run Post-Phase Protocol per completed sub-agent (same protocol as foreground).
+- If a background sub-agent fails, handle it in step 3 above (same as foreground failure).
+- **Note**: explore, plan, and review phases must always use foreground execution. Only implement waves use background for parallel batches.
 
 ## Post-Review Fix Cycle
 
