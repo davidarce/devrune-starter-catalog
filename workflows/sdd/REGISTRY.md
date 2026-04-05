@@ -20,7 +20,7 @@ When a user describes work that involves code changes, you MUST evaluate BEFORE 
 - The user explicitly says "just do it" / "skip SDD" / "quick fix"
 - Pure questions or research (no implementation)
 
-**How to offer**: Use `AskUserQuestion` — NEVER suggest SDD as plain text: **Start with /sdd-explore {topic}** / **Skip SDD, just do it**
+**How to offer**: Use `AskUserQuestion` — NEVER suggest SDD as plain text: **Start SDD (explore phase)** / **Skip SDD, just do it**
 
 ## SDD — How to Start (MANDATORY)
 
