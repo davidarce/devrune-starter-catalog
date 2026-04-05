@@ -25,13 +25,12 @@ When a user describes work that involves code changes, you MUST evaluate BEFORE 
 ## SDD — How to Start (MANDATORY)
 
 When SDD is triggered:
-1. Read `{WORKFLOW_DIR}/ORCHESTRATOR.md` FIRST and COMPLETELY — this is your playbook
-2. Read `{WORKFLOW_DIR}/_shared/launch-templates.md` — these are your copy-paste templates for Task() calls
+1. Load `Skill("sdd-orchestrator")` — if unavailable, read `{WORKFLOW_DIR}/ORCHESTRATOR.md` directly
+2. Read `{WORKFLOW_DIR}/_shared/launch-templates.md` — copy-paste templates for `Task()` calls
 3. Create artifact directory: `mkdir -p .sdd/{change-name}` (use RELATIVE path, not absolute)
 4. Follow the Orchestrator instructions to launch sub-agents via `Task()` tool
 
-**Do NOT** try `Skill("sdd")` — the orchestrator is NOT a skill. Read the ORCHESTRATOR.md file directly.
-**Do NOT** call `Skill("sdd-explore")` or any `Skill("sdd-*")` directly — those are loaded BY the sub-agent INSIDE a `Task()`. The orchestrator launches `Task()`, the sub-agent loads the Skill.
+**Do NOT** call sub-agent skills (`Skill("sdd-explore")`, `Skill("sdd-plan")`, etc.) directly — those are loaded BY the sub-agents INSIDE a `Task()`. The orchestrator launches `Task()`, the sub-agent loads the Skill.
 
 ## SDD — Delegation Rules
 
