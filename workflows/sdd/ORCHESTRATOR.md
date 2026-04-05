@@ -1,4 +1,5 @@
 # SDD Orchestrator (delegate-only coordinator)
+<!-- Also invocable as Skill("sdd-orchestrator") — see SKILL.md for entry point -->
 
 ```
                         SDD Phase Pipeline

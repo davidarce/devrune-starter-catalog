@@ -10,6 +10,7 @@ components:
     - sdd-plan
     - sdd-implement
     - sdd-review
+    - sdd-orchestrator
   entrypoint: "ORCHESTRATOR.md"
   roles:
     - name: sdd-explorer
@@ -66,7 +67,8 @@ components:
     - "Bash(cd:*)"
     - "Bash(cat:*)"
     - "Bash(open:*)"
-    # SDD phase skills
+    # SDD orchestrator + phase skills
+    - "Skill(sdd-orchestrator)"
     - "Skill(sdd-explore)"
     - "Skill(sdd-plan)"
     - "Skill(sdd-implement)"
