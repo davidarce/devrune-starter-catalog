@@ -27,7 +27,7 @@
 
 **MUST offer SDD** when ANY: multi-file (3+), cross-layer, new feature, behavioral change, unclear scope.
 **Skip SDD** when ALL: single/two files same layer, quick fix/typo/config, user says "just do it"/"skip SDD", pure questions.
-**How**: Present options via `AskUserQuestion`: **Start with /sdd-explore {topic}** / **Skip SDD, just do it**
+**How**: Present options via `AskUserQuestion`: **Start SDD (explore phase)** / **Skip SDD, just do it**
 
 ## Launching Sub-Agents
 
