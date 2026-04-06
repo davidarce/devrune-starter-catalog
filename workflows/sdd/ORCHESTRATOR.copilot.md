@@ -1,5 +1,4 @@
 # SDD Orchestrator (delegate-only coordinator)
-<!-- Also invocable as Skill("sdd-orchestrator") — see SKILL.md for entry point -->
 
 ```
                         SDD Phase Pipeline
@@ -44,7 +43,7 @@ Before the first launch, save the active-workflow marker to engram (if available
 ```
 mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-workflow",
   type: "architecture", project: "{project}",
-  content: "ACTIVE SDD workflow: {change}. Orchestrator: {WORKFLOW_DIR}/ORCHESTRATOR.md. Phase: starting explore.")
+  content: "ACTIVE SDD workflow: {change}. Orchestrator: {WORKFLOW_DIR}/ORCHESTRATOR.copilot.md. Phase: starting explore.")
 ```
 
 ## Post-Phase Protocol (MANDATORY after EVERY sub-agent)
@@ -67,12 +66,11 @@ mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-
 
 Triggered automatically by Post-Phase Protocol step 5 when `which crit` succeeds after a plan phase.
 
-1. **Launch**: Run `crit plan --name {change} .sdd/{change}/plan.md` in background (Bash, `run_in_background: true`). Tell user: "Crit is open in your browser. Leave inline comments on the plan, then click Finish Review."
-2. **Wait**: Do NOT proceed until the background task completes.
-3. **Read feedback**: Read `~/.crit/plans/{change}/.crit.json` using the Read tool. Note: plan mode stores `.crit.json` in `~/.crit/plans/{change}/`, NOT in the project root.
-4. **Parse**: Extract all comments where `resolved` is `false` or missing.
-5. **Branch**:
-   - **Has unresolved comments**: Format as CRIT_FEEDBACK markdown (see format below). Re-launch `sdd-plan` sub-agent using the Plan Re-entry template from `{WORKFLOW_DIR}/_shared/launch-templates.md`. After sub-agent returns envelope, increment `plan_review_round` in `state.yaml` and loop back to step 1 (run crit again for next round).
+1. **Launch**: Run `crit plan --name {change} .sdd/{change}/plan.md` as a **foreground Bash call** (blocking — do NOT use `run_in_background`). Tell user: "Crit is open in your browser. Leave inline comments on the plan, then click Finish Review." Do NOT proceed until the Bash call returns — it blocks until the user clicks Finish Review.
+2. **Read feedback**: Read `~/.crit/plans/{change}/.crit.json` using the Read tool. Note: plan mode stores `.crit.json` in `~/.crit/plans/{change}/`, NOT in the project root.
+3. **Parse**: Extract all comments where `resolved` is `false` or missing.
+4. **Branch**:
+   - **Has unresolved comments**: Format as CRIT_FEEDBACK markdown (see format below). Re-launch `sdd-plan` sub-agent using the Plan Re-entry template from `{WORKFLOW_DIR}/_shared/launch-templates.md`. After sub-agent returns envelope, increment `plan_review_round` in `state.yaml` and loop back to step 1 (run crit again for next round — always foreground).
    - **No unresolved comments**: Plan approved. Show "Plan approved via Crit review." Proceed to Post-Phase step 6 (`AskUserQuestion`: **Continue to implement** / **Review artifacts** / **Abort**).
 
 **CRIT_FEEDBACK format** (injected into sdd-plan re-entry prompt):
@@ -89,36 +87,25 @@ Review comments from user via Crit inline review:
 - [c2] (file-level): "File needs restructuring"
 
 Address each comment by revising plan.md. After addressing, reply using:
-crit comment --plan {change} --reply-to {id} --author 'Claude Code' 'What you did'
+crit comment --plan {change} --reply-to {id} --author 'Copilot' 'What you did'
 ```
 
 ## Implement: Batch-by-Batch Orchestration
 
-> **Agent Compatibility**: `run_in_background` is supported natively by Claude Code. Other agents (Codex, OpenCode, Copilot, Factory Droid) should execute all batches sequentially in foreground mode. If the agent does not support background Task() execution, skip step 3b and launch ALL batches as foreground Task() one at a time.
+> **Agent Compatibility**: Copilot does not support `run_in_background`. Execute ALL batches sequentially as foreground Task() calls, one at a time — never in parallel.
 
 A large plan exhausts a single sub-agent's context. The orchestrator drives waves:
 
 1. Read the Batch Assignment Table from `.sdd/{change}/plan.md` (metadata only, not source code)
 2. Group batches into waves by dependency satisfaction
 3. For each wave:
-   a. Identify batches: separate `Parallel=Yes` (no unmet deps) from sequential
-   b. Launch all `Parallel=Yes` batches as background Task() (use Parallel Batch Template from `{WORKFLOW_DIR}/_shared/launch-templates.md`)
-   c. Launch sequential batches as foreground Task() one at a time (use Sequential Batch Template)
-   d. Wait for all background tasks to complete (Claude Code sends notification on completion)
-   e. For each completed sub-agent (foreground and background): run Post-Phase Protocol
-   f. Verify `[X]` markers in plan.md for all batches in this wave
-   g. All `status: ok` -> proceed to next wave
-   h. Any `status: failed` -> STOP, show failure: **Retry wave** / **Abort** / **Skip to next wave**
+   a. Identify all batches in the wave (ignore `Parallel=Yes` — all run sequentially)
+   b. Launch each batch as foreground Task() one at a time (use Sequential Batch Template from `{WORKFLOW_DIR}/_shared/launch-templates.md`)
+   c. After each batch: run Post-Phase Protocol
+   d. Verify `[X]` markers in plan.md for the batch
+   e. All `status: ok` -> proceed to next batch / wave
+   f. Any `status: failed` -> STOP, show failure: **Retry wave** / **Abort** / **Skip to next wave**
 4. After all waves -> auto-launch review
-
-### Background Task Handling
-
-- Background tasks are launched with `run_in_background: true` on the Task() call.
-- The orchestrator does NOT poll or sleep-wait. Claude Code delivers a notification when each background task completes.
-- After notification, read the sub-agent output (envelope) from the Task() return — same as foreground.
-- Run Post-Phase Protocol per completed sub-agent (same protocol as foreground).
-- If a background sub-agent fails, handle it in step 3 above (same as foreground failure).
-- **Note**: explore, plan, and review phases must always use foreground execution. Only implement waves use background for parallel batches.
 
 ## Post-Review Fix Cycle
 
