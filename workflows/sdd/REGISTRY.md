@@ -1,3 +1,7 @@
+> **Agent note — OpenCode and Copilot**: Your SDD Orchestrator instructions are embedded natively (as your system prompt / agent file). Any step below that says "read `ORCHESTRATOR.md` directly" or "re-read `ORCHESTRATOR.md`" does **not** apply to you — skip those steps.
+>
+> **Codex, Factory, and Claude agents**: All instructions below apply in full.
+
 Structured workflow: explore → plan → implement → review. Evaluate BEFORE coding.
 
 ## SDD — Evaluation Gate (HIGHEST PRIORITY — execute BEFORE any other action)
@@ -25,7 +29,7 @@ When a user describes work that involves code changes, you MUST evaluate BEFORE 
 ## SDD — How to Start (MANDATORY)
 
 When SDD is triggered:
-1. Load `Skill("sdd-orchestrator")` — if unavailable, read `{WORKFLOW_DIR}/ORCHESTRATOR.md` directly
+1. Load `Skill("sdd-orchestrator")` — if unavailable, read `{WORKFLOW_DIR}/ORCHESTRATOR.md` directly _(Codex/Factory/Claude only — OpenCode and Copilot: skip the fallback; Skill() is always available)_
 2. Read `{WORKFLOW_DIR}/_shared/launch-templates.md` — copy-paste templates for `Task()` calls
 3. Create artifact directory: `mkdir -p .sdd/{change-name}` (use RELATIVE path, not absolute)
 4. Follow the Orchestrator instructions to launch sub-agents via `Task()` tool
@@ -39,9 +43,11 @@ When SDD is triggered:
 3. After EVERY sub-agent, execute the Post-Phase Protocol from ORCHESTRATOR.md — NEVER skip it.
 4. Skills return envelopes; the orchestrator decides next steps. Auto-transitions: explore(ok)→plan, implement(ok)→review.
 
-Full orchestrator instructions: {WORKFLOW_DIR}/ORCHESTRATOR.md
+Full orchestrator instructions: {WORKFLOW_DIR}/ORCHESTRATOR.md _(Codex/Factory/Claude only)_
 
-### SDD -- Compaction Recovery (MANDATORY)
+### SDD -- Compaction Recovery (MANDATORY — Codex, Factory, and Claude only)
+
+> **OpenCode and Copilot agents**: Your orchestrator is embedded natively — compaction recovery is handled differently. Skip this section.
 
 After compaction, if memory has `sdd/*/active-workflow` observations starting with "ACTIVE":
 
