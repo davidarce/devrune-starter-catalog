@@ -33,21 +33,9 @@
 
 **CRITICAL: The orchestrator NEVER calls Skill() directly. It launches a Task() sub-agent, and the SUB-AGENT loads the skill inside its own context.**
 
-For every phase, use the `Task` tool to spawn a sub-agent:
+For every phase, use the `Task` tool to spawn a sub-agent. The sub-agent's prompt instructs IT to call `Skill("sdd-{phase}")` — the orchestrator never calls Skill itself.
 
-```
-Task(
-  description: '{phase} for {change-name}',
-  subagent_type: 'general',
-  prompt: '<sub-agent prompt that tells it to load Skill("sdd-{phase}") internally>'
-)
-```
-
-The sub-agent's prompt instructs IT to call `Skill("sdd-{phase}")` — the orchestrator never calls Skill itself.
-
-Full launch templates (copy-paste ready) are in `{WORKFLOW_DIR}/_shared/launch-templates.md` — read them before your first launch.
-
-Model assignment: use the Phase-to-Model Table above when passing `model:` to the Task call.
+**Read `{WORKFLOW_DIR}/_shared/launch-templates.md` before your first launch** — it contains the exact copy-paste Task() calls for every phase (correct `subagent_type`, model, and prompt per phase).
 
 ### First Sub-Agent of a New Workflow
 
