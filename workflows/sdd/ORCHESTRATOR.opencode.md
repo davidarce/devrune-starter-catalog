@@ -55,7 +55,7 @@ Before the first launch, save the active-workflow marker to engram (if available
 ```
 mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-workflow",
   type: "architecture", project: "{project}",
-  content: "ACTIVE SDD workflow: {change}. Orchestrator: {WORKFLOW_DIR}/ORCHESTRATOR.md. Phase: starting explore.")
+  content: "ACTIVE SDD workflow: {change}. Orchestrator: {WORKFLOW_DIR}/ORCHESTRATOR.opencode.md. Phase: starting explore.")
 ```
 
 ## Post-Phase Protocol (MANDATORY after EVERY sub-agent)
@@ -100,36 +100,25 @@ Review comments from user via Crit inline review:
 - [c2] (file-level): "File needs restructuring"
 
 Address each comment by revising plan.md. After addressing, reply using:
-crit comment --plan {change} --reply-to {id} --author 'Claude Code' 'What you did'
+crit comment --plan {change} --reply-to {id} --author 'OpenCode' 'What you did'
 ```
 
 ## Implement: Batch-by-Batch Orchestration
 
-> **Agent Compatibility**: `run_in_background` is supported natively by Claude Code. Other agents (Codex, OpenCode, Copilot, Factory Droid) should execute all batches sequentially in foreground mode. If the agent does not support background Task() execution, skip step 3b and launch ALL batches as foreground Task() one at a time.
+> **Agent Compatibility**: OpenCode does not support `run_in_background`. Execute ALL batches sequentially as foreground Task() calls, one at a time — never in parallel.
 
 A large plan exhausts a single sub-agent's context. The orchestrator drives waves:
 
 1. Read the Batch Assignment Table from `.sdd/{change}/plan.md` (metadata only, not source code)
 2. Group batches into waves by dependency satisfaction
 3. For each wave:
-   a. Identify batches: separate `Parallel=Yes` (no unmet deps) from sequential
-   b. Launch all `Parallel=Yes` batches as background Task() (use Parallel Batch Template from `{WORKFLOW_DIR}/_shared/launch-templates.md`)
-   c. Launch sequential batches as foreground Task() one at a time (use Sequential Batch Template)
-   d. Wait for all background tasks to complete (Claude Code sends notification on completion)
-   e. For each completed sub-agent (foreground and background): run Post-Phase Protocol
-   f. Verify `[X]` markers in plan.md for all batches in this wave
-   g. All `status: ok` -> proceed to next wave
-   h. Any `status: failed` -> STOP, show failure: **Retry wave** / **Abort** / **Skip to next wave**
+   a. Identify all batches in the wave (ignore `Parallel=Yes` — all run sequentially)
+   b. Launch each batch as foreground Task() one at a time (use Sequential Batch Template from `{WORKFLOW_DIR}/_shared/launch-templates.md`)
+   c. After each batch: run Post-Phase Protocol
+   d. Verify `[X]` markers in plan.md for the batch
+   e. All `status: ok` -> proceed to next batch / wave
+   f. Any `status: failed` -> STOP, show failure: **Retry wave** / **Abort** / **Skip to next wave**
 4. After all waves -> auto-launch review
-
-### Background Task Handling
-
-- Background tasks are launched with `run_in_background: true` on the Task() call.
-- The orchestrator does NOT poll or sleep-wait. Claude Code delivers a notification when each background task completes.
-- After notification, read the sub-agent output (envelope) from the Task() return — same as foreground.
-- Run Post-Phase Protocol per completed sub-agent (same protocol as foreground).
-- If a background sub-agent fails, handle it in step 3 above (same as foreground failure).
-- **Note**: explore, plan, and review phases must always use foreground execution. Only implement waves use background for parallel batches.
 
 ## Post-Review Fix Cycle
 
