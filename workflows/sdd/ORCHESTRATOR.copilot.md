@@ -27,21 +27,25 @@
 
 **MUST offer SDD** when ANY: multi-file (3+), cross-layer, new feature, behavioral change, unclear scope.
 **Skip SDD** when ALL: single/two files same layer, quick fix/typo/config, user says "just do it"/"skip SDD", pure questions.
-**How**: Present options via `AskUserQuestion`: **Start SDD (explore phase)** / **Skip SDD, just do it**
+**How**: Present options to the user directly: **Start SDD (explore phase)** / **Skip SDD, just do it**
 
 ## Launching Sub-Agents
 
-**CRITICAL: The orchestrator NEVER calls Skill() directly. It launches a Task() sub-agent, and the SUB-AGENT loads the skill inside its own context.**
+**The orchestrator delegates to sub-agents by invoking them with `@agent-name`. Each sub-agent is a native `.agent.md` file that contains its full instructions.**
 
-For every phase, use the `Task` tool to spawn a sub-agent. The sub-agent's prompt instructs IT to call `Skill("sdd-{phase}")` — the orchestrator never calls Skill itself.
+### Sub-Agent Invocation Patterns
 
-**Read `{WORKFLOW_DIR}/_shared/launch-templates.md` before your first launch** — it contains the exact copy-paste Task() calls for every phase (correct `subagent_type`, model, and prompt per phase).
+For each phase, invoke the corresponding agent:
+- **explore**: Invoke `@sdd-explorer` with: "Explore the codebase for {change-name}. Write exploration.md to .sdd/{change-name}/exploration.md. Return the SDD envelope."
+- **plan**: Invoke `@sdd-planner` with: "Create an implementation plan for {change-name}. Read .sdd/{change-name}/exploration.md first. Write plan.md. Return the SDD envelope."
+- **implement**: Invoke `@sdd-implementer` with: "Implement batch {batch} for {change-name}. Read .sdd/{change-name}/plan.md for tasks. Return the SDD envelope."
+- **review**: Invoke `@sdd-reviewer` with: "Review changes for {change-name}. Read .sdd/{change-name}/plan.md for context. Return the SDD envelope."
 
 ### First Sub-Agent of a New Workflow
 
 Before the first launch, save the active-workflow marker to engram (if available):
 ```
-mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-workflow",
+mcp__engram__mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-workflow",
   type: "architecture", project: "{project}",
   content: "ACTIVE SDD workflow: {change}. Orchestrator: {WORKFLOW_DIR}/ORCHESTRATOR.copilot.md. Phase: starting explore.")
 ```
@@ -60,18 +64,19 @@ mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-
    - explore `status: ok` → auto-launch plan (no ask — 99% of the time users continue immediately)
    - explore `status: warning/blocked` → ask user (ambiguities or limitations need resolution first)
    - implement `status: ok` → auto-launch review (no ask)
-   - All other cases → `AskUserQuestion`: **Continue to {next}** / **Review artifacts** / **Abort**
+   - All other cases → Ask the user: **Continue to {next}** / **Review artifacts** / **Abort**
 
 ## Crit Plan Review Protocol
 
 Triggered automatically by Post-Phase Protocol step 5 when `which crit` succeeds after a plan phase.
 
-1. **Launch**: Run `crit plan --name {change} .sdd/{change}/plan.md` as a **foreground Bash call** (blocking — do NOT use `run_in_background`). Tell user: "Crit is open in your browser. Leave inline comments on the plan, then click Finish Review." Do NOT proceed until the Bash call returns — it blocks until the user clicks Finish Review.
+1. **Launch**: Run `crit plan --name {change} .sdd/{change}/plan.md` as a **foreground terminal call** (blocking). Use a timeout of at least 30 minutes (1800000ms) — Crit is interactive and the user needs time to read and comment on the plan. Tell user: "Crit is open in your browser. Leave inline comments on the plan, then click Finish Review." Do NOT proceed until the call returns — it blocks until the user clicks Finish Review.
+   - **If the call times out or fails**: Do NOT treat this as approval. The absence of `.crit.json` means the review was NEVER completed — NOT that it was approved with no comments. Tell the user: "Crit review was interrupted (timeout/error). Would you like to: **Retry Crit review** / **Skip Crit, review plan manually** / **Approve plan as-is**". Do NOT proceed to implement until the user explicitly approves.
 2. **Read feedback**: Read `~/.crit/plans/{change}/.crit.json` using the Read tool. Note: plan mode stores `.crit.json` in `~/.crit/plans/{change}/`, NOT in the project root.
 3. **Parse**: Extract all comments where `resolved` is `false` or missing.
 4. **Branch**:
-   - **Has unresolved comments**: Format as CRIT_FEEDBACK markdown (see format below). Re-launch `sdd-plan` sub-agent using the Plan Re-entry template from `{WORKFLOW_DIR}/_shared/launch-templates.md`. After sub-agent returns envelope, increment `plan_review_round` in `state.yaml` and loop back to step 1 (run crit again for next round — always foreground).
-   - **No unresolved comments**: Plan approved. Show "Plan approved via Crit review." Proceed to Post-Phase step 6 (`AskUserQuestion`: **Continue to implement** / **Review artifacts** / **Abort**).
+   - **Has unresolved comments**: Format as CRIT_FEEDBACK markdown (see format below). Re-launch `@sdd-planner` with the plan re-entry prompt (include the CRIT_FEEDBACK block and ask it to revise plan.md). After sub-agent returns envelope, increment `plan_review_round` in `state.yaml` and loop back to step 1 (run crit again for next round — always foreground).
+   - **No unresolved comments**: Plan approved. Show "Plan approved via Crit review." Proceed to Post-Phase step 6 (Ask the user: **Continue to implement** / **Review artifacts** / **Abort**).
 
 **CRIT_FEEDBACK format** (injected into sdd-plan re-entry prompt):
 
@@ -92,7 +97,7 @@ crit comment --plan {change} --reply-to {id} --author 'Copilot' 'What you did'
 
 ## Implement: Batch-by-Batch Orchestration
 
-> **Agent Compatibility**: Copilot does not support `run_in_background`. Execute ALL batches sequentially as foreground Task() calls, one at a time — never in parallel.
+Execute ALL batches sequentially, one at a time.
 
 A large plan exhausts a single sub-agent's context. The orchestrator drives waves:
 
@@ -100,7 +105,7 @@ A large plan exhausts a single sub-agent's context. The orchestrator drives wave
 2. Group batches into waves by dependency satisfaction
 3. For each wave:
    a. Identify all batches in the wave (ignore `Parallel=Yes` — all run sequentially)
-   b. Launch each batch as foreground Task() one at a time (use Sequential Batch Template from `{WORKFLOW_DIR}/_shared/launch-templates.md`)
+   b. Invoke `@sdd-implementer` for each batch one at a time, providing: the change name, the batch ID, and the path to plan.md
    c. After each batch: run Post-Phase Protocol
    d. Verify `[X]` markers in plan.md for the batch
    e. All `status: ok` -> proceed to next batch / wave
@@ -110,18 +115,18 @@ A large plan exhausts a single sub-agent's context. The orchestrator drives wave
 ## Post-Review Fix Cycle
 
 After review completes, options depend on status:
-- `ok` -> **Commit** (via `git-commit` skill) / **Done (no commit)**
-- `warning` -> **Commit anyway** (via `git-commit` skill) / **Fix issues first** / **Done**
+- `ok` -> **Commit** (via `@git-commit` agent) / **Done (no commit)**
+- `warning` -> **Commit anyway** (via `@git-commit` agent) / **Fix issues first** / **Done**
 - `failed` -> **Fix issues** / **Done** (NO commit option)
 
-When user chooses "Commit": invoke `Skill("git-commit")` — do NOT run git commands directly.
+When user chooses "Commit": invoke the `@git-commit` agent — do NOT run git commands directly.
 When user chooses "Fix issues": delegate fixes to a sub-agent (orchestrator NEVER fixes code), then auto-launch review again.
 
-On workflow completion with commit: offer PR creation via `Skill("git-pull-request")`.
+On workflow completion with commit: offer PR creation via the `@git-pull-request` agent.
 
 On workflow completion or abort, clear the marker:
 ```
-mem_save(topic_key: "sdd/{change}/active-workflow", ..., content: "COMPLETED|ABORTED SDD workflow: {change}.")
+mcp__engram__mem_save(topic_key: "sdd/{change}/active-workflow", ..., content: "COMPLETED|ABORTED SDD workflow: {change}.")
 ```
 
 ## Gotchas (observed failures)
@@ -130,6 +135,7 @@ mem_save(topic_key: "sdd/{change}/active-workflow", ..., content: "COMPLETED|ABO
 2. **Stale [X] markers**: Always verify plan.md markers after each implement wave.
 3. **Engram previews are truncated**: Never use `mem_search` results directly. Always follow with `mem_get_observation`.
 4. **Post-Phase skipping**: System-level "be concise" instructions do NOT override the Post-Phase Protocol.
+5. **Crit timeout ≠ approval**: If `crit plan` is killed by timeout or fails, the absence of `.crit.json` means the review was NEVER completed — NOT that it was approved with no comments. ALWAYS ask the user before proceeding to implement.
 
 ## Edge Cases and Recovery
 
@@ -139,5 +145,4 @@ Compaction recovery, fail-fast error handling, abort/complete cleanup, and non-S
 
 - Envelope format: `{WORKFLOW_DIR}/_shared/envelope-contract.md`
 - Persistence rules: `{WORKFLOW_DIR}/_shared/persistence-contract.md`
-- Launch templates: `{WORKFLOW_DIR}/_shared/launch-templates.md`
 - Recovery flows: `{WORKFLOW_DIR}/_shared/recovery.md`

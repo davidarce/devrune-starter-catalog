@@ -69,6 +69,7 @@ Triggered automatically by Post-Phase Protocol step 5 when `which crit` succeeds
 
 1. **Launch**: Run `crit plan --name {change} .sdd/{change}/plan.md` in background (Bash, `run_in_background: true`). Tell user: "Crit is open in your browser. Leave inline comments on the plan, then click Finish Review."
 2. **Wait**: Do NOT proceed until the background task completes.
+   - **If the Bash call times out or fails**: Do NOT treat this as approval. The absence of `.crit.json` means the review was NEVER completed — NOT that it was approved with no comments. Tell the user: "Crit review was interrupted (timeout/error). Would you like to: **Retry Crit review** / **Skip Crit, review plan manually** / **Approve plan as-is**". Do NOT proceed to implement until the user explicitly approves.
 3. **Read feedback**: Read `~/.crit/plans/{change}/.crit.json` using the Read tool. Note: plan mode stores `.crit.json` in `~/.crit/plans/{change}/`, NOT in the project root.
 4. **Parse**: Extract all comments where `resolved` is `false` or missing.
 5. **Branch**:
@@ -143,6 +144,7 @@ mem_save(topic_key: "sdd/{change}/active-workflow", ..., content: "COMPLETED|ABO
 2. **Stale [X] markers**: Always verify plan.md markers after each implement wave.
 3. **Engram previews are truncated**: Never use `mem_search` results directly. Always follow with `mem_get_observation`.
 4. **Post-Phase skipping**: System-level "be concise" instructions do NOT override the Post-Phase Protocol.
+5. **Crit timeout ≠ approval**: If `crit plan` is killed by timeout or fails, the absence of `.crit.json` means the review was NEVER completed — NOT that it was approved with no comments. ALWAYS ask the user before proceeding to implement.
 
 ## Edge Cases and Recovery
 
