@@ -1,0 +1,8 @@
+{
+  "hooks": {
+    "PreCompact": [{
+      "type": "command",
+      "command": "\"$FACTORY_PROJECT_DIR\"/.factory/hooks/sdd-pre-compact.sh"
+    }]
+  }
+}

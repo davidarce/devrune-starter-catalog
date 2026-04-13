@@ -50,7 +50,26 @@ mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-
 
 1. **Parse** the SDD Envelope from sub-agent output (format: `{WORKFLOW_DIR}/_shared/envelope-contract.md`). For parallel implement waves: run steps 1–3 for EACH sub-agent envelope in the wave. Aggregate status: if all `ok` → wave is `ok`; if any `failed` → wave is `failed`; if any `warning` but none `failed` → wave is `warning`.
 2. **Write state.yaml**: `.sdd/{change}/state.yaml` per schema in `{WORKFLOW_DIR}/_shared/persistence-contract.md`. For parallel waves: write the highest-severity status from all sub-agents in the wave.
-3. **Engram** (if available): save `{phase}-summary`, `state`, and update `active-workflow` marker
+3. **Engram** (if available): save `{phase}-summary`, `state`, and update `active-workflow` marker with NEXT directive.
+
+   **NEXT Step Resolution** — set the NEXT directive based on what just completed:
+   - After explore `ok`: `NEXT: plan phase -> deep interview then crit detection`
+   - After plan `ok` (pre-crit): `NEXT: plan phase -> crit detection then ask user`
+   - After plan `ok` (post-crit, approved): `NEXT: implement phase -> wave 1 batch A`
+   - After implement `ok` (more waves remaining): `NEXT: implement phase -> wave {N} batch {ID}`
+   - After implement `ok` (all waves done): `NEXT: review phase -> auto-launch review`
+   - After review: `NEXT: review phase -> post-review fix cycle`
+
+   Update `active-workflow` marker:
+   ```
+   mem_save(
+     topic_key: "sdd/{change}/active-workflow",
+     type: "architecture", project: "{project}",
+     title: "sdd/{change}/active-workflow",
+     content: "ACTIVE SDD workflow: {change}. Orchestrator: {WORKFLOW_DIR}/ORCHESTRATOR.opencode.md. NEXT: {phase} phase -> {next step}."
+   )
+   ```
+
 4. **Show** executive summary to user (verbatim from envelope). For parallel implement waves: show per-batch status first, then the aggregated wave status.
 5. **Crit detection** (plan phase only): After `plan` phase with `status: ok`, run `which crit` (Bash).
    - If crit is found: auto-launch Crit Plan Review Protocol (see dedicated section below). Skip step 6.
@@ -61,6 +80,11 @@ mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-
    - explore `status: warning/blocked` → ask user (ambiguities or limitations need resolution first)
    - implement `status: ok` → auto-launch review (no ask)
    - All other cases → `AskUserQuestion`: **Continue to {next}** / **Review artifacts** / **Abort**
+
+   **Crit confirmation guard** (plan phase, when crit IS available): After plan phase with `status: ok`, if `which crit` succeeds:
+   - Check `crit_completed` in `.sdd/{change}/state.yaml`.
+   - If `crit_completed` is absent or `false`: MUST NOT offer "Continue to implement". Auto-launch Crit Plan Review Protocol immediately (return to step 5).
+   - If `crit_completed` is `true`: crit was executed and approved — proceed normally with the `AskUserQuestion` above.
 
 ## Crit Plan Review Protocol
 
