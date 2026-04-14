@@ -23,7 +23,7 @@ Task(
   Skill(skill: "{adviser-skill}", args: "{change-name}")
 
   If the Skill tool fails, fall back to reading the SKILL.md file directly:
-  Read("{skills_path}/skills/{adviser-skill}/SKILL.md")
+  Read("{SKILLS_PATH}/skills/{adviser-skill}/SKILL.md")
   (e.g. for Codex/Copilot where Skill() is unavailable — reading the file gives the same instructions)
   If neither Skill() nor the file read succeeds, use your built-in domain knowledge for this adviser role.
 
@@ -100,7 +100,7 @@ Run each adviser sequentially. Wait for each to return before launching the next
 Invoke each requested adviser by naming it in your message:
 ```
 @{adviser-skill} You are a specialist adviser. Load your skill by reading:
-{WORKFLOW_DIR}/../skills/{adviser-skill}/SKILL.md
+{SKILLS_PATH}/{adviser-skill}/SKILL.md
 
 GUIDANCE CONTEXT FROM PLANNER:
 {guidance_context from envelope}

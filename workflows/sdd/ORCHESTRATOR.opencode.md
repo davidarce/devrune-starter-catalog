@@ -106,7 +106,7 @@ Triggered automatically by Post-Phase Protocol step 6 when `which crit` succeeds
 3. **Parse**: Extract all comments where `resolved` is `false` or missing.
 4. **Branch**:
    - **Has unresolved comments**: Format as CRIT_FEEDBACK markdown (see format below). Re-launch `sdd-plan` sub-agent using the Plan Re-entry template from `{WORKFLOW_DIR}/_shared/launch-templates.md`. After sub-agent returns envelope, increment `plan_review_round` in `state.yaml` and loop back to step 1 (run crit again for next round — always foreground).
-   - **No unresolved comments**: Plan approved. Show "Plan approved via Crit review." Proceed to Post-Phase step 6 (`AskUserQuestion`: **Continue to implement** / **Review artifacts** / **Abort**).
+   - **No unresolved comments**: Plan approved. Show "Plan approved via Crit review." Proceed to Post-Phase step 7 (`AskUserQuestion`: **Continue to implement** / **Review artifacts** / **Abort**).
 
 **CRIT_FEEDBACK format** (injected into sdd-plan re-entry prompt):
 
