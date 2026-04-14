@@ -31,6 +31,10 @@ components:
       model: opus
     - name: sdd-orchestrator
       kind: orchestrator
+    - name: sdd-adviser
+      kind: subagent
+      skill: "*-adviser"
+      model: opus
   decisionRules:
     - scenario: '"commit", "commit my changes", "create commit"'
       resolution: "Use `git-commit`"

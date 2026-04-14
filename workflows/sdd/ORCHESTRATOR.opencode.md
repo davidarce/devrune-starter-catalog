@@ -16,12 +16,13 @@
 
 ## Phase-to-Model Table
 
-| Phase | Skill | Model |
-|-------|-------|-------|
-| explore | `sdd-explore` | `{WORKFLOW_MODEL_EXPLORER}` |
-| plan | `sdd-plan` | `{WORKFLOW_MODEL_PLANNER}` |
-| implement | `sdd-implement` | `{WORKFLOW_MODEL_IMPLEMENTER}` |
-| review | `sdd-review` | `{WORKFLOW_MODEL_REVIEWER}` |
+| Phase | Skill | Model | Subagent Type |
+|-------|-------|-------|---------------|
+| explore | `sdd-explore` | `{WORKFLOW_MODEL_EXPLORER}` | |
+| plan | `sdd-plan` | `{WORKFLOW_MODEL_PLANNER}` | |
+| implement | `sdd-implement` | `{WORKFLOW_MODEL_IMPLEMENTER}` | |
+| review | `sdd-review` | `{WORKFLOW_MODEL_REVIEWER}` | |
+| adviser | `*-adviser` | `{WORKFLOW_MODEL_ADVISER}` ⭐ | `general-purpose` (hardcoded) |
 
 ## Evaluation Gate
 
@@ -71,11 +72,20 @@ mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-
    ```
 
 4. **Show** executive summary to user (verbatim from envelope). For parallel implement waves: show per-batch status first, then the aggregated wave status.
-5. **Crit detection** (plan phase only): After `plan` phase with `status: ok`, run `which crit` (Bash).
-   - If crit is found: auto-launch Crit Plan Review Protocol (see dedicated section below). Skip step 6.
-   - If crit is NOT found: proceed to step 6 (existing flow, no behavioral change).
+5. **Guidance loop** (plan phase only): After `plan` phase returns `status: guidance_requested`:
+   a. Extract `requested_advisers[]` and `guidance_context` from envelope.
+   b. Increment `guidance_round` in state.yaml.
+   c. **Launch advisers sequentially** (OpenCode does not support run_in_background) using the
+      Sequential Adviser Consultation Template from `{WORKFLOW_DIR}/_shared/adviser-templates.md`.
+      Run one adviser at a time; collect each summary + engram ID before launching the next.
+   d. After all advisers complete: re-launch sdd-plan using the Plan Re-entry with Guidance Template from `{WORKFLOW_DIR}/_shared/adviser-templates.md`.
+   e. After sdd-plan re-entry returns envelope: loop back to step 1 (Post-Phase Protocol from start).
+   - After non-plan phases or after `status: ok/warning/blocked/failed`: skip this step.
+6. **Crit detection** (plan phase only): After `plan` phase with `status: ok`, run `which crit` (Bash).
+   - If crit is found: auto-launch Crit Plan Review Protocol (see dedicated section below). Skip step 7.
+   - If crit is NOT found: proceed to step 7 (existing flow, no behavioral change).
    - After non-plan phases: skip this step entirely.
-6. **Ask or auto-continue**:
+7. **Ask or auto-continue**:
    - explore `status: ok` → auto-launch plan (no ask — 99% of the time users continue immediately)
    - explore `status: warning/blocked` → ask user (ambiguities or limitations need resolution first)
    - implement `status: ok` → auto-launch review (no ask)
@@ -83,12 +93,12 @@ mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-
 
    **Crit confirmation guard** (plan phase, when crit IS available): After plan phase with `status: ok`, if `which crit` succeeds:
    - Check `crit_completed` in `.sdd/{change}/state.yaml`.
-   - If `crit_completed` is absent or `false`: MUST NOT offer "Continue to implement". Auto-launch Crit Plan Review Protocol immediately (return to step 5).
-   - If `crit_completed` is `true`: crit was executed and approved — proceed normally with the `AskUserQuestion` above.
+   - If `crit_completed` is absent or `false`: MUST NOT offer "Continue to implement". Auto-launch Crit Plan Review Protocol immediately (return to step 6).
+   - If `crit_completed` is `true`: crit was executed and approved — proceed normally with the `AskUserQuestion` in step 7.
 
 ## Crit Plan Review Protocol
 
-Triggered automatically by Post-Phase Protocol step 5 when `which crit` succeeds after a plan phase.
+Triggered automatically by Post-Phase Protocol step 6 when `which crit` succeeds after a plan phase.
 
 1. **Launch**: Run `crit plan --name {change} .sdd/{change}/plan.md` as a **foreground Bash call** (blocking — do NOT use `run_in_background`). Use a timeout of at least 30 minutes (1800000ms) — Crit is interactive and the user needs time to read and comment on the plan. Tell user: "Crit is open in your browser. Leave inline comments on the plan, then click Finish Review." Do NOT proceed until the Bash call returns — it blocks until the user clicks Finish Review.
    - **If the Bash call times out or fails**: Do NOT treat this as approval. The absence of `.crit.json` means the review was NEVER completed — NOT that it was approved with no comments. Tell the user: "Crit review was interrupted (timeout/error). Would you like to: **Retry Crit review** / **Skip Crit, review plan manually** / **Approve plan as-is**". Do NOT proceed to implement until the user explicitly approves.
