@@ -63,7 +63,10 @@ This prevents the implementer from having to reverse-engineer the current state.
 ## Team Selection
 
 <!--
-Skills selected for advice during planning phase.
+Adviser skills identified during planning. These are NOT invoked by sdd-plan directly.
+If guidance is needed, sdd-plan returns a guidance_requested envelope listing these skills.
+The orchestrator then launches each adviser, collects guidance, and re-enters sdd-plan
+with the recommendations. See SKILL.md steps 5, 7, and 8 for the full flow.
 -->
 
 | Skill | Reason for Selection |
@@ -73,11 +76,13 @@ Skills selected for advice during planning phase.
 ## Advice Received
 
 <!--
-Document key recommendations from each skill consulted.
-This section is populated during the Advice phase (step 6).
+Adviser recommendations integrated into the plan. This section is populated during
+Guidance Integration re-entry (step 8) — after the orchestrator collects adviser
+outputs and re-launches sdd-plan with a GUIDANCE block.
+For each adviser: document what was integrated and what was skipped (with rationale).
 -->
 
-_No advice received yet. Skills will be invoked after team selection._
+_No advice received yet. Advisers will be consulted by the orchestrator if guidance is requested._
 
 ## 3. Implementation Tasks
 

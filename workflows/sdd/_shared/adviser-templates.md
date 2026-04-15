@@ -34,11 +34,14 @@ Task(
   GUIDANCE CONTEXT FROM PLANNER:
   {guidance_context from envelope}
 
-  CURRENT PLAN EXCERPT:
-  {paste relevant sections from .sdd/{change-name}/plan.md}
+  PLAN:
+  Read the full plan at: .sdd/{change-name}/plan.md
+  Focus your analysis on the sections relevant to your domain, but consider the full
+  architecture context — cross-section dependencies matter. The guidance_context above
+  tells you WHERE to focus; the plan gives you the FULL picture.
 
   TASK:
-  Analyse the plan above from your specialist domain perspective.
+  Read the plan file first, then analyse from your specialist domain perspective.
   Provide structured advice in this format:
 
   ### Strengths
@@ -105,8 +108,9 @@ Invoke each requested adviser by naming it in your message:
 GUIDANCE CONTEXT FROM PLANNER:
 {guidance_context from envelope}
 
-CURRENT PLAN EXCERPT:
-{paste relevant sections from .sdd/{change-name}/plan.md}
+PLAN:
+Read the full plan at: .sdd/{change-name}/plan.md
+Focus on sections relevant to your domain; the guidance_context tells you WHERE to focus.
 
 Provide advice in Strengths / Issues Found / Recommendations format.
 Save to engram if available. Return summary + engram ID.
