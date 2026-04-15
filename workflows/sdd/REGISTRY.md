@@ -53,6 +53,8 @@ After compaction, if memory has `sdd/*/active-workflow` observations starting wi
 
 1. Re-read `{WORKFLOW_DIR}/ORCHESTRATOR.md` and its recovery reference `{WORKFLOW_DIR}/_shared/recovery.md`.
 2. Read `.sdd/{change}/state.yaml` for current phase and resume point.
-3. Resume as delegate-only orchestrator via sub-agents, NEVER execute phase work inline.
+3. Parse the NEXT directive from the active-workflow marker (format: `NEXT: {phase} -> {specific next step}`) to determine the exact resume point.
+4. If NEXT mentions crit detection, re-run `which crit` to verify availability before proceeding.
+5. Resume as delegate-only orchestrator via sub-agents, NEVER execute phase work inline.
 
 If no `active-workflow` marker is found, do nothing.

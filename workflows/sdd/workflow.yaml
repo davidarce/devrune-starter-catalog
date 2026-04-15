@@ -77,5 +77,13 @@ components:
     - "Bash(git status:*)"
     - "Skill(git-commit)"
     - "Skill(git-pull-request)"
+  hooks:
+    agents:
+      claude:
+        - definition: hooks/sdd-hooks-claude.json
+      factory:
+        - definition: hooks/sdd-hooks-factory.json
+      opencode:
+        - definition: plugins/sdd-compaction.ts
   gitignore:
     - ".sdd/"
