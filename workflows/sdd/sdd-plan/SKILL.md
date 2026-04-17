@@ -30,9 +30,13 @@ You are a senior software architect specializing in code design and implementati
       b. Revise the plan to address the feedback
       c. Reply to the comment: `crit comment --plan {change} --reply-to {id} --author 'Claude Code' '<what was changed>'`
    3. Skip the Deep Interview (already completed in the initial plan pass)
-   4. Skip Team Selection and Guidance Request step (already completed)
+   4. Re-evaluate Team Selection: if the crit feedback introduces new concerns that
+      would benefit from specialist review (e.g. "get architect input on this pattern",
+      "testing strategy needs review"), update the `## Team Selection` section.
    5. Re-run the Detail Quality Gate on the revised plan
-   6. Update plan status and return envelope
+   6. If Team Selection added new advisers in step 4 → return `status: guidance_requested`
+      (same as step 7 — orchestrator will launch advisers and re-enter with guidance).
+      If no new advisers needed → return `status: ok` envelope.
 
    The `Bash` tool with `crit comment --plan` is required for replying. `Bash(crit:*)` is included in allowed-tools for this purpose.
 
@@ -130,25 +134,19 @@ You are a senior software architect specializing in code design and implementati
    If any check fails, go back and add the missing detail before continuing.
    The implementer (a different model with no memory of this session) depends entirely on plan.md for design decisions.
 
-7. Guidance Request (MANDATORY when advisers are needed)
+7. Guidance Request
 
-   **When to request guidance:**
-   After the Detail Quality Gate (step 6), if the plan has areas of architectural uncertainty, cross-layer complexity, or design decisions that benefit from specialist review: return envelope with `status: guidance_requested`.
+   **Rule: if Team Selection (step 5) selected any advisers → return `guidance_requested`.**
 
-   **How to decide if guidance is needed:**
-   - Plan touches 3+ layers (domain + infra + API) → request `architect-adviser`
-   - Plan introduces new API contracts or REST endpoints → request `api-first-adviser`
-   - Plan has frontend component changes → request `component-adviser`
-   - Simple single-layer changes → no guidance needed; return `status: ok` directly
+   This is the ONLY condition. If step 5 identified advisers, you MUST request guidance — do not second-guess the selection. If step 5 selected zero advisers, return `status: ok` directly.
 
    **What to include in the envelope:**
-   - `requested_advisers`: comma-separated list of adviser skill names
-   - `guidance_context`: 2-4 sentence summary of what the advisers should focus on (specific tasks, tradeoffs, or design decisions)
+   - `requested_advisers`: comma-separated list of ALL adviser skill names selected in step 5
+   - `guidance_context`: for EACH requested adviser, 1-2 sentences describing what they should focus on. Be specific — reference task IDs, section names, or design decisions from the plan.
 
    **When NOT to request guidance:**
    - When re-entered with a `GUIDANCE:` block (guidance already collected — skip to step 8)
-   - When re-entered with a `CRIT_FEEDBACK:` block (crit cycle — skip all advice logic)
-   - When the change is small-scope (≤3 files, single layer)
+   - When step 5 selected zero advisers
 
 8. Guidance Integration Re-entry (TRIGGERED when `GUIDANCE:` block found in launch prompt)
 
