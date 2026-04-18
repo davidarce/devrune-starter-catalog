@@ -80,3 +80,60 @@ Before finalizing your review, check `gotchas.md` for common Claude mistakes in 
 - [ ] Dates in ISO 8601 UTC format
 - [ ] `Location` header returned on 201 Created responses
 - [ ] Deprecation communicated via `Sunset` and `Deprecation` headers
+
+## Adviser Mode (SDD Orchestrator Integration)
+
+This skill supports **adviser mode**: when invoked by the SDD orchestrator with a `GUIDANCE CONTEXT FROM PLANNER` block in the prompt, use the following procedure instead of the standard interactive review flow.
+
+### Entry Conditions
+Adviser mode is active when the prompt contains:
+- A `GUIDANCE CONTEXT FROM PLANNER:` block
+- A `CURRENT PLAN EXCERPT:` block
+
+### Adviser Mode Procedure
+1. Read the `GUIDANCE CONTEXT FROM PLANNER` block to understand what the planner needs reviewed.
+2. Read the `CURRENT PLAN EXCERPT` to see the specific tasks and design decisions.
+3. Apply your domain expertise to the plan content — do NOT read codebase files unless the plan references specific existing code that is relevant. In adviser mode, focus on contract specs and API shape from the plan (not codebase files).
+4. Produce structured advice in the format below.
+5. Save output to engram and return summary + observation ID.
+
+Focus ONLY on your specialist domain: REST conventions, OpenAPI spec quality, error models, versioning.
+
+### Output Format (Adviser Mode)
+```
+### Strengths
+- [What looks sound in the plan from this skill's domain perspective]
+
+### Issues Found
+[Severity: Critical / Major / Minor — reference specific task IDs or section names]
+- T001: [issue description]
+
+### Recommendations
+[Specific, actionable. Reference task ID or section name for each recommendation.]
+- T001: [recommendation]
+```
+
+### Persistence (Adviser Mode)
+Save full advice output to engram:
+```
+mem_save(
+  title: "sdd/{change-name}/guidance/api-first-adviser",
+  type: "architecture",
+  project: "{project-name}",
+  content: "{your full structured advice output}"
+)
+```
+If engram is unavailable, skip silently.
+
+### Return Format (Adviser Mode)
+Return a concise summary (3-5 bullet points) plus the engram observation ID:
+```
+### Summary
+- [key point 1]
+- [key point 2]
+- ...
+
+### Engram ID
+{observation_id or "unavailable"}
+```
+Do NOT return an SDD Envelope when in adviser mode.

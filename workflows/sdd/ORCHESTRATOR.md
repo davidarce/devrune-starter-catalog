@@ -17,12 +17,13 @@
 
 ## Phase-to-Model Table
 
-| Phase | Skill | Model |
-|-------|-------|-------|
-| explore | `sdd-explore` | `{WORKFLOW_MODEL_EXPLORER}` |
-| plan | `sdd-plan` | `{WORKFLOW_MODEL_PLANNER}` |
-| implement | `sdd-implement` | `{WORKFLOW_MODEL_IMPLEMENTER}` |
-| review | `sdd-review` | `{WORKFLOW_MODEL_REVIEWER}` |
+| Phase | Skill | Model | Subagent Type |
+|-------|-------|-------|---------------|
+| explore | `sdd-explore` | `{WORKFLOW_MODEL_EXPLORER}` | |
+| plan | `sdd-plan` | `{WORKFLOW_MODEL_PLANNER}` | |
+| implement | `sdd-implement` | `{WORKFLOW_MODEL_IMPLEMENTER}` | |
+| review | `sdd-review` | `{WORKFLOW_MODEL_REVIEWER}` | |
+| adviser | `*-adviser` | `{WORKFLOW_MODEL_ADVISER}` ⭐ | `general-purpose` (hardcoded) |
 
 ## Evaluation Gate
 
@@ -72,11 +73,25 @@ mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-
    ```
 
 4. **Show** executive summary to user (verbatim from envelope). For parallel implement waves: show per-batch status first, then the aggregated wave status.
-5. **Crit detection** (plan phase only): After `plan` phase with `status: ok`, run `which crit` (Bash).
-   - If crit is found: auto-launch Crit Plan Review Protocol (see dedicated section below). Skip step 6.
-   - If crit is NOT found: proceed to step 6 (existing flow, no behavioral change).
+5. **Guidance loop** (plan phase only): After `plan` phase returns `status: guidance_requested`:
+   a. Extract `requested_advisers[]` and `guidance_context` from envelope.
+   b. Increment `guidance_round` in state.yaml (for tracking only — no maximum).
+   c. Launch all advisers in parallel using the Adviser Consultation Template from `{WORKFLOW_DIR}/_shared/adviser-templates.md`. Use `run_in_background: true` for each.
+   d. Wait for all adviser background tasks to complete.
+   e. Collect the summary and engram observation ID returned by each adviser.
+      (Each adviser persists its own output to engram and returns the observation ID.)
+      If an adviser reports engram unavailable: keep its returned inline summary text for step f.
+   f. Re-launch sdd-plan using the Plan Re-entry with Guidance Template from `{WORKFLOW_DIR}/_shared/adviser-templates.md`.
+      - For each adviser: include its observation ID in the GUIDANCE block (planner fetches full content via mem_get_observation).
+      - If engram unavailable for an adviser: include its inline summary text in the GUIDANCE block instead.
+   g. After sdd-plan re-entry returns envelope: loop back to step 1 (Post-Phase Protocol from start).
+   - After non-plan phases or after `status: ok/warning/blocked/failed`: skip this step.
+   - The guidance loop runs as many times as sdd-plan requests guidance_requested. The user controls plan quality via crit review — if during a crit iteration the planner needs more adviser input, it can request guidance again.
+6. **Crit detection** (plan phase only): After `plan` phase with `status: ok`, run `which crit` (Bash).
+   - If crit is found: auto-launch Crit Plan Review Protocol (see dedicated section below). Skip step 7.
+   - If crit is NOT found: proceed to step 7 (existing flow, no behavioral change).
    - After non-plan phases: skip this step entirely.
-6. **Ask or auto-continue**:
+7. **Ask or auto-continue**:
    - explore `status: ok` → auto-launch plan (no ask — 99% of the time users continue immediately)
    - explore `status: warning/blocked` → ask user (ambiguities or limitations need resolution first)
    - implement `status: ok` → auto-launch review (no ask)
@@ -84,12 +99,12 @@ mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-
 
    **Crit confirmation guard** (plan phase, when crit IS available): After plan phase with `status: ok`, if `which crit` succeeds:
    - Check `crit_completed` in `.sdd/{change}/state.yaml`.
-   - If `crit_completed` is absent or `false`: MUST NOT offer "Continue to implement". Auto-launch Crit Plan Review Protocol immediately (return to step 5).
-   - If `crit_completed` is `true`: crit was executed and approved — proceed normally with the `AskUserQuestion` above.
+   - If `crit_completed` is absent or `false`: MUST NOT offer "Continue to implement". Auto-launch Crit Plan Review Protocol immediately (return to step 6).
+   - If `crit_completed` is `true`: crit was executed and approved — proceed normally with the `AskUserQuestion` in step 7.
 
 ## Crit Plan Review Protocol
 
-Triggered automatically by Post-Phase Protocol step 5 when `which crit` succeeds after a plan phase.
+Triggered automatically by Post-Phase Protocol step 6 when `which crit` succeeds after a plan phase.
 
 1. **Launch**: Run `crit plan --name {change} .sdd/{change}/plan.md` in background (Bash, `run_in_background: true`). Tell user: "Crit is open in your browser. Leave inline comments on the plan, then click Finish Review."
 2. **Wait**: Do NOT proceed until the background task completes.
@@ -98,7 +113,7 @@ Triggered automatically by Post-Phase Protocol step 5 when `which crit` succeeds
 4. **Parse**: Extract all comments where `resolved` is `false` or missing.
 5. **Branch**:
    - **Has unresolved comments**: Format as CRIT_FEEDBACK markdown (see format below). Re-launch `sdd-plan` sub-agent using the Plan Re-entry template from `{WORKFLOW_DIR}/_shared/launch-templates.md`. After sub-agent returns envelope, increment `plan_review_round` in `state.yaml` and loop back to step 1 (run crit again for next round).
-   - **No unresolved comments**: Plan approved. Show "Plan approved via Crit review." Proceed to Post-Phase step 6 (`AskUserQuestion`: **Continue to implement** / **Review artifacts** / **Abort**).
+   - **No unresolved comments**: Plan approved. Show "Plan approved via Crit review." Proceed to Post-Phase step 7 (`AskUserQuestion`: **Continue to implement** / **Review artifacts** / **Abort**).
 
 **CRIT_FEEDBACK format** (injected into sdd-plan re-entry prompt):
 
