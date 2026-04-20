@@ -81,12 +81,12 @@ mcp__engram__mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{ch
    b. Increment `guidance_round` in state.yaml.
    c. For each requested adviser: invoke `@{adviser-skill}` by name (e.g. `@architect-adviser`,
       `@api-first-adviser`) with the prompt from the Copilot Adviser Invocation template in
-      `_shared/adviser-templates.md`. This is natural language @agent-name invocation — the same
+      `{WORKFLOW_DIR}/_shared/adviser-templates.md`. This is natural language @agent-name invocation — the same
       mechanism used to invoke `@sdd-planner` and `@sdd-explorer`. Each adviser is a `.agent.md`
       file in `.github/agents/` and loads its SKILL.md directly (no Skill() tool required).
    d. Run advisers sequentially (Copilot has no background execution).
       Collect each summary + engram ID before invoking the next adviser.
-   e. Invoke `@sdd-planner` with the Plan Re-entry with Guidance format (see adviser-templates.md).
+   e. Invoke `@sdd-planner` with the Plan Re-entry with Guidance format (see `{WORKFLOW_DIR}/_shared/adviser-templates.md`).
    f. After `@sdd-planner` returns: loop back to step 1.
    - After non-plan phases or after `status: ok/warning/blocked/failed`: skip this step.
 6. **Crit detection** (plan phase only): After `plan` phase with `status: ok`, run `which crit` (Bash).
