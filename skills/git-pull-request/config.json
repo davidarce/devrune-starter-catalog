@@ -1,0 +1,5 @@
+{
+  "default_base_branch": "develop",
+  "jira_project_prefix": "",
+  "pr_platform": ""
+}
