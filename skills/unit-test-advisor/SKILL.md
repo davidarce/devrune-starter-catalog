@@ -1,5 +1,6 @@
 ---
-name: unit-test-adviser
+name: unit-test-advisor
+scope: [testing]
 description: "Domain unit test patterns: test structure, mocking strategies, test data builders, Given-When-Then."
 allowed-tools:
   - Read

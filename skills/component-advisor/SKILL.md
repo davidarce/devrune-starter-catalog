@@ -1,5 +1,6 @@
 ---
-name: component-adviser
+name: component-advisor
+scope: [frontend]
 description: React component design patterns — composition, hooks, state management, performance
 version: "1.0"
 tags: [react, components, hooks, design-patterns, performance]
