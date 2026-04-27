@@ -41,7 +41,7 @@ workflows:
 devrune-starter-catalog/
 ├── workflows/
 │   └── sdd/             ← the flagship SDD workflow (4 phases, orchestrator, hooks)
-├── skills/              ← 11 reusable agent skills (7 advisers + git ops + review/explore)
+├── skills/              ← 11 reusable agent skills (7 advisors + git ops + review/explore)
 ├── rules/               ← 11 coding-standard rule packs (architecture, API, tech, testing)
 ├── mcps/                ← 6 MCP server definitions
 └── tools/               ← 2 developer CLI tools (Crit, Engram) auto-installed by DevRune
@@ -78,22 +78,22 @@ Orchestration is **delegate-only** — the `sdd-orchestrator` never reads or wri
 
 ### The Advisor Strategy (guidance loop)
 
-During Plan, the planner can detect it needs specialist input and return a `guidance_requested` envelope. The orchestrator launches the requested advisers **in parallel** (with Opus for depth), collects their recommendations, and re-enters the planner with the guidance integrated.
+During Plan, the planner can detect it needs specialist input and return a `guidance_requested` envelope. The orchestrator launches the requested advisors **in parallel** (with Opus for depth), collects their recommendations, and re-enters the planner with the guidance integrated.
 
 ```
 sdd-plan (Sonnet) ─┐
                    ├─ detects gap → guidance_requested
                    ▼
-Orchestrator ──── launches advisers (Opus) in parallel
+Orchestrator ──── launches advisors (Opus) in parallel
                    │     architect · api-first · unit-test · component · a11y ...
                    ▼
-Orchestrator ──── re-enters sdd-plan with adviser recommendations
+Orchestrator ──── re-enters sdd-plan with advisor recommendations
                    │
                    ▼
 sdd-plan ──── status: ok → crit review → implement
 ```
 
-Advisers return **Strengths / Issues / Recommendations** and persist full guidance to engram when available. **Advisers never execute** — they only advise.
+Advisors return **Strengths / Issues / Recommendations** and persist full guidance to engram when available. **Advisors never execute** — they only advise.
 
 ### Compaction recovery — SDD survives context resets
 
@@ -127,7 +127,7 @@ workflows/sdd/
 ├── _shared/
 │   ├── envelope-contract.md   ← the envelope every phase returns
 │   ├── launch-templates.md    ← copy-paste Task() templates per phase
-│   ├── adviser-templates.md   ← adviser invocation patterns (parallel · sequential · @agent)
+│   ├── advisor-templates.md   ← advisor invocation patterns (parallel · sequential · @agent)
 │   ├── persistence-contract.md ← .sdd/ (primary) + engram (secondary), state.yaml schema
 │   └── recovery.md            ← compaction recovery + fail-fast error handling
 │
@@ -145,21 +145,23 @@ workflows/sdd/
 
 ## 🧰 Skills
 
-Reusable agent skills. Advisers participate in the SDD guidance loop; git/review skills are invoked directly by the user or by SDD's decision rules.
+Reusable agent skills. Advisors participate in the SDD guidance loop; git/review skills are invoked directly by the user or by SDD's decision rules.
 
-### Advisers
+### Advisors
 
 These feed the SDD guidance loop. The planner flags which ones are relevant; the orchestrator launches them in parallel.
 
-| Skill                      | Domain                                                                              |
-|----------------------------|-------------------------------------------------------------------------------------|
-| `architect-adviser`        | Clean architecture, hexagonal, DDD, ports and adapters.                             |
-| `api-first-adviser`        | OpenAPI, REST conventions, error models, versioning.                                |
-| `component-adviser`        | React component design — composition, hooks, state management, performance.        |
-| `unit-test-adviser`        | Domain unit tests — Given-When-Then, Mother pattern, mocking strategies.            |
-| `integration-test-adviser` | Adapter tests — WireMock, external-service simulation, TestContainers.              |
-| `frontend-test-adviser`    | React Testing Library, Vitest/Jest, Cypress/Playwright e2e.                         |
-| `web-accessibility-adviser`| WCAG 2.1 AA, ARIA, keyboard navigation, screen readers.                             |
+Each advisor declares its applicable project domains via the `scope` field in its `SKILL.md` frontmatter. The vocabulary is `frontend`, `backend`, `testing`, `architecture`, `api`, `security`, `performance`, `accessibility`. An empty `scope` means universal (applies to every project). Unknown values are silently dropped (forward-compatible).
+
+| Skill                       | Scope                       | Domain                                                                              |
+|-----------------------------|-----------------------------|-------------------------------------------------------------------------------------|
+| `architect-advisor`         | `[architecture]`            | Clean architecture, hexagonal, DDD, ports and adapters.                             |
+| `api-first-advisor`         | `[backend, api]`            | OpenAPI, REST conventions, error models, versioning.                                |
+| `component-advisor`         | `[frontend]`                | React component design — composition, hooks, state management, performance.        |
+| `unit-test-advisor`         | `[testing]`                 | Domain unit tests — Given-When-Then, Mother pattern, mocking strategies.            |
+| `integration-test-advisor`  | `[backend, testing]`        | Adapter tests — WireMock, external-service simulation, TestContainers.              |
+| `frontend-test-advisor`     | `[frontend, testing]`       | React Testing Library, Vitest/Jest, Cypress/Playwright e2e.                         |
+| `web-accessibility-advisor` | `[frontend, accessibility]` | WCAG 2.1 AA, ARIA, keyboard navigation, screen readers.                             |
 
 ### Workflow-direct skills
 
@@ -174,7 +176,7 @@ These feed the SDD guidance loop. The planner flags which ones are relevant; the
 
 ## 📐 Rules
 
-Coding-standard rule packs scoped by category. Advisers reference the rules they own; DevRune can install them per-agent as individual files, a concatenated rules doc, or both (`install.rulesMode`).
+Coding-standard rule packs scoped by category. Advisors reference the rules they own; DevRune can install them per-agent as individual files, a concatenated rules doc, or both (`install.rulesMode`).
 
 | Category       | Rule                          | Scope                                                                  |
 |----------------|-------------------------------|------------------------------------------------------------------------|
@@ -232,7 +234,7 @@ agents: [claude, opencode]
 packages:
   - source: github:davidarce/devrune-starter-catalog@main
     select:
-      skills: [git-commit, architect-adviser, unit-test-adviser]
+      skills: [git-commit, architect-advisor, unit-test-advisor]
       rules:  [architecture/clean-architecture, testing/mother-pattern]
 
 mcps:
@@ -252,7 +254,7 @@ devrune sync
 devrune init
 ```
 
-DevRune detects your tech stack and pre-selects the advisers and rules that fit (e.g. a React repo pre-selects `component-adviser`, `frontend-test-adviser`, `web-accessibility-adviser` and the `react` / `frontend-testing` / `accessibility-standards` rules).
+DevRune detects your tech stack and pre-selects the advisors and rules that fit (e.g. a React repo pre-selects `component-advisor`, `frontend-test-advisor`, `web-accessibility-advisor` and the `react` / `frontend-testing` / `accessibility-standards` rules).
 
 ---
 
@@ -323,7 +325,7 @@ depends_on:
 
 ## 🤝 Contributing
 
-This catalog is **community-curated** — new adviser skills, new rule packs, new MCPs, and corrections are welcome.
+This catalog is **community-curated** — new advisor skills, new rule packs, new MCPs, and corrections are welcome.
 
 - 🐛 Issues and discussions: [github.com/davidarce/devrune-starter-catalog/issues](https://github.com/davidarce/devrune-starter-catalog/issues)
 - 🍴 **Fork-friendly by design** — the MIT license and the flat layout are intentional. Use your own fork as your team's source of truth; DevRune doesn't care which catalog it points at.

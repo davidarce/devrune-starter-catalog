@@ -1,5 +1,6 @@
 ---
-name: integration-test-adviser
+name: integration-test-advisor
+scope: [backend, testing]
 description: Integration test patterns — adapter testing, external service mocking, test slicing
 version: "1.0"
 tags: [testing, integration-tests, adapters, mocking, database]

@@ -1,5 +1,6 @@
 ---
-name: web-accessibility-adviser
+name: web-accessibility-advisor
+scope: [frontend, accessibility]
 description: Web accessibility patterns — WCAG 2.1 AA, ARIA, keyboard navigation, screen readers
 version: "1.0"
 tags: [accessibility, a11y, wcag, aria, keyboard, screen-reader]

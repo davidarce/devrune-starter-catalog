@@ -1,5 +1,6 @@
 ---
-name: api-first-adviser
+name: api-first-advisor
+scope: [backend, api]
 description: API-first design patterns — OpenAPI, REST conventions, error models, versioning
 version: "1.0"
 tags: [api, openapi, rest, http, versioning, error-handling]

@@ -1,5 +1,6 @@
 ---
-name: architect-adviser
+name: architect-advisor
+scope: [architecture]
 description: "Clean architecture patterns: hexagonal, DDD, ports and adapters, layered design."
 allowed-tools:
   - Read

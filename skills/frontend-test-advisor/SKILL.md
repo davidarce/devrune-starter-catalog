@@ -1,5 +1,6 @@
 ---
-name: frontend-test-adviser
+name: frontend-test-advisor
+scope: [frontend, testing]
 description: Frontend testing patterns — React Testing Library, Vitest/Jest, Cypress e2e
 version: "1.0"
 tags: [testing, react, rtl, vitest, jest, cypress, frontend]
