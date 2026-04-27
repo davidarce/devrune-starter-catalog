@@ -1,0 +1,10 @@
+{
+  "default_base_branch": "main",
+  "jira_project_prefix": "",
+  "pr_platform": "",
+  "workspace": {
+    "mode": "auto",
+    "default_target": "",
+    "known_repos": []
+  }
+}

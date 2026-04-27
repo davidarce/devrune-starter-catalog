@@ -3,7 +3,7 @@ name: sdd-review
 description: 'Use when reviewing code changes before commit, comparing implementation against SDD plan, or doing standalone code review with adviser consultation.'
 argument-hint: "[change_name?]"
 disable-model-invocation: false
-allowed-tools: Bash(git diff:*), Bash(git status:*), Bash(git log:*), Read, Glob, Grep, AskUserQuestion, Skill
+allowed-tools: Bash(git:*), Bash(pwd), Bash(find:*), Read, Write, Glob, Grep, AskUserQuestion, Skill
 ---
 
 <meta prompt 1 = "[Review]">
@@ -11,17 +11,66 @@ You are reviewing code changes with git diffs. Focus on ensuring changes are sou
 
 ## Dynamic Context (pre-resolved)
 
-- **Base branch**: !`git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's|refs/remotes/origin/||' || echo "main"`
-- **Status**: !`git status --short 2>/dev/null || echo "__NO_GIT__"`
-- **Diff stat (vs base)**: !`git diff --stat origin/HEAD...HEAD 2>/dev/null || echo "__NO_GIT__"`
-- **Diff (vs base)**: !`git diff origin/HEAD...HEAD 2>/dev/null || echo "__NO_GIT__"`
-- **Recent log**: !`git log --oneline origin/HEAD..HEAD 2>/dev/null || echo "__NO_GIT__"`
+- **CWD**: !`pwd`
+- **Is git repo**: !`git rev-parse --is-inside-work-tree 2>/dev/null || echo "__NO_GIT__"`
 
-> If any value above shows `__NO_GIT__`, the working directory is not a git repository. Ask the user which project to target, then run the git commands from that directory using `git -C <path>`.
+> Heavy git context (base branch, status, diff, log) is resolved in **Step 0** below using `git -C <target_path>` after the target repo is determined. This avoids frontmatter pre-execution failures when CWD is a workspace, not a repo.
+
+## Configuration
+
+This skill reads `config.json` from its own directory (if present):
+- `workspace` — Workspace-aware target resolution. See **Step 0** below for the schema and algorithm. If `config.json` is absent, the skill falls back to scanning the CWD on each invocation.
+
+### Configuration write-back (opt-in)
+
+The skill may propose updates to `config.json` (via `Write` tool) when it discovers repos in a workspace or the user asks to "always" review a specific repo. **Write-back is always opt-in**: the skill asks via `AskUserQuestion` before persisting, never overwrites a non-empty value silently, and only modifies its own `config.json`.
+
+## Step 0: Resolve Target Repository
+
+This skill must work in two scenarios: (a) CWD is a git repository (direct mode) and (b) CWD is a workspace containing one or more git repositories nested inside (workspace mode). Resolve the target repo before any git command.
+
+**Inputs:**
+- `CWD` and `Is git repo` from the Dynamic Context block above
+- `config.json` in this skill's directory, specifically the `workspace` block:
+  ```json
+  {
+    "workspace": {
+      "mode": "auto",
+      "default_target": "",
+      "known_repos": []
+    }
+  }
+  ```
+- Any explicit user argument naming a repo
+
+**Resolution algorithm:**
+
+1. Read `config.json` from this skill's directory (if it exists; otherwise treat as empty `workspace` block).
+2. **Repo mode detection**: if `Is git repo` == `true` AND `workspace.mode != "multi-repo"` → set `target_path = "."`, skip to step 6 (direct mode).
+3. **Workspace mode**: resolve target by priority:
+   a. **Explicit user argument** — if the user named a repo, match against `known_repos[].name` first, else against `known_repos[].path`, else against any directory at `<CWD>/<arg>` containing a `.git/` entry.
+   b. **`workspace.default_target`** — if non-empty AND the resolved path exists AND contains `.git/`, use it.
+   c. **Single known repo** — if `known_repos.length == 1` AND the path is valid, use it.
+   d. **Multiple known repos** — call `AskUserQuestion` listing `known_repos[].name` as options. Add an "Other / scan again" option.
+   e. **Empty `known_repos`** — scan with `find . -maxdepth 2 -name .git -type d 2>/dev/null | grep -v "/worktrees/" | grep -v "/.claude/"`. Each match's parent directory is a repo. Populate a discovery list with `{name: <basename>, path: <relative>}`. If exactly one → use it. If many → AskUserQuestion. If none → report "no git repository found" and stop.
+4. Store `target_path` for the rest of the skill (input to `git -C`).
+5. **Configuration write-back (opt-in only)**: if `config.json` exists and any of these conditions hold, propose a write-back via `AskUserQuestion`. Never write silently; never overwrite a non-empty value without explicit confirmation:
+   - Step 3.e populated new `known_repos` from a scan → "Save these N repos to `known_repos` so I don't re-scan?"
+   - User chose a repo via 3.d that's not yet in `known_repos` → "Add it to `known_repos`?"
+   - User chose a repo and the conversation suggests permanence ("always", "default") → "Set as `default_target`?"
+   On confirmation, use the `Write` tool to update `config.json` (preserve all other fields, write the file atomically).
+6. **Resolve heavy git context** with `target_path`:
+   - Base branch: `git -C <target_path> symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null || echo "origin/main"` (fallback chain: try also `origin/master` if `origin/main` doesn't exist)
+   - Status: `git -C <target_path> status --short`
+   - Diff stat (vs base): `git -C <target_path> diff --stat <base>...HEAD`
+   - Diff (vs base): `git -C <target_path> diff <base>...HEAD`
+   - Recent log: `git -C <target_path> log --oneline <base>..HEAD`
+
+   Use these values from this point forward. **Never** `cd <target_path> && git ...` — Claude Code's anti-pattern alert blocks compound `cd && git` even with allowlists.
 
 **Two Operating Modes:**
 
-1. **Standalone Mode** (no arguments): Analyze the pre-resolved git diff above without SDD context
+1. **Standalone Mode** (no arguments): Analyze the git diff resolved above without SDD context
 2. **SDD Context Mode** (with change_name): Compare implementation against `.sdd/{change-name}/plan.md`
 
 ---
@@ -30,7 +79,7 @@ You are reviewing code changes with git diffs. Focus on ensuring changes are sou
 
 ### Step 1: Gather Context
 
-The git status and diff are already available in the **Dynamic Context** section above. Use them directly — no need to re-execute git commands unless the context shows `__NO_GIT__`.
+The git status, diff, and log were resolved in **Step 0** using `git -C <target_path>`. Use those values directly — no need to re-execute git commands.
 
 **If change_name provided:**
 - Read `.sdd/{change-name}/plan.md` to understand expected changes
@@ -176,7 +225,7 @@ Your **LAST output MUST be the SDD Envelope**. Nothing may follow the envelope.
 ## Gotchas
 
 - **Reporting Critical Issues without specialist diagnosis** — before finalizing any Critical Issue, check for available `*-adviser` skills and invoke the relevant one via the Skill tool. Reporting domain logic or test coverage gaps without adviser input produces vague, unactionable feedback.
-- **Re-running git commands when Dynamic Context is already pre-resolved** — the skill injects git status, diff stat, and full diff at invocation time. Use those values directly; re-executing git commands wastes turns and may produce stale results if the working tree changes mid-review.
+- **Re-running git commands when Step 0 already resolved them** — Step 0 stashes git status, diff stat, full diff, and recent log via `git -C <target_path>`. Use those values directly; re-executing git commands wastes turns and may produce stale results if the working tree changes mid-review.
 - **Blocking on minor issues** — distinguish Critical (must fix before commit) from Minor (nice-to-have). Marking minor issues as blockers stalls workflow unnecessarily.
 - **Making code changes during review** — the review phase analyzes only; never modifies files. Any fixes belong in a follow-up implementation task.
 
