@@ -10,8 +10,12 @@ allowed-tools:
   - Read
   - Grep
   - Glob
+  - Write
+  - AskUserQuestion
   - Bash(git:*)
   - Bash(gh:*)
+  - Bash(pwd)
+  - Bash(find:*)
   - Bash(glab:*)
   - mcp__atlassian__jira_get_issue
 model: haiku
@@ -21,14 +25,10 @@ model: haiku
 
 ## Dynamic Context (pre-resolved)
 
-- **Remote URL**: !`git remote get-url origin 2>/dev/null || echo "__NO_GIT__"`
-- **Branch**: !`git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "__NO_GIT__"`
-- **Base branch**: !`git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's|refs/remotes/origin/||' || echo "main"`
-- **Status**: !`git status --short 2>/dev/null || echo "__NO_GIT__"`
-- **Diff vs base**: !`git diff --stat origin/HEAD...HEAD 2>/dev/null || echo "__NO_GIT__"`
-- **Commits vs base**: !`git log --oneline origin/HEAD..HEAD 2>/dev/null || echo "__NO_GIT__"`
+- **CWD**: !`pwd`
+- **Is git repo**: !`git rev-parse --is-inside-work-tree 2>/dev/null || echo "__NO_GIT__"`
 
-> If any value above shows `__NO_GIT__`, the working directory is not a git repository. Ask the user which project to target, then run the git commands from that directory using `git -C <path>`.
+> Heavy git context (status, diff, log, base branch) is resolved in **Step 0** below using `git -C <target_path>` after the target repo is determined. This avoids frontmatter pre-execution failures when CWD is a workspace, not a repo.
 
 ## Overview
 
@@ -50,17 +50,67 @@ This skill reads `config.json` from its own directory for project-specific setti
 - `default_base_branch` — Base branch for PR target (default: "main")
 - `jira_project_prefix` — Expected JIRA project prefix for branch detection (optional, e.g., "BUYERS")
 - `pr_platform` — Force platform override: "github" or "gitlab" (optional, auto-detected if empty)
+- `workspace` — Workspace-aware target resolution. See **Step 0** below for the schema and resolution algorithm.
 
 If `config.json` is not present or has empty values, the skill falls back to auto-detection from git remote URL.
 
+### Configuration write-back (opt-in)
+
+The skill may propose updates to `config.json` (via `Write` tool) when it learns something new — e.g., discovers repos in a workspace, detects `pr_platform` from a remote URL, or the user asks to "always" target a specific repo. **Write-back is always opt-in**: the skill asks via `AskUserQuestion` before persisting, never overwrites a non-empty value silently, and only modifies its own `config.json`.
+
 ## Workflow
+
+### Step 0: Resolve Target Repository
+
+This skill must work in two scenarios: (a) CWD is a git repository (direct mode) and (b) CWD is a workspace containing one or more git repositories nested inside (workspace mode). Resolve the target repo before running any git/gh command.
+
+**Inputs:**
+- `CWD` and `Is git repo` from the Dynamic Context block above
+- `config.json` in this skill's directory, specifically the `workspace` block:
+  ```json
+  {
+    "workspace": {
+      "mode": "auto",
+      "default_target": "",
+      "known_repos": []
+    }
+  }
+  ```
+- Any explicit user argument naming a repo (e.g. `open PR on lib-purchaseai`)
+
+**Resolution algorithm:**
+
+1. Read `config.json` from this skill's directory.
+2. **Repo mode detection**: if `Is git repo` == `true` AND `workspace.mode != "multi-repo"` → set `target_path = "."`, skip to step 6 (direct mode).
+3. **Workspace mode**: resolve target by priority:
+   a. **Explicit user argument** — if the user named a repo, match against `known_repos[].name` first, else against `known_repos[].path`, else against any directory at `<CWD>/<arg>` containing a `.git/` entry.
+   b. **`workspace.default_target`** — if non-empty AND the resolved path exists AND contains `.git/`, use it.
+   c. **Single known repo** — if `known_repos.length == 1` AND the path is valid, use it.
+   d. **Multiple known repos** — call `AskUserQuestion` listing `known_repos[].name` as options. Add an "Other / scan again" option.
+   e. **Empty `known_repos`** — scan with `find . -maxdepth 2 -name .git -type d 2>/dev/null | grep -v "/worktrees/" | grep -v "/.claude/"`. Each match's parent directory is a repo. Populate a discovery list with `{name: <basename>, path: <relative>}`. If exactly one → use it. If many → AskUserQuestion. If none → report "no git repository found" and stop.
+4. Store the choice in two variables for the rest of the skill:
+    - `target_path` — relative or absolute path to the repo (input to `git -C`)
+    - `target_owner_repo` — owner/repo string for `gh` (compute via `git -C <target_path> remote get-url origin`, parse SSH or HTTPS form, e.g., `git@github.com:owner/repo.git` → `owner/repo`)
+5. **Configuration write-back (opt-in only)**: if any of these conditions hold, propose a write-back via `AskUserQuestion`. Never write silently; never overwrite a non-empty value without explicit confirmation:
+    - Step 3.e populated new `known_repos` from a scan → "Save these N repos to `known_repos` so I don't re-scan?"
+    - User chose a repo via 3.d that's not yet in `known_repos` → "Add it to `known_repos`?"
+    - User chose a repo and the conversation suggests permanence ("always", "default") → "Set as `default_target`?"
+    - The skill detected `pr_platform` from a remote URL and the field is empty → "Save `pr_platform: <github|gitlab>`?"
+      On confirmation, use the `Write` tool to update `config.json` (preserve all other fields, write the file atomically).
+6. From this point on, **every** git command in this skill uses `git -C <target_path> <subcommand>` and **every** gh command uses `gh -R <target_owner_repo> <subcommand>`. Never `cd <target_path> && git ...` — Claude Code's anti-pattern alert blocks compound `cd && git` even with allowlists.
+
+**Anti-patterns:**
+- 🚫 `cd <target_path> && git <cmd>` — blocked by Claude Code, prompts user, cannot be silenced.
+- 🚫 Pre-resolving git state in frontmatter (`!`<git-cmd>``) without `|| echo "__NO_GIT__"` — fails skill loading when CWD is not a git repo.
+- 🚫 Silently writing to `config.json` based on a single signal — always confirm with the user before persisting.
+- 🚫 Using `gh -C <path>` — `gh` does not support `-C`; use `-R <owner>/<repo>` instead.
 
 ### Step 1: Understand Parameters
 
 Extract parameters from the context or ask the user:
-- `base_branch`: Branch to compare against (default: `develop` or `main` depending on project)
-- `head_branch`: Branch with changes (default: current branch from `git rev-parse --abbrev-ref HEAD`)
-- `working_directory`: Git repository path (default: current working directory)
+- `base_branch`: Branch to compare against (default: `develop` or `main` depending on project; resolve via fallback chain `git -C <target_path> symbolic-ref refs/remotes/origin/HEAD` → `origin/main` → `origin/master` → ask user)
+- `head_branch`: Branch with changes (default: current branch from `git -C <target_path> rev-parse --abbrev-ref HEAD`)
+- `target_path` and `target_owner_repo` come from **Step 0** above.
 
 ### Step 2: Detect Git Platform
 
@@ -68,8 +118,8 @@ Determine whether the repository is hosted on GitHub or GitLab by inspecting the
 
 **Commands:**
 ```bash
-# Get the remote URL
-git remote get-url origin
+# Get the remote URL (from Step 0's target_path)
+git -C <target_path> remote get-url origin
 ```
 
 **Platform detection patterns:**
@@ -103,7 +153,7 @@ Extract the JIRA ticket ID from the current git branch name to fetch ticket cont
 **Commands:**
 ```bash
 # Get current branch name
-git rev-parse --abbrev-ref HEAD
+git -C <target_path> rev-parse --abbrev-ref HEAD
 
 # Extract JIRA ID using regex pattern: [A-Z]+-[0-9]+
 ```
@@ -170,26 +220,26 @@ Components: ["Infrastructure", "Integration"]
 
 ### Step 5: Analyze File Changes
 
-Use git commands to gather comprehensive change information:
+Use git commands to gather comprehensive change information (always with `-C <target_path>` from Step 0):
 
 ```bash
 # Get current branch
-git rev-parse --abbrev-ref HEAD
+git -C <target_path> rev-parse --abbrev-ref HEAD
 
 # Get repository root
-git rev-parse --show-toplevel
+git -C <target_path> rev-parse --show-toplevel
 
 # Get changed files with status
-git diff --name-status <base_branch>...<head_branch>
+git -C <target_path> diff --name-status <base_branch>...<head_branch>
 
 # Get diff statistics
-git diff --stat <base_branch>...<head_branch>
+git -C <target_path> diff --stat <base_branch>...<head_branch>
 
 # Get commit messages
-git log --oneline <base_branch>..<head_branch>
+git -C <target_path> log --oneline <base_branch>..<head_branch>
 
 # Get full diff
-git diff <base_branch>...<head_branch>
+git -C <target_path> diff <base_branch>...<head_branch>
 ```
 
 Analyze the output to understand:
@@ -265,17 +315,18 @@ For detailed per-template fill-out guidance and a full example, see [references/
 
 Use the platform-specific command based on the platform detected in Step 2.
 
-**GitHub (using `gh`):**
+**GitHub (using `gh -R <target_owner_repo>`):**
 
 ```bash
 gh pr create \
+  -R <target_owner_repo> \
   --base <base_branch> \
   --draft \
   --title "<title>" \
   --body "<filled-template>"
 ```
 
-**GitLab (using `glab`):**
+**GitLab (using `glab` from `target_path`):** glab does not support `-R`. Run with `--repo <target_path>` or invoke from inside the target via `git -C <target_path>` for any preflight commands; the actual `glab mr create` must run with `target_path` as `cwd` of the spawned shell — when this is not possible from the skill, prefer using `gh` (GitHub) or asking the user to run `glab` manually with the filled template.
 
 ```bash
 glab mr create \
@@ -293,8 +344,8 @@ glab mr create \
 
 **Important guidelines:**
 - **Title format**: `[JIRA-ID] <Summary from JIRA or descriptive title>`
-  - Example: `[PROJ-123] Migrate service integration to v2`
-  - Use JIRA summary as the base, refined if needed for clarity
+    - Example: `[PROJ-123] Migrate service integration to v2`
+    - Use JIRA summary as the base, refined if needed for clarity
 - Do NOT include Claude Code co-authorship
 - Ensure body includes reference to JIRA ticket in "Related Issues" section
 - If JIRA has acceptance criteria, include them as checkboxes in PR description
@@ -321,8 +372,6 @@ glab mr create \
 - **JIRA unavailability**: Do not block PR creation if the JIRA API fails — fall back to git diff analysis and commit messages.
 - **AI attribution**: Do not include Claude co-authorship lines in the PR body.
 - **Draft flag**: Always create PRs in draft mode (`--draft`) — let the author promote to ready.
-
-Before finalizing your PR, also review [gotchas.md](gotchas.md) for broader anti-patterns Claude commonly makes when opening PRs (wrong base branch, force-pushing protected branches, stale-branch PRs, missing upstream, duplicating the diff in prose, skipping CI check).
 
 ## Template Assets
 
@@ -381,9 +430,9 @@ Seven templates are available in `assets/templates/`: `bug.md`, `feature.md`, `d
 - **JIRA integration is optional**: If JIRA API is unavailable or fails, the skill continues with git diff analysis only
 - **Git diff is the source of truth for technical details**: JIRA provides business context and requirements
 - **Acceptance Criteria parsing**: Look for common markers in JIRA description:
-  - "*Acceptance Criteria*" (formatted text)
-  - "AC:" or "Acceptance Criteria:"
-  - Bullet points or numbered lists following these markers
+    - "*Acceptance Criteria*" (formatted text)
+    - "AC:" or "Acceptance Criteria:"
+    - Bullet points or numbered lists following these markers
 - **Related tickets**: Check JIRA description for links to other tickets (initiatives, dependencies, blockers)
 - The JIRA MCP tool (`mcp__atlassian__jira_get_issue`) requires proper authentication and network access to Jira instance
 - **PR Title**: Prefer JIRA summary but refine if needed for clarity (e.g., translate to English if JIRA is written in another language)
@@ -394,6 +443,7 @@ Seven templates are available in `assets/templates/`: `bug.md`, `feature.md`, `d
 **GitHub:**
 ```bash
 gh pr create \
+  -R <target_owner_repo> \
   --base <base_branch> \
   --draft \
   --title "[JIRA-ID] Description" \
@@ -418,6 +468,5 @@ EOF
 
 ## References
 
-- [git-commit](../git-commit/SKILL.md) -- create commits before PR (`git-commit`)
+- [git-commit](../git-commit/SKILL.md) -- create commits before PR (`git:commit`)
 - [PR templates guide](references/pr-templates-guide.md) -- detailed per-template fill-out guidance
-- [gotchas.md](gotchas.md) - Common Claude anti-patterns when opening PRs

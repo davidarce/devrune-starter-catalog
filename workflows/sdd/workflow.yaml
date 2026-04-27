@@ -16,7 +16,7 @@ components:
     - name: sdd-explorer
       kind: subagent
       skill: sdd-explore
-      model: sonnet
+      model: haiku
     - name: sdd-planner
       kind: subagent
       skill: sdd-plan
@@ -79,6 +79,10 @@ components:
     - "Skill(sdd-review)"
     # Git operations (commit/PR skills)
     - "Bash(git status:*)"
+    - "Bash(git -C:*)"
+    - "Bash(gh -R:*)"
+    - "Bash(pwd)"
+    - "Bash(find:*)"
     - "Skill(git-commit)"
     - "Skill(git-pull-request)"
   hooks:

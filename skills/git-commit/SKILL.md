@@ -1,5 +1,5 @@
 ---
-name: git-commit
+name: git:commit
 description: 'Use when the user asks to create/make/save a commit in ANY language (English/Spanish/paraphrase). Follows Conventional Commits with JIRA ticket detection.'
 metadata:
   version: "1.1"
@@ -10,13 +10,11 @@ allowed-tools:
   - Read
   - Grep
   - Glob
-  - Bash(git add:*)
-  - Bash(git status:*)
-  - Bash(git diff:*)
-  - Bash(git branch:*)
-  - Bash(git log:*)
-  - Bash(git commit:*)
-  - Bash(git rev-parse:*)
+  - Write
+  - AskUserQuestion
+  - Bash(git:*)
+  - Bash(pwd)
+  - Bash(find:*)
   - mcp__atlassian__jira_get_issue
 model: haiku
 ---
@@ -25,12 +23,10 @@ model: haiku
 
 ## Dynamic Context (pre-resolved)
 
-- **Branch**: !`git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "__NO_GIT__"`
-- **Status**: !`git status --short 2>/dev/null || echo "__NO_GIT__"`
-- **Diff stat**: !`git diff --stat 2>/dev/null || echo "__NO_GIT__"`
-- **Recent log**: !`git log --oneline -10 2>/dev/null || echo "__NO_GIT__"`
+- **CWD**: !`pwd`
+- **Is git repo**: !`git rev-parse --is-inside-work-tree 2>/dev/null || echo "__NO_GIT__"`
 
-> If any value above shows `__NO_GIT__`, the working directory is not a git repository. Ask the user which project to target, then run the git commands from that directory using `git -C <path>`.
+> Heavy git context (branch, status, diff, log) is resolved in **Step 0** below using `git -C <target_path>` after the target repo is determined. This avoids frontmatter pre-execution failures when CWD is a workspace, not a repo.
 
 ## Overview
 
@@ -51,8 +47,57 @@ Do NOT invoke for history reads or amendments ("show me the last commit", "what 
 This skill reads `config.json` from its own directory for project-specific settings:
 - `default_base_branch` — Base branch for comparisons (default: "main")
 - `jira_project_prefix` — Expected JIRA project prefix for branch detection (optional, e.g., "BUYERS")
+- `workspace` — Workspace-aware target resolution. See **Step 0** below for the schema and resolution algorithm.
 
 If `config.json` is not present or has empty values, the skill falls back to auto-detection from git context.
+
+### Configuration write-back (opt-in)
+
+The skill may propose updates to `config.json` (via `Write` tool) when it learns something new — e.g., discovers repos in a workspace, detects a recurring JIRA prefix, or the user asks to "always" target a specific repo. **Write-back is always opt-in**: the skill asks via `AskUserQuestion` before persisting, never overwrites a non-empty value silently, and only modifies its own `config.json`.
+
+## Step 0: Resolve Target Repository
+
+This skill must work in two scenarios: (a) CWD is a git repository (direct mode) and (b) CWD is a workspace containing one or more git repositories nested inside (workspace mode). Resolve the target repo before running any git command.
+
+**Inputs:**
+- `CWD` and `Is git repo` from the Dynamic Context block above
+- `config.json` in this skill's directory, specifically the `workspace` block:
+  ```json
+  {
+    "workspace": {
+      "mode": "auto",
+      "default_target": "",
+      "known_repos": []
+    }
+  }
+  ```
+- Any explicit user argument naming a repo (e.g. `commit on lib-purchaseai`)
+
+**Resolution algorithm:**
+
+1. Read `config.json` from this skill's directory.
+2. **Repo mode detection**: if `Is git repo` == `true` AND `workspace.mode != "multi-repo"` → set `target_path = "."`, skip to step 6 (direct mode).
+3. **Workspace mode**: resolve target by priority:
+   a. **Explicit user argument** — if the user named a repo, match against `known_repos[].name` first, else against `known_repos[].path`, else against any directory at `<CWD>/<arg>` containing a `.git/` entry.
+   b. **`workspace.default_target`** — if non-empty AND the resolved path exists AND contains `.git/`, use it.
+   c. **Single known repo** — if `known_repos.length == 1` AND the path is valid, use it.
+   d. **Multiple known repos** — call `AskUserQuestion` listing `known_repos[].name` as options. Add an "Other / scan again" option.
+   e. **Empty `known_repos`** — scan with `find . -maxdepth 2 -name .git -type d 2>/dev/null | grep -v "/worktrees/" | grep -v "/.claude/"`. Each match's parent directory is a repo. Populate a discovery list with `{name: <basename>, path: <relative>}`. If exactly one → use it. If many → AskUserQuestion. If none → report "no git repository found" and stop.
+4. Store the choice in two variables for the rest of the skill:
+    - `target_path` — relative or absolute path to the repo (input to `git -C`)
+    - `target_owner_repo` — owner/repo string for `gh` (compute via `git -C <target_path> remote get-url origin`, parse SSH or HTTPS form, e.g., `git@github.com:owner/repo.git` → `owner/repo`). Not used by `git:commit` directly but kept for parity across skills.
+5. **Configuration write-back (opt-in only)**: if any of these conditions hold, propose a write-back via `AskUserQuestion`. Never write silently; never overwrite a non-empty value without explicit confirmation:
+    - Step 3.e populated new `known_repos` from a scan → "Save these N repos to `known_repos` so I don't re-scan?"
+    - User chose a repo via 3.d that's not yet in `known_repos` → "Add it to `known_repos`?"
+    - User chose a repo and the conversation suggests permanence ("always", "default") → "Set as `default_target`?"
+    - The skill detected a recurring JIRA prefix in the last 10 commits and `jira_project_prefix` is empty → "Save `jira_project_prefix: <PREFIX>`?"
+      On confirmation, use the `Write` tool to update `config.json` (preserve all other fields, write the file atomically).
+6. From this point on, **every** git command in this skill uses `git -C <target_path> <subcommand>`. Never `cd <target_path> && git ...` — Claude Code's anti-pattern alert blocks compound `cd && git` even with allowlists.
+
+**Anti-patterns:**
+- 🚫 `cd <target_path> && git <cmd>` — blocked by Claude Code, prompts user, cannot be silenced.
+- 🚫 Pre-resolving git state in frontmatter (`!`<git-cmd>``) without `|| echo "__NO_GIT__"` — fails skill loading when CWD is not a git repo.
+- 🚫 Silently writing to `config.json` based on a single signal — always confirm with the user before persisting.
 
 ## Commit Format
 
@@ -91,8 +136,8 @@ Extract the JIRA ticket ID from the current git branch name.
 
 **Commands:**
 ```bash
-# Get current branch name
-git rev-parse --abbrev-ref HEAD
+# Get current branch name (always with -C from Step 0)
+git -C <target_path> rev-parse --abbrev-ref HEAD
 
 # Extract JIRA ID using regex pattern: [A-Z]+-[0-9]+
 ```
@@ -165,13 +210,13 @@ Analyze the current git diff to understand what has changed.
 **Commands:**
 ```bash
 # Get list of changed files with status
-git diff --name-status
+git -C <target_path> diff --name-status
 
 # Get detailed diff
-git diff
+git -C <target_path> diff
 
 # Get diff statistics
-git diff --stat
+git -C <target_path> diff --stat
 ```
 
 **Analyze the diff output to identify:**
@@ -234,9 +279,9 @@ Extract the scope from the changed files to indicate which part of the codebase 
 
 #### Strategy 2: By Domain Concept
 - Extract common prefix from changed files:
-  - `OrderService.java`, `OrderRepository.java` → `order`
-  - `UserEntity.java`, `UserMapper.java` → `user`
-  - `PaymentProcessor.java`, `PaymentValidator.java` → `payment`
+    - `OrderService.java`, `OrderRepository.java` → `order`
+    - `UserEntity.java`, `UserMapper.java` → `user`
+    - `PaymentProcessor.java`, `PaymentValidator.java` → `payment`
 
 #### Strategy 3: By Feature Area
 - Authentication-related files → `auth`
@@ -245,9 +290,9 @@ Extract the scope from the changed files to indicate which part of the codebase 
 
 #### Strategy 4: Multiple Scopes
 - If changes affect multiple unrelated areas, either:
-  - Omit scope entirely
-  - Use the most significant scope
-  - Consider this indicates multiple commits might be needed
+    - Omit scope entirely
+    - Use the most significant scope
+    - Consider this indicates multiple commits might be needed
 
 **Examples:**
 ```
@@ -303,9 +348,9 @@ Create a concise, imperative description of the change.
 - Extract key terms from JIRA summary (e.g., "Migrate external service to v2" → "migrate external service integration to v2")
 - Combine with git diff insights to be more specific
 - Example:
-  - JIRA: "Update purchase variable integration"
-  - Git diff: Shows migration from v1 to v2 API
-  - Result: "migrate external service integration to v2"
+    - JIRA: "Update purchase variable integration"
+    - Git diff: Shows migration from v1 to v2 API
+    - Result: "migrate external service integration to v2"
 
 **Good examples:**
 - `add user authentication service`
@@ -336,19 +381,19 @@ Generate the final commit message and create the commit.
 [TASK-321] perf(application)!: change caching strategy for performance
 ```
 
-**Commands to create commit:**
+**Commands to create commit (always with -C from Step 0):**
 ```bash
 # Review staged and unstaged files first
-git status
+git -C <target_path> status
 
 # Stage only reviewed files — avoid git add . to prevent committing sensitive files (.env, credentials)
-git add <file1> <file2> …
+git -C <target_path> add <file1> <file2> …
 
 # Create commit with generated message
-git commit -m "[JIRA-ID] type(scope): description"
+git -C <target_path> commit -m "[JIRA-ID] type(scope): description"
 
 # Verify commit was created
-git log -1 --oneline
+git -C <target_path> log -1 --oneline
 ```
 
 **Important:**
@@ -385,10 +430,10 @@ After creating the commit, verify it was successful and report to the user.
 **Verification commands:**
 ```bash
 # Show the created commit
-git log -1 --format="%h %s"
+git -C <target_path> log -1 --format="%h %s"
 
 # Show commit details
-git show --stat HEAD
+git -C <target_path> show --stat HEAD
 ```
 
 **Report to user:**
@@ -405,8 +450,6 @@ git show --stat HEAD
 - **Commit type priority**: Do not override the priority order when multiple types apply — breaking changes (`!`) always take precedence, then `feat`, then `fix`.
 - **JIRA unavailability**: If the JIRA MCP call fails, continue with git diff analysis only — do not block the commit.
 
-Before finalizing your commit, also review [gotchas.md](gotchas.md) for broader anti-patterns Claude commonly makes when committing.
-
 ## Complete Example Workflow
 
 A full end-to-end walkthrough covering branch parsing, JIRA lookup, diff analysis, and commit creation. For the detailed step-by-step execution, see [commit-examples.md](references/commit-examples.md).
@@ -419,8 +462,7 @@ Covers multiple unrelated changes, breaking changes, missing JIRA IDs, and how J
 
 - [commit-patterns.md](references/commit-patterns.md) - Comprehensive patterns for commit type detection, scope determination, and breaking change identification with real examples
 - [commit-examples.md](references/commit-examples.md) - Full end-to-end workflow example and advanced scenario walkthroughs
-- [gotchas.md](gotchas.md) - Common Claude anti-patterns when committing
-- [git-pull-request](../git-pull-request/SKILL.md) - Create a pull request after committing (`git-pull-request`)
+- [git-pull-request](../git-pull-request/SKILL.md) - Create a pull request after committing (`git:pull-request`)
 
 ## Best Practices
 
