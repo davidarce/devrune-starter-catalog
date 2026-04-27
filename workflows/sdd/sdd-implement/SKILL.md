@@ -56,77 +56,36 @@ Two critical files contain the context for implementation:
 
 Use recovered content as context. If neither file nor engram has the required artifact, return envelope with `status: blocked`.
 
-**Batch Execution Strategy**
+## Batch Execution (wave-scoped)
 
-The plan contains a **Batch Assignment Table** that defines how tasks are grouped and executed. This table is the SINGLE source of truth for parallelism and execution order.
+Your launch prompt from the orchestrator specifies the batches you own. Honor that scope.
 
-1. **Read the Batch Assignment Table** from plan.md. It looks like:
-   ```
-   | Batch | Tasks | File | Parallel | Depends on |
-   |-------|-------|------|----------|------------|
-   | A | T001-T003 | src/User.java | Yes | — |
-   | B | T004-T005 | src/Order.java | Yes | — |
-   | C | T006 | src/Service.java | No | A, B |
-   ```
+### Wave-scoped mode (default when launched by orchestrator)
 
-2. **Identify executable batches**: A batch is ready when ALL batches in its "Depends on" column are complete.
+The prompt contains one of:
+  - `Batches: A, B` (parallel batches in this wave — you own ALL listed batches)
+  - `Batch: C` (single sequential batch)
+  - `Previously completed batches: X, Y` (do not re-execute these)
 
-3. **Execute batches by type**:
-    - **Parallel batches** (`Parallel=Yes`, no pending dependencies): Launch ALL ready parallel batches as simultaneous Task calls in a SINGLE message.
-    - **Sequential batches** (`Parallel=No` or has pending dependencies): Execute one batch at a time, wait for completion before proceeding.
+Rules:
+1. Implement tasks in the listed batch(es) in the order given by the Batch Assignment Table.
+2. Execute tasks within each batch sequentially (same file).
+3. Between batches in the same wave (if prompt lists multiple): sequential is safe.
+4. NEVER infer additional batches or launch Task()/Agent() to implement them.
+5. Quality gate: after the LAST task of each batch, run the Phase Checkpoint from plan.md.
+6. Mark [X] as each task completes.
+7. Return envelope with status reflecting this wave only.
 
-4. **Within each batch**: Execute tasks sequentially (they target the same file).
+### Standalone fallback mode (no batch directive in prompt)
 
-5. **Fail-fast**: If ANY task in ANY batch fails, STOP immediately. Do not continue with remaining tasks or batches.
+If the prompt has no "Batch:" / "Batches:" directive:
+1. Read the full Batch Assignment Table from plan.md.
+2. Execute all batches sequentially (ignore Parallel=Yes — no Task() self-orchestration).
+3. Run Phase Checkpoints after each batch.
+4. Mark [X] as each task completes.
+5. Return envelope when all batches done.
 
-6. **Update progress**: After each batch completes successfully, mark ALL its tasks as `[X]` in plan.md.
-
-**Task Tool Invocation Pattern:**
-
-For PARALLEL batches (Parallel=Yes, no pending dependencies) -- launch multiple Task calls in ONE message, one per batch:
-
-```
-// Batches A and B are both Parallel=Yes with no dependencies -- launch together:
-Task 1: {
-  "description": "Implement Batch A (T001-T003): [target file]",
-  "prompt": "You are an implementation subagent...\n\n## Assigned Tasks\nT001, T002, T003 (execute sequentially)\n\n## Target File\nsrc/User.java\n...",
-  "subagent_type": "general-purpose"
-}
-Task 2: {
-  "description": "Implement Batch B (T004-T005): [target file]",
-  "prompt": "You are an implementation subagent...\n\n## Assigned Tasks\nT004, T005 (execute sequentially)\n\n## Target File\nsrc/Order.java\n...",
-  "subagent_type": "general-purpose"
-}
-// Both batches execute simultaneously, results collected when both complete
-```
-
-For SEQUENTIAL batches (Parallel=No or has dependencies) -- execute one at a time:
-
-```
-// Batch C depends on A and B -- only launch after both complete:
-Task: {
-  "description": "Implement Batch C (T006): [target file]",
-  "prompt": "You are an implementation subagent...\n\n## Assigned Tasks\nT006\n\n## Target File\nsrc/Service.java\n...",
-  "subagent_type": "general-purpose"
-}
-```
-
-**Batch Execution Algorithm:**
-
-```
-1. Parse the Batch Assignment Table from plan.md
-2. Mark all batches as pending
-3. Loop:
-   a. Find all batches whose dependencies are satisfied (all "Depends on" batches complete)
-   b. If none remain, execution is done
-   c. Among ready batches, separate into Parallel=Yes and Parallel=No groups
-   d. Launch all Parallel=Yes batches simultaneously (one Task call per batch)
-   e. If only Parallel=No batches are ready, launch one at a time
-   f. Wait for all launched batches to complete
-   g. If any batch failed: STOP immediately
-   h. Mark completed batches, update [X] markers in plan.md
-   i. Repeat from step 3a
-```
+This fallback preserves backward compatibility for direct skill invocations (e.g. `/sdd-implement {change}`).
 
 **Explore & Understand (as needed)**
 
@@ -203,63 +162,24 @@ This prevents permission hook timeouts on large content and avoids wasting turns
 
 ---
 
-## Post-Implementation Verification (MANDATORY)
+## Quality Gate (per-batch, driven by plan Phase Checkpoints)
 
-After ALL tasks are complete and all quality gates passed, run a FINAL sanity check:
+After the LAST task of each batch completes, run the Phase Checkpoint for that batch's phase.
 
-1. **Run the build** — full project build as a final verification that all changes integrate correctly
-2. **Run formatting/linting/type checks** (if applicable) — ensure code style consistency
-3. **Verify no regressions** — check that existing functionality still works
+1. Locate the `**Checkpoint**:` block in plan.md that covers the batch's phase.
+2. Each bullet under the Checkpoint is a verifiable assertion — translate to a shell command
+   where possible:
+   - "Project builds without errors" → detect build runner, run it
+   - "All N integration test scenarios pass" → run the test runner
+   - "Linting passes" → run the linter
+3. If a Checkpoint bullet does not translate to a command (e.g. "documentation updated"),
+   verify by re-reading the relevant file.
+4. If ANY Checkpoint bullet fails: STOP, return envelope with `status: failed`.
+5. If the plan defines no Checkpoint for this batch's phase, default to runner-detected
+   `build` + `test` commands.
 
-Note: Per-task test execution is handled by the Quality Gate above. This section is the final integration check after all tasks are done. If any verification step fails, fix the issues before returning the envelope.
-
----
-
-## Quality Gate (MANDATORY)
-
-Every task MUST pass a quality gate before you proceed to the next task. NEVER continue to the next task if the current task's quality gate fails.
-
-### Step 1: Detect Test Runner
-
-At the START of implementation (before the first task), detect whether the project has a test runner. Look for:
-
-- `jest.config.*` or `vitest.config.*` (JavaScript/TypeScript)
-- `pytest.ini`, `setup.cfg` with `[tool:pytest]`, or `pyproject.toml` with `[tool.pytest]` (Python)
-- `pom.xml` with surefire/failsafe plugin (Java/Maven)
-- `package.json` with a `"test"` script (Node.js)
-- `Makefile` with a `test` target
-- `Cargo.toml` (Rust -- use `cargo test`)
-- `go.mod` (Go -- use `go test ./...`)
-- `.gradle` or `build.gradle` with test task (Gradle)
-
-**Detection approach**: Try to run the test command. If the command is not found or the runner itself fails to start, assume no test runner exists. Do NOT rely solely on config file presence.
-
-### Step 2: Test Runner EXISTS -- Run Tests Per Task
-
-After implementing EACH task, run the relevant tests:
-
-1. Execute the test command (e.g., `npm test`, `mvn test`, `pytest`, `cargo test`)
-2. If tests **PASS**: proceed to the next task
-3. If tests **FAIL**: STOP immediately. Do NOT continue to the next task. Return envelope with `status=failed` and include the failure details in the executive summary
-
-### Step 3: NO Test Runner -- Verify Build Per Task
-
-If no test runner was detected:
-
-1. After each task, verify the project builds/compiles successfully
-2. If build **succeeds**: proceed to the next task
-3. If build **FAILS**: STOP immediately. Return envelope with `status=failed`
-
-### Step 4: Config/Import-Only Tasks
-
-For tasks that only modify configuration files or import statements:
-
-- Verify build compiles -- no need to run full test suite
-- If the build breaks even from a config change, STOP immediately
-
-### Key Rule
-
-**NEVER continue to the next task if the current task's quality gate fails.** A failed quality gate means the implementation is broken and further changes will compound the problem.
+**The quality gate is per-batch, not per-task.** Per-task test runs are wasteful and the
+old rule is REMOVED.
 
 ---
 
@@ -340,7 +260,7 @@ Your LAST output MUST be the SDD Envelope. Nothing may follow it.
 ✅ **Both context files read** — exploration.md AND plan.md
 ✅ **All plan tasks completed** — every task from the plan is implemented
 ✅ **Batch execution followed** — Batch Assignment Table used to determine parallelism and ordering
-✅ **Quality gate passed for all tasks** — tests (or build) verified after each task
+✅ **Quality gate passed per batch** — Phase Checkpoint from plan.md verified after each batch's last task
 ✅ **Code compiles/builds** — no syntax errors or build failures
 ✅ **Tests pass** — if tests exist, they should pass
 ✅ **No regressions** — existing functionality still works
