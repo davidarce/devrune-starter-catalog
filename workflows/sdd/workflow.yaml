@@ -65,8 +65,9 @@ components:
     - "Bash(tree:*)"
     # Crit plan review integration
     - "Bash(which crit*)"
-    - "Bash(crit plan:*)"
-    - "Bash(crit comment:*)"
+    - "Bash(crit:*)"
+    - "Read(//Users/*/.crit/**)"
+    - "Edit(.sdd/*/state.yaml)"
     # Workspace navigation
     - "Bash(cd:*)"
     - "Bash(cat:*)"

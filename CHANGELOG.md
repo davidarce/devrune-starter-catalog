@@ -49,13 +49,10 @@ non-empty value silently, and only modifies its own `config.json`.
 
 **Workflow permissions**
 
-`workflows/sdd/workflow.yaml` adds the following permissions to support
-the new contract:
+`workflows/sdd/workflow.yaml` updates the SDD permissions list:
 
-- `Bash(git -C:*)` — operate on a nested repo without changing CWD.
-- `Bash(gh -R:*)` — GitHub CLI without changing CWD (gh has no `-C`).
-- `Bash(pwd)` — read CWD in dynamic context.
-- `Bash(find:*)` — scan for nested repos when `known_repos` is empty.
+- Workspace mode: `Bash(git -C:*)`, `Bash(gh -R:*)`, `Bash(pwd)`, `Bash(find:*)` — needed for the Step 0 algorithm.
+- Crit plan-review: replaced the narrow `Bash(crit plan:*)` and `Bash(crit comment:*)` with the blanket `Bash(crit:*)`, which also covers `crit status`, `crit fetch`, `crit share`, `crit config`, `crit --help`. Added `Read(//Users/*/.crit/**)` for reading `~/.crit/plans/<change>/.crit.json` and `Edit(.sdd/*/state.yaml)` for the orchestrator's phase-state updates. Together these silence the repeated prompts seen during plan reviews.
 
 **New files**
 
