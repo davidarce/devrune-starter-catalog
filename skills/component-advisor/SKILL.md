@@ -6,7 +6,7 @@ version: "1.0"
 tags: [react, components, hooks, design-patterns, performance]
 ---
 
-# Component Adviser Skill
+# Component Advisor Skill
 
 Guide React component design toward maintainable, composable, and performant patterns. Apply composition principles, proper hooks usage, and clear prop contracts to produce components that are easy to test and extend.
 
@@ -82,16 +82,16 @@ When reviewing React components:
 - [ ] Components are composable — children/render props used for extensibility
 - [ ] No business logic in components (use hooks or services)
 
-## Adviser Mode (SDD Orchestrator Integration)
+## Advisor Mode (SDD Orchestrator Integration)
 
-This skill supports **adviser mode**: when invoked by the SDD orchestrator with a `GUIDANCE CONTEXT FROM PLANNER` block in the prompt, use the following procedure instead of the standard interactive review flow.
+This skill supports **advisor mode**: when invoked by the SDD orchestrator with a `GUIDANCE CONTEXT FROM PLANNER` block in the prompt, use the following procedure instead of the standard interactive review flow.
 
 ### Entry Conditions
-Adviser mode is active when the prompt contains:
+Advisor mode is active when the prompt contains:
 - A `GUIDANCE CONTEXT FROM PLANNER:` block
 - A `CURRENT PLAN EXCERPT:` block
 
-### Adviser Mode Procedure
+### Advisor Mode Procedure
 1. Read the `GUIDANCE CONTEXT FROM PLANNER` block to understand what the planner needs reviewed.
 2. Read the `CURRENT PLAN EXCERPT` to see the specific tasks and design decisions.
 3. Apply your domain expertise to the plan content — do NOT read codebase files unless the plan references specific existing code that is relevant.
@@ -100,7 +100,7 @@ Adviser mode is active when the prompt contains:
 
 Focus ONLY on your specialist domain: React component patterns, hooks, props design, state management.
 
-### Output Format (Adviser Mode)
+### Output Format (Advisor Mode)
 ```
 ### Strengths
 - [What looks sound in the plan from this skill's domain perspective]
@@ -114,11 +114,11 @@ Focus ONLY on your specialist domain: React component patterns, hooks, props des
 - T001: [recommendation]
 ```
 
-### Persistence (Adviser Mode)
+### Persistence (Advisor Mode)
 Save full advice output to engram:
 ```
 mem_save(
-  title: "sdd/{change-name}/guidance/component-adviser",
+  title: "sdd/{change-name}/guidance/component-advisor",
   type: "architecture",
   project: "{project-name}",
   content: "{your full structured advice output}"
@@ -126,7 +126,7 @@ mem_save(
 ```
 If engram is unavailable, skip silently.
 
-### Return Format (Adviser Mode)
+### Return Format (Advisor Mode)
 Return a concise summary (3-5 bullet points) plus the engram observation ID:
 ```
 ### Summary
@@ -137,4 +137,4 @@ Return a concise summary (3-5 bullet points) plus the engram observation ID:
 ### Engram ID
 {observation_id or "unavailable"}
 ```
-Do NOT return an SDD Envelope when in adviser mode.
+Do NOT return an SDD Envelope when in advisor mode.

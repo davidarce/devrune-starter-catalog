@@ -22,7 +22,7 @@
 | plan | `sdd-plan` | `{WORKFLOW_MODEL_PLANNER}` | |
 | implement | `sdd-implement` | `{WORKFLOW_MODEL_IMPLEMENTER}` | |
 | review | `sdd-review` | `{WORKFLOW_MODEL_REVIEWER}` | |
-| adviser | `*-adviser` | `{WORKFLOW_MODEL_ADVISER}` ⭐ | `general-purpose` (hardcoded) |
+| advisor | `*-advisor` | `{WORKFLOW_MODEL_ADVISOR}` ⭐ | `general-purpose` (hardcoded) |
 
 ## Evaluation Gate
 
@@ -73,12 +73,12 @@ mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-
 
 4. **Show** executive summary to user (verbatim from envelope). For parallel implement waves: show per-batch status first, then the aggregated wave status.
 5. **Guidance loop** (plan phase only): After `plan` phase returns `status: guidance_requested`:
-   a. Extract `requested_advisers[]` and `guidance_context` from envelope.
+   a. Extract `requested_advisors[]` and `guidance_context` from envelope.
    b. Increment `guidance_round` in state.yaml.
-   c. **Launch advisers sequentially** (OpenCode does not support run_in_background) using the
-      Sequential Adviser Consultation Template from `{WORKFLOW_DIR}/_shared/adviser-templates.md`.
-      Run one adviser at a time; collect each summary + engram ID before launching the next.
-   d. After all advisers complete: re-launch sdd-plan using the Plan Re-entry with Guidance Template from `{WORKFLOW_DIR}/_shared/adviser-templates.md`.
+   c. **Launch advisors sequentially** (OpenCode does not support run_in_background) using the
+      Sequential Advisor Consultation Template from `{WORKFLOW_DIR}/_shared/advisor-templates.md`.
+      Run one advisor at a time; collect each summary + engram ID before launching the next.
+   d. After all advisors complete: re-launch sdd-plan using the Plan Re-entry with Guidance Template from `{WORKFLOW_DIR}/_shared/advisor-templates.md`.
    e. After sdd-plan re-entry returns envelope: loop back to step 1 (Post-Phase Protocol from start).
    - After non-plan phases or after `status: ok/warning/blocked/failed`: skip this step.
 6. **Crit detection** (plan phase only): After `plan` phase with `status: ok`, run `which crit` (Bash).

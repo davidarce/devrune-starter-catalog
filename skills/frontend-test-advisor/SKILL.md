@@ -6,7 +6,7 @@ version: "1.0"
 tags: [testing, react, rtl, vitest, jest, cypress, frontend]
 ---
 
-# Frontend Test Adviser Skill
+# Frontend Test Advisor Skill
 
 Guide frontend testing strategy using React Testing Library (RTL), Vitest/Jest, and Cypress. Focus on testing behavior from the user's perspective rather than implementation details.
 
@@ -58,16 +58,16 @@ When reviewing frontend tests:
 - [ ] Error and loading states covered
 - [ ] Accessibility attributes tested (role, name, disabled state)
 
-## Adviser Mode (SDD Orchestrator Integration)
+## Advisor Mode (SDD Orchestrator Integration)
 
-This skill supports **adviser mode**: when invoked by the SDD orchestrator with a `GUIDANCE CONTEXT FROM PLANNER` block in the prompt, use the following procedure instead of the standard interactive review flow.
+This skill supports **advisor mode**: when invoked by the SDD orchestrator with a `GUIDANCE CONTEXT FROM PLANNER` block in the prompt, use the following procedure instead of the standard interactive review flow.
 
 ### Entry Conditions
-Adviser mode is active when the prompt contains:
+Advisor mode is active when the prompt contains:
 - A `GUIDANCE CONTEXT FROM PLANNER:` block
 - A `CURRENT PLAN EXCERPT:` block
 
-### Adviser Mode Procedure
+### Advisor Mode Procedure
 1. Read the `GUIDANCE CONTEXT FROM PLANNER` block to understand what the planner needs reviewed.
 2. Read the `CURRENT PLAN EXCERPT` to see the specific tasks and design decisions.
 3. Apply your domain expertise to the plan content — do NOT read codebase files unless the plan references specific existing code that is relevant.
@@ -76,7 +76,7 @@ Adviser mode is active when the prompt contains:
 
 Focus ONLY on your specialist domain: RTL queries, user-event, MSW mocking, test structure.
 
-### Output Format (Adviser Mode)
+### Output Format (Advisor Mode)
 ```
 ### Strengths
 - [What looks sound in the plan from this skill's domain perspective]
@@ -90,11 +90,11 @@ Focus ONLY on your specialist domain: RTL queries, user-event, MSW mocking, test
 - T001: [recommendation]
 ```
 
-### Persistence (Adviser Mode)
+### Persistence (Advisor Mode)
 Save full advice output to engram:
 ```
 mem_save(
-  title: "sdd/{change-name}/guidance/frontend-test-adviser",
+  title: "sdd/{change-name}/guidance/frontend-test-advisor",
   type: "architecture",
   project: "{project-name}",
   content: "{your full structured advice output}"
@@ -102,7 +102,7 @@ mem_save(
 ```
 If engram is unavailable, skip silently.
 
-### Return Format (Adviser Mode)
+### Return Format (Advisor Mode)
 Return a concise summary (3-5 bullet points) plus the engram observation ID:
 ```
 ### Summary
@@ -113,4 +113,4 @@ Return a concise summary (3-5 bullet points) plus the engram observation ID:
 ### Engram ID
 {observation_id or "unavailable"}
 ```
-Do NOT return an SDD Envelope when in adviser mode.
+Do NOT return an SDD Envelope when in advisor mode.

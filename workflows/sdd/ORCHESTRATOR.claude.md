@@ -30,7 +30,7 @@ For each phase, launch via the `Agent` tool:
 
 ```
 Agent(
-  description: '{phase} for {change-name}',  # required — 3-5 words, e.g. "explore for sdd-advisers-command"
+  description: '{phase} for {change-name}',  # required — 3-5 words, e.g. "explore for sdd-advisors-command"
   subagent_type: 'sdd-{phase}',             # sdd-explorer, sdd-planner, sdd-implementer, sdd-reviewer
   run_in_background: false,                 # true ONLY for parallel implement batches (see below)
   prompt: <dynamic context — see per-phase blocks>
@@ -70,27 +70,27 @@ mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-
 4. **Show** executive summary to user (verbatim from envelope). For parallel waves: per-batch status first, then aggregated wave status.
 
 5. **Guidance loop** (plan phase only): After `plan` returns `status: guidance_requested`:
-   a. Extract `requested_advisers[]` and `guidance_context` from envelope.
+   a. Extract `requested_advisors[]` and `guidance_context` from envelope.
    b. Increment `guidance_round` in state.yaml (for tracking only — no maximum).
-   c. Launch all advisers in parallel. **Launch all requested advisers in a single message with multiple Agent() calls, each with `run_in_background: true`** — running N background tasks sequentially does NOT run them in parallel.
+   c. Launch all advisors in parallel. **Launch all requested advisors in a single message with multiple Agent() calls, each with `run_in_background: true`** — running N background tasks sequentially does NOT run them in parallel.
       ```
       Agent(
-        description: '{adviser-skill} guidance for {change-name}',  # required
-        subagent_type: '{adviser-skill}',              # e.g. architect-adviser, api-first-adviser
+        description: '{advisor-skill} guidance for {change-name}',  # required
+        subagent_type: '{advisor-skill}',              # e.g. architect-advisor, api-first-advisor
         run_in_background: true,
         prompt: 'Review the plan at .sdd/{change}/plan.md from your specialist perspective.
-          Focus: {guidance_context_for_this_adviser}.
+          Focus: {guidance_context_for_this_advisor}.
           Provide Strengths / Issues Found / Recommendations format, return engram observation ID.
           Persist findings via mem_save.'
       )
       ```
-   d. Wait for all adviser background tasks to complete (Claude Code sends notifications). If an adviser reports engram unavailable: keep its returned inline summary text for step f.
-   e. Collect each adviser's engram observation ID (or inline summary if engram unavailable).
+   d. Wait for all advisor background tasks to complete (Claude Code sends notifications). If an advisor reports engram unavailable: keep its returned inline summary text for step f.
+   e. Collect each advisor's engram observation ID (or inline summary if engram unavailable).
    f. Re-launch `sdd-planner` with a GUIDANCE block. Show BOTH forms explicitly — planner fetches engram IDs via `mem_get_observation`, reads inline text as-is:
       ```
       GUIDANCE (Round N):
-      - architect-adviser: engram ID {id} — {one-line summary}    # engram available → planner calls mem_get_observation({id})
-      - api-first-adviser: [inline] {full adviser text}            # engram unavailable → planner reads inline text directly
+      - architect-advisor: engram ID {id} — {one-line summary}    # engram available → planner calls mem_get_observation({id})
+      - api-first-advisor: [inline] {full advisor text}            # engram unavailable → planner reads inline text directly
       ```
    g. Loop back to step 1 with the planner's new envelope.
    - After non-plan phases or `status: ok/warning/blocked/failed`: skip this step.

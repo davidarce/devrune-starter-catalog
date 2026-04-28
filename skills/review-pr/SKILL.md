@@ -26,7 +26,7 @@ This skill reads `config.json` from its own directory:
 ## Overview
 
 This skill orchestrates PR/MR code reviews in 3 steps:
-1. **Delegate** — a single sub-agent detects the platform, fetches the PR/MR, creates an isolated worktree, and analyzes using `sdd-review` with dynamic adviser discovery. Returns a structured JSON.
+1. **Delegate** — a single sub-agent detects the platform, fetches the PR/MR, creates an isolated worktree, and analyzes using `sdd-review` with dynamic advisor discovery. Returns a structured JSON.
 2. **Review with user** — present findings for user approval before publishing (human-in-the-loop)
 3. **Publish** — post only user-approved findings as inline comments on the detected platform
 
@@ -129,7 +129,7 @@ git -C /tmp/pr-review-<pr-number> checkout pr-review-<pr-number>
 
 Load the sdd-review skill via the Skill tool: Skill("sdd-review"). Follow its Standalone Mode instructions (no change_name).
 
-When the skill says to check for *-adviser skills, discover and invoke them via the Skill tool (advisers ARE slash commands).
+When the skill says to check for *-advisor skills, discover and invoke them via the Skill tool (advisors ARE slash commands).
 
 {if focus provided:}
 ## Review Focus (PRIORITY)
@@ -159,14 +159,14 @@ Return ONLY this JSON (no other text):
   "summary": "Brief assessment",
   "verdict": "APPROVE | COMMENT | REQUEST_CHANGES",
   "highlights": ["Positive 1", "Positive 2"],
-  "advisers_used": ["architect-adviser", "unit-test-adviser"],
+  "advisors_used": ["architect-advisor", "unit-test-advisor"],
   "findings": [
     {
       "path": "relative/path/to/file.java",
       "line": 63,
       "severity": "Critical | Major | Minor | Suggestion",
       "category": "Architecture | Code Quality | Testing | Bug Risk | Performance | Security | Business Logic",
-      "rule": "adviser or rule name",
+      "rule": "advisor or rule name",
       "body": "Description with suggestion"
     }
   ]
@@ -200,7 +200,7 @@ Present:
 1. **Platform**: GitHub / GitLab
 2. **Verdict**: APPROVE / COMMENT / REQUEST_CHANGES
 3. **Summary**: One-line assessment
-4. **Advisers used**: Which `*-adviser` skills contributed
+4. **Advisors used**: Which `*-advisor` skills contributed
 5. **Highlights**: What the PR/MR does well
 6. **Findings table**:
 
@@ -262,13 +262,13 @@ glab api projects/:id/merge_requests/<pr-number>/discussions \
 
 **Rules (both platforms):**
 - Comments and summary in the **user's language**
-- Review body includes: summary, advisers applied, highlights, verdict, footer `Generated with [Claude Code](https://claude.com/claude-code)`
+- Review body includes: summary, advisors applied, highlights, verdict, footer `Generated with [Claude Code](https://claude.com/claude-code)`
 - GitHub event MUST be `"COMMENT"`
 - Max `max_comments` findings (default: 20), prioritized by severity
 
 ### Step 5: Report to User
 
-Display: platform, advisers used, comments posted count, findings by severity, PR/MR link, verdict.
+Display: platform, advisors used, comments posted count, findings by severity, PR/MR link, verdict.
 
 ## Gotchas
 
@@ -290,7 +290,7 @@ See `gotchas.md` in this skill directory for the full list. Key points:
 | Error | Action |
 |-------|--------|
 | PR/MR not found | Tell user the number may be wrong or they lack access |
-| No adviser skills installed | Proceed with general review only |
+| No advisor skills installed | Proceed with general review only |
 | Diff too large (>5000 lines) | Warn and proceed — suggest batch review |
 | Sub-agent returns invalid JSON | Parse what you can; post valid findings, report errors |
 | GitHub API error posting review | Show error and dump review as text for manual posting |
@@ -302,6 +302,6 @@ See `gotchas.md` in this skill directory for the full list. Key points:
 
 ## References
 
-- `sdd-review` — core analysis engine (standalone mode) with dynamic adviser discovery
+- `sdd-review` — core analysis engine (standalone mode) with dynamic advisor discovery
 - `git-pull-request` — PR/MR creation (complementary: create → review)
 - `git-commit` — commit automation (complementary: review → commit)

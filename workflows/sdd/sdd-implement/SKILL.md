@@ -120,7 +120,7 @@ Go straight to `Edit` when the change is clear. Examples:
     - After each batch completes successfully, mark ALL its tasks as `[X]` in plan.md
 
 **Architecture Planning (optional)**
-If you need a high-level plan, check if an architect adviser skill is installed (e.g., `*-architect-adviser`) and use it as a subagent. File selection is essential before doing so:
+If you need a high-level plan, check if an architect advisor skill is installed (e.g., `*-architect-advisor`) and use it as a subagent. File selection is essential before doing so:
 
 ```text
 Plan: Outline the approach to migrate X → Y given the following files.
@@ -302,7 +302,7 @@ Related SDD workflow skills:
 - [sdd-review](../sdd-review/SKILL.md) — next phase: review changes against the plan
 
 Related specialist skills (for subagent invocation):
-- Any installed adviser skills matching `*-adviser` pattern -- discovered dynamically from the skills directory
+- Any installed advisor skills matching `*-advisor` pattern -- discovered dynamically from the skills directory
 
 Shared contracts:
 - [Persistence Contract](../_shared/persistence-contract.md) — shared persistence rules for SDD skills

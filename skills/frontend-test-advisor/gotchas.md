@@ -1,4 +1,4 @@
-# Gotchas — frontend-test-adviser
+# Gotchas — frontend-test-advisor
 
 Common mistakes Claude makes when writing or reviewing frontend tests. Check these before finalizing your output.
 

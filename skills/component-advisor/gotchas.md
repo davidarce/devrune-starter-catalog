@@ -1,4 +1,4 @@
-# Gotchas — component-adviser
+# Gotchas — component-advisor
 
 Common mistakes Claude makes when writing or reviewing React components. Check these before finalizing your output.
 

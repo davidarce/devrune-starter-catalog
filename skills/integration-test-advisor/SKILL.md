@@ -6,7 +6,7 @@ version: "1.0"
 tags: [testing, integration-tests, adapters, mocking, database]
 ---
 
-# Integration Test Adviser Skill
+# Integration Test Advisor Skill
 
 Guide the design of integration tests that verify how components collaborate across boundaries — specifically how adapters interact with databases, external HTTP services, and messaging systems.
 
@@ -52,25 +52,25 @@ When reviewing integration tests:
 - [ ] Tests don't depend on execution order (no shared mutable state between tests)
 - [ ] Assertions verify the actual stored/transmitted state, not just return values
 
-## Adviser Mode (SDD Orchestrator Integration)
+## Advisor Mode (SDD Orchestrator Integration)
 
-This skill supports **adviser mode**: when invoked by the SDD orchestrator with a `GUIDANCE CONTEXT FROM PLANNER` block in the prompt, use the following procedure instead of the standard interactive review flow.
+This skill supports **advisor mode**: when invoked by the SDD orchestrator with a `GUIDANCE CONTEXT FROM PLANNER` block in the prompt, use the following procedure instead of the standard interactive review flow.
 
 ### Entry Conditions
-Adviser mode is active when the prompt contains:
+Advisor mode is active when the prompt contains:
 - A `GUIDANCE CONTEXT FROM PLANNER:` block
 - A `CURRENT PLAN EXCERPT:` block
 
-### Adviser Mode Procedure
+### Advisor Mode Procedure
 1. Read the `GUIDANCE CONTEXT FROM PLANNER` block to understand what the planner needs reviewed.
 2. Read the `CURRENT PLAN EXCERPT` to see the specific tasks and design decisions.
-3. Apply your domain expertise to the plan content — do NOT read codebase files unless the plan references specific existing code that is relevant. In adviser mode, focus on adapter boundaries and test slicing as described in plan tasks.
+3. Apply your domain expertise to the plan content — do NOT read codebase files unless the plan references specific existing code that is relevant. In advisor mode, focus on adapter boundaries and test slicing as described in plan tasks.
 4. Produce structured advice in the format below.
 5. Save output to engram and return summary + observation ID.
 
 Focus ONLY on your specialist domain: @AdapterIT patterns, SimulationRepository, external service mocking.
 
-### Output Format (Adviser Mode)
+### Output Format (Advisor Mode)
 ```
 ### Strengths
 - [What looks sound in the plan from this skill's domain perspective]
@@ -84,11 +84,11 @@ Focus ONLY on your specialist domain: @AdapterIT patterns, SimulationRepository,
 - T001: [recommendation]
 ```
 
-### Persistence (Adviser Mode)
+### Persistence (Advisor Mode)
 Save full advice output to engram:
 ```
 mem_save(
-  title: "sdd/{change-name}/guidance/integration-test-adviser",
+  title: "sdd/{change-name}/guidance/integration-test-advisor",
   type: "architecture",
   project: "{project-name}",
   content: "{your full structured advice output}"
@@ -96,7 +96,7 @@ mem_save(
 ```
 If engram is unavailable, skip silently.
 
-### Return Format (Adviser Mode)
+### Return Format (Advisor Mode)
 Return a concise summary (3-5 bullet points) plus the engram observation ID:
 ```
 ### Summary
@@ -107,4 +107,4 @@ Return a concise summary (3-5 bullet points) plus the engram observation ID:
 ### Engram ID
 {observation_id or "unavailable"}
 ```
-Do NOT return an SDD Envelope when in adviser mode.
+Do NOT return an SDD Envelope when in advisor mode.

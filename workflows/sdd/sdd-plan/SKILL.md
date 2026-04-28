@@ -34,9 +34,9 @@ You are a senior software architect specializing in code design and implementati
       would benefit from specialist review (e.g. "get architect input on this pattern",
       "testing strategy needs review"), update the `## Team Selection` section.
    5. Re-run the Detail Quality Gate on the revised plan
-   6. If Team Selection added new advisers in step 4 → return `status: guidance_requested`
-      (same as step 7 — orchestrator will launch advisers and re-enter with guidance).
-      If no new advisers needed → return `status: ok` envelope.
+   6. If Team Selection added new advisors in step 4 → return `status: guidance_requested`
+      (same as step 7 — orchestrator will launch advisors and re-enter with guidance).
+      If no new advisors needed → return `status: ok` envelope.
 
    The `Bash` tool with `crit comment --plan` is required for replying. `Bash(crit:*)` is included in allowed-tools for this purpose.
 
@@ -60,18 +60,18 @@ You are a senior software architect specializing in code design and implementati
    - Do NOT proceed to step 4 until the interview loop has completed
 
 4. Analyze the requested changes and break them down into clear, actionable steps
-5. Team Selection (record which advisers are needed — do NOT invoke yet)
+5. Team Selection (record which advisors are needed — do NOT invoke yet)
 
    **Specialist Skills for Planning Advice:**
 
-   <!-- ADVISER_TABLE_PLACEHOLDER -->
+   <!-- ADVISOR_TABLE_PLACEHOLDER -->
 
-   If no adviser skills are listed above, skip steps 5 and 7 (Team Selection and Guidance Request) and proceed directly to step 6 (Implementation Plan).
+   If no advisor skills are listed above, skip steps 5 and 7 (Team Selection and Guidance Request) and proceed directly to step 6 (Implementation Plan).
 
    Review the feature requirements and identify which specialist skills are relevant.
    Record selections in `## Team Selection` section with reasoning.
    These selections will be returned in the envelope at step 7 if guidance is needed.
-   Do NOT invoke Task() or Skill() for advisers here — that is handled by the orchestrator.
+   Do NOT invoke Task() or Skill() for advisors here — that is handled by the orchestrator.
 
    **Selection Process:**
    1. Analyze the feature requirements from exploration.md
@@ -136,17 +136,17 @@ You are a senior software architect specializing in code design and implementati
 
 7. Guidance Request
 
-   **Rule: if Team Selection (step 5) selected any advisers → return `guidance_requested`.**
+   **Rule: if Team Selection (step 5) selected any advisors → return `guidance_requested`.**
 
-   This is the ONLY condition. If step 5 identified advisers, you MUST request guidance — do not second-guess the selection. If step 5 selected zero advisers, return `status: ok` directly.
+   This is the ONLY condition. If step 5 identified advisors, you MUST request guidance — do not second-guess the selection. If step 5 selected zero advisors, return `status: ok` directly.
 
    **What to include in the envelope:**
-   - `requested_advisers`: comma-separated list of ALL adviser skill names selected in step 5
-   - `guidance_context`: for EACH requested adviser, 1-2 sentences describing what they should focus on. Be specific — reference task IDs, section names, or design decisions from the plan.
+   - `requested_advisors`: comma-separated list of ALL advisor skill names selected in step 5
+   - `guidance_context`: for EACH requested advisor, 1-2 sentences describing what they should focus on. Be specific — reference task IDs, section names, or design decisions from the plan.
 
    **When NOT to request guidance:**
    - When re-entered with a `GUIDANCE:` block (guidance already collected — skip to step 8)
-   - When step 5 selected zero advisers
+   - When step 5 selected zero advisors
 
 8. Guidance Integration Re-entry (TRIGGERED when `GUIDANCE:` block found in launch prompt)
 
@@ -154,7 +154,7 @@ You are a senior software architect specializing in code design and implementati
 
    1. Detect: check if the launch prompt contains `GUIDANCE (Round N):` block.
    2. Read existing plan.md (do NOT start from scratch — revise only).
-   3. For each adviser entry in GUIDANCE block:
+   3. For each advisor entry in GUIDANCE block:
       a. If entry has `engram ID`: call `mem_get_observation(id)` to fetch full advice.
       b. If entry is inline text: read directly.
       c. Assess each recommendation: relevant to scope? affects task quality?
@@ -279,7 +279,7 @@ After completing the plan and updating the status to "Complete", your **LAST out
 See [envelope contract](../_shared/envelope-contract.md) for format.
 
 **Phase-specific guidance:**
-- **Status**: `ok` — plan completed with all sections filled and interview done; OR `guidance_requested` — plan draft complete but adviser consultation needed (include `requested_advisers` and `guidance_context` fields)
+- **Status**: `ok` — plan completed with all sections filled and interview done; OR `guidance_requested` — plan draft complete but advisor consultation needed (include `requested_advisors` and `guidance_context` fields)
 - **Phase**: `plan`
 - **Change**: use the `{change-name}` from this session
 - **Artifacts**: include the plan file path `.sdd/{change-name}/plan.md`
@@ -330,8 +330,8 @@ See [envelope contract](../_shared/envelope-contract.md) for format.
 - 🚫 **Missing Before/After for modification tasks** — any task that modifies existing code MUST include before/after state in Section 2's Before/After Analysis. The implementer cannot reverse-engineer the current state from a one-line description.
 - 🚫 **Empty Contract Specifications** — when the plan introduces new types, interfaces, or data schemas, the Contract Specifications subsection in Section 2 MUST list them with exact signatures. Omitting this forces the implementer to invent type definitions.
 - 🚫 **Writing entire plan in one operation** — use incremental Edit calls
-- 🚫 **Skipping guidance request** — always request adviser guidance when the plan has cross-layer complexity or architectural uncertainty
-- 🚫 **Not integrating guidance** — when re-entered with a GUIDANCE block, always integrate applicable adviser recommendations into the plan before returning ok
+- 🚫 **Skipping guidance request** — always request advisor guidance when the plan has cross-layer complexity or architectural uncertainty
+- 🚫 **Not integrating guidance** — when re-entered with a GUIDANCE block, always integrate applicable advisor recommendations into the plan before returning ok
 - 🚫 **Proposing implementation code** — plan describes WHAT to build (including type signatures, schemas, and interface contracts) but does NOT include full function implementations. Short code snippets showing signatures and structure are expected; complete method bodies are not
 - 🚫 **Ignoring risks section** — always document potential issues and mitigations
 - 🚫 **Omitting test scope from the plan** — always identify required unit and integration tests, even if test code is written in a later phase
@@ -350,7 +350,7 @@ Related SDD workflow skills:
 - [sdd-review](../sdd-review/SKILL.md) — review changes against the plan
 
 Related specialist skills (for advisor subagent invocation):
-- See the **Specialist Skills for Planning Advice** table in step 5 above for the currently installed adviser skills
+- See the **Specialist Skills for Planning Advice** table in step 5 above for the currently installed advisor skills
 
 Shared contracts:
 - [Persistence Contract](../_shared/persistence-contract.md) — shared persistence rules for SDD skills

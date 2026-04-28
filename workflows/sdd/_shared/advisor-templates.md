@@ -1,31 +1,31 @@
-# SDD Adviser Templates
+# SDD Advisor Templates
 
 These templates are used by the orchestrator when handling `guidance_requested` envelopes.
 See `launch-templates.md` for phase launch templates (explore, plan, implement, review).
 
-## Adviser Consultation Template
+## Advisor Consultation Template
 
 > **Multi-agent compatibility note**: This template is for Claude and Factory agents (Task() + run_in_background supported).
-> OpenCode: use the Sequential Adviser Template below (run_in_background: false, one at a time).
-> Copilot: use the Copilot Adviser Invocation section below (@agent-name pattern, no Task() tool).
+> OpenCode: use the Sequential Advisor Template below (run_in_background: false, one at a time).
+> Copilot: use the Copilot Advisor Invocation section below (@agent-name pattern, no Task() tool).
 > Codex: same template as Claude/Factory — Task() is supported; run_in_background: false (no background support).
 
-Use this template for each adviser when the orchestrator handles a `guidance_requested` envelope.
-Launch all requested advisers in parallel (run_in_background: true).
+Use this template for each advisor when the orchestrator handles a `guidance_requested` envelope.
+Launch all requested advisors in parallel (run_in_background: true).
 
 Task(
-  description: 'adviser consultation ({adviser-skill}) for {change-name}',
-  subagent_type: 'general-purpose',    // hardcoded — advisers are always general-purpose Task() calls
-  model: '{WORKFLOW_MODEL_ADVISER}',
+  description: 'advisor consultation ({advisor-skill}) for {change-name}',
+  subagent_type: 'general-purpose',    // hardcoded — advisors are always general-purpose Task() calls
+  model: '{WORKFLOW_MODEL_ADVISOR}',
   run_in_background: true,
-  prompt: 'You are a specialist adviser sub-agent. Load your skill:
+  prompt: 'You are a specialist advisor sub-agent. Load your skill:
 
-  Skill(skill: "{adviser-skill}", args: "{change-name}")
+  Skill(skill: "{advisor-skill}", args: "{change-name}")
 
   If the Skill tool fails, fall back to reading the SKILL.md file directly:
-  Read("{SKILLS_PATH}/skills/{adviser-skill}/SKILL.md")
+  Read("{SKILLS_PATH}/skills/{advisor-skill}/SKILL.md")
   (e.g. for Codex/Copilot where Skill() is unavailable — reading the file gives the same instructions)
-  If neither Skill() nor the file read succeeds, use your built-in domain knowledge for this adviser role.
+  If neither Skill() nor the file read succeeds, use your built-in domain knowledge for this advisor role.
 
   CONTEXT:
   - Change: {change-name}
@@ -56,7 +56,7 @@ Task(
   PERSISTENCE:
   Save your full advice output to engram:
   mem_save(
-    title: "sdd/{change-name}/guidance/{adviser-skill}",
+    title: "sdd/{change-name}/guidance/{advisor-skill}",
     type: "architecture",
     project: "{project-name}",
     content: "{your full structured advice output}"
@@ -74,36 +74,36 @@ Task(
   Do NOT produce an SDD Envelope.'
 )
 
-## Sequential Adviser Consultation Template (OpenCode / Codex)
+## Sequential Advisor Consultation Template (OpenCode / Codex)
 
 > Use this template instead of the parallel template above when `run_in_background` is NOT supported
-> (OpenCode, Codex). Launch advisers one at a time, foreground.
+> (OpenCode, Codex). Launch advisors one at a time, foreground.
 
 Task(
-  description: 'adviser consultation ({adviser-skill}) for {change-name}',
+  description: 'advisor consultation ({advisor-skill}) for {change-name}',
   subagent_type: 'general-purpose',
-  model: '{WORKFLOW_MODEL_ADVISER}',
+  model: '{WORKFLOW_MODEL_ADVISOR}',
   run_in_background: false,   // OpenCode/Codex: foreground only
   prompt: '...same prompt body as parallel template above...'
 )
 
-Run each adviser sequentially. Wait for each to return before launching the next.
+Run each advisor sequentially. Wait for each to return before launching the next.
 
-## Copilot Adviser Invocation
+## Copilot Advisor Invocation
 
 > Copilot has no Task() tool. Use natural language @agent-name invocations instead — exactly the same
 > mechanism the orchestrator uses to invoke `@sdd-planner` and `@sdd-explorer`.
 >
 > **Why @agent-name (not #runSubagent)**: `#runSubagent` is VS Code-specific and less portable.
 > Natural language `@agent-name` invocation is the standard Copilot subagent mechanism and matches
-> the existing SDD phase pattern. Each adviser is a `.agent.md` file in `.github/agents/`.
+> the existing SDD phase pattern. Each advisor is a `.agent.md` file in `.github/agents/`.
 >
-> Invoke advisers sequentially (no background execution in Copilot).
+> Invoke advisors sequentially (no background execution in Copilot).
 
-Invoke each requested adviser by naming it in your message:
+Invoke each requested advisor by naming it in your message:
 ```
-@{adviser-skill} You are a specialist adviser. Load your skill by reading:
-{SKILLS_PATH}/{adviser-skill}/SKILL.md
+@{advisor-skill} You are a specialist advisor. Load your skill by reading:
+{SKILLS_PATH}/{advisor-skill}/SKILL.md
 
 GUIDANCE CONTEXT FROM PLANNER:
 {guidance_context from envelope}
@@ -115,14 +115,14 @@ Focus on sections relevant to your domain; the guidance_context tells you WHERE 
 Provide advice in Strengths / Issues Found / Recommendations format.
 Save to engram if available. Return summary + engram ID.
 ```
-Example invocations: `@architect-adviser`, `@api-first-adviser`, `@unit-test-adviser`, etc.
+Example invocations: `@architect-advisor`, `@api-first-advisor`, `@unit-test-advisor`, etc.
 Each `.agent.md` configures the agent to read its own SKILL.md — no fallback to a generic agent needed.
 
 ---
 
 ## Plan Phase: Re-entry with Guidance Template
 
-When the orchestrator re-enters `sdd-plan` after collecting adviser guidance:
+When the orchestrator re-enters `sdd-plan` after collecting advisor guidance:
 
 Task(
   description: 'plan re-entry (guidance round {N}) for {change-name}',
@@ -142,16 +142,16 @@ Task(
   - Previous artifacts: exploration.md, plan.md (EXISTING — revise, do not recreate)
 
   GUIDANCE (Round {N}):
-  Adviser recommendations collected by orchestrator. For each entry below, fetch full content via
+  Advisor recommendations collected by orchestrator. For each entry below, fetch full content via
   mem_get_observation(id) if an ID is provided, or read the inline text directly if no ID.
 
-  {for each adviser:}
-  ### {adviser-skill} (engram ID: {observation_id or "inline"})
-  {if inline: paste adviser output directly}
+  {for each advisor:}
+  ### {advisor-skill} (engram ID: {observation_id or "inline"})
+  {if inline: paste advisor output directly}
   {if ID: "Fetch via mem_get_observation({observation_id})"}
 
   TASK:
-  Integrate the adviser recommendations into plan.md.
+  Integrate the advisor recommendations into plan.md.
   For each recommendation:
   1. Assess whether it applies (some may not fit scope)
   2. If it applies: update the relevant task, add/modify Detail Block, adjust Before/After, or add a new task

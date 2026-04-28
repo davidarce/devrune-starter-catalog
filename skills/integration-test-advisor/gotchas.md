@@ -1,4 +1,4 @@
-# Gotchas — integration-test-adviser
+# Gotchas — integration-test-advisor
 
 Common mistakes Claude makes when writing or reviewing integration tests. Check these before finalizing your output.
 
