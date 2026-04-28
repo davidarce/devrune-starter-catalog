@@ -1,4 +1,9 @@
 {
-  "default_base_branch": "develop",
-  "jira_project_prefix": ""
+  "default_base_branch": "main",
+  "jira_project_prefix": "",
+  "workspace": {
+    "mode": "auto",
+    "default_target": "",
+    "known_repos": []
+  }
 }

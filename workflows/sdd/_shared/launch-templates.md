@@ -1,3 +1,8 @@
+> **Scope**: This file is consumed by **Codex and Factory** variants only.
+> Other variants use their own launch-template files.
+
+---
+
 # SDD Launch Templates
 
 ## Generic Sub-Agent Template

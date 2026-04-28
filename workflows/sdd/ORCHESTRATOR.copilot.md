@@ -36,6 +36,10 @@
 
 ### Sub-Agent Invocation Patterns
 
+See `{WORKFLOW_DIR}/_shared/launch-templates.md` for the exact invocation
+prompts per phase, including the operational contract (envelope format, persistence,
+wave-scope discipline, quality gate directive, CRIT_FEEDBACK pattern).
+
 For each phase, invoke the corresponding agent:
 - **explore**: Invoke `@sdd-explorer` with: "Explore the codebase for {change-name}. Write exploration.md to .sdd/{change-name}/exploration.md. Return the SDD envelope."
 - **plan**: Invoke `@sdd-planner` with: "Create an implementation plan for {change-name}. Read .sdd/{change-name}/exploration.md first. Write plan.md. Return the SDD envelope."
@@ -113,7 +117,7 @@ Triggered automatically by Post-Phase Protocol step 6 when `which crit` succeeds
 2. **Read feedback**: Read `~/.crit/plans/{change}/.crit.json` using the Read tool. Note: plan mode stores `.crit.json` in `~/.crit/plans/{change}/`, NOT in the project root.
 3. **Parse**: Extract all comments where `resolved` is `false` or missing.
 4. **Branch**:
-   - **Has unresolved comments**: Format as CRIT_FEEDBACK markdown (see format below). Re-launch `@sdd-planner` with the plan re-entry prompt (include the CRIT_FEEDBACK block and ask it to revise plan.md). After sub-agent returns envelope, increment `plan_review_round` in `state.yaml` and loop back to step 1 (run crit again for next round — always foreground).
+   - **Has unresolved comments**: Format as CRIT_FEEDBACK markdown (see format below). Re-launch `@sdd-planner` with the plan re-entry prompt (include the CRIT_FEEDBACK block and ask it to revise plan.md). The full re-entry prompt template is in `{WORKFLOW_DIR}/_shared/launch-templates.md`. After sub-agent returns envelope, increment `plan_review_round` in `state.yaml` and loop back to step 1 (run crit again for next round — always foreground).
    - **No unresolved comments**: Plan approved. Show "Plan approved via Crit review." Proceed to Post-Phase step 7 (Ask the user: **Continue to implement** / **Review artifacts** / **Abort**).
 
 **CRIT_FEEDBACK format** (injected into sdd-plan re-entry prompt):
