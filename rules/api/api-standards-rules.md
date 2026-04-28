@@ -2,7 +2,7 @@
 name: api-standards
 scope: api
 applies-to:
-  - api-first-adviser
+  - api-first-advisor
 description: "REST API naming, validation, error models, versioning"
 paths:
   - "**/*.{yaml,yml}"

@@ -2,8 +2,8 @@
 name: frontend-testing
 scope: tech
 applies-to:
-  - frontend-test-adviser
-  - component-adviser
+  - frontend-test-advisor
+  - component-advisor
 description: 'Frontend testing standards: React Testing Library, Vitest/Jest, Cypress/Playwright e2e, test structure, mocking, coverage.'
 paths:
   - "**/*.test.{ts,tsx}"

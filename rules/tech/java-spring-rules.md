@@ -3,10 +3,10 @@ name: java-spring
 scope: tech
 technology: java
 applies-to:
-  - architect-adviser
-  - unit-test-adviser
-  - integration-test-adviser
-  - api-first-adviser
+  - architect-advisor
+  - unit-test-advisor
+  - integration-test-advisor
+  - api-first-advisor
 description: "Java Spring Boot conventions: module structure, DI, testing, API patterns"
 paths:
   - "**/*.java"

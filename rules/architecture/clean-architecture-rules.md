@@ -2,7 +2,7 @@
 name: clean-architecture
 scope: architecture
 applies-to:
-  - architect-adviser
+  - architect-advisor
 description: "Hexagonal architecture, DDD patterns, ports and adapters"
 paths:
   - "**/*.java"

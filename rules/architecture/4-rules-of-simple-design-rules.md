@@ -2,7 +2,7 @@
 name: 4-rules-of-simple-design
 scope: architecture
 applies-to:
-  - architect-adviser
+  - architect-advisor
 description: "Kent Beck's 4 Rules of Simple Design: test-first, clarity, DRY, minimality"
 paths:
   - "**/*.java"
@@ -116,4 +116,4 @@ When applying these rules during architecture reviews, follow this sequence:
 2. **Apply Rule 2** -- Read the code as a newcomer. Can you understand each module's purpose from its name and structure alone? Flag anything that requires "insider knowledge" to decode.
 3. **Apply Rule 3** -- Search for duplicated knowledge (not just duplicated lines). Check if the same business rule appears in multiple places or if similar abstractions could be unified without losing clarity (respect Rule 2 priority).
 4. **Apply Rule 4** -- Identify elements that do not serve Rules 1-3. Question unused abstractions, empty layers, and speculative patterns.
-5. **Report findings** using the architect-adviser output format: Issues sorted by severity, with each issue referencing the specific rule violated.
+5. **Report findings** using the architect-advisor output format: Issues sorted by severity, with each issue referencing the specific rule violated.
