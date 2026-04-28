@@ -22,7 +22,7 @@
 | plan | `sdd-plan` | `{WORKFLOW_MODEL_PLANNER}` | |
 | implement | `sdd-implement` | `{WORKFLOW_MODEL_IMPLEMENTER}` | |
 | review | `sdd-review` | `{WORKFLOW_MODEL_REVIEWER}` | |
-| adviser | `*-adviser` | `{WORKFLOW_MODEL_ADVISER}` ⭐ | N/A — Copilot uses natural language @agent-name invocation, not Task() |
+| advisor | `*-advisor` | `{WORKFLOW_MODEL_ADVISOR}` ⭐ | N/A — Copilot uses natural language @agent-name invocation, not Task() |
 
 ## Evaluation Gate
 
@@ -81,16 +81,16 @@ mcp__engram__mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{ch
 
 4. **Show** executive summary to user (verbatim from envelope). For parallel implement waves: show per-batch status first, then the aggregated wave status.
 5. **Guidance loop** (plan phase only): After `plan` phase returns `status: guidance_requested`:
-   a. Extract `requested_advisers[]` and `guidance_context` from envelope.
+   a. Extract `requested_advisors[]` and `guidance_context` from envelope.
    b. Increment `guidance_round` in state.yaml.
-   c. For each requested adviser: invoke `@{adviser-skill}` by name (e.g. `@architect-adviser`,
-      `@api-first-adviser`) with the prompt from the Copilot Adviser Invocation template in
-      `{WORKFLOW_DIR}/_shared/adviser-templates.md`. This is natural language @agent-name invocation — the same
-      mechanism used to invoke `@sdd-planner` and `@sdd-explorer`. Each adviser is a `.agent.md`
+   c. For each requested advisor: invoke `@{advisor-skill}` by name (e.g. `@architect-advisor`,
+      `@api-first-advisor`) with the prompt from the Copilot Advisor Invocation template in
+      `{WORKFLOW_DIR}/_shared/advisor-templates.md`. This is natural language @agent-name invocation — the same
+      mechanism used to invoke `@sdd-planner` and `@sdd-explorer`. Each advisor is a `.agent.md`
       file in `.github/agents/` and loads its SKILL.md directly (no Skill() tool required).
-   d. Run advisers sequentially (Copilot has no background execution).
-      Collect each summary + engram ID before invoking the next adviser.
-   e. Invoke `@sdd-planner` with the Plan Re-entry with Guidance format (see `{WORKFLOW_DIR}/_shared/adviser-templates.md`).
+   d. Run advisors sequentially (Copilot has no background execution).
+      Collect each summary + engram ID before invoking the next advisor.
+   e. Invoke `@sdd-planner` with the Plan Re-entry with Guidance format (see `{WORKFLOW_DIR}/_shared/advisor-templates.md`).
    f. After `@sdd-planner` returns: loop back to step 1.
    - After non-plan phases or after `status: ok/warning/blocked/failed`: skip this step.
 6. **Crit detection** (plan phase only): After `plan` phase with `status: ok`, run `which crit` (Bash).

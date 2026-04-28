@@ -31,9 +31,9 @@ components:
       model: opus
     - name: sdd-orchestrator
       kind: orchestrator
-    - name: sdd-adviser
+    - name: sdd-advisor
       kind: subagent
-      skill: "*-adviser"
+      skill: "*-advisor"
       model: opus
   decisionRules:
     - scenario: '"commit", "commit my changes", "create commit"'
@@ -41,17 +41,17 @@ components:
     - scenario: '"create PR", "pull request", "create pull request"'
       resolution: "Use `git-pull-request`"
     - scenario: '"Review my tests" + integration test files'
-      resolution: "Use `integration-test-adviser`"
+      resolution: "Use `integration-test-advisor`"
     - scenario: '"Review my tests" + domain unit test files'
-      resolution: "Use `unit-test-adviser`"
+      resolution: "Use `unit-test-advisor`"
     - scenario: '"Design an API" + mentions OpenAPI/REST'
-      resolution: "Use `api-first-adviser`"
+      resolution: "Use `api-first-advisor`"
     - scenario: '"Design a service" + mentions architecture/DDD'
-      resolution: "Use `architect-adviser`"
+      resolution: "Use `architect-advisor`"
     - scenario: '"Review my component" + React/TypeScript'
-      resolution: "Use `component-adviser`"
+      resolution: "Use `component-advisor`"
     - scenario: '"Review my tests" + frontend test files'
-      resolution: "Use `frontend-test-adviser`"
+      resolution: "Use `frontend-test-advisor`"
   invocationControls:
     - skills: "git-commit, git-pull-request"
       description: "When user requests commit/PR operations (see Decision Rules)"

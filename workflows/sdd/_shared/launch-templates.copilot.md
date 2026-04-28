@@ -103,13 +103,13 @@ ENVELOPE: Your LAST output MUST be the SDD Envelope as a markdown table per
 
 ---
 
-## Adviser Invocation
+## Advisor Invocation
 
-When consulting an adviser (architect, unit-test, integration-test, component, api-first, etc.),
-invoke `@{adviser-skill}` with this prompt:
+When consulting an advisor (architect, unit-test, integration-test, component, api-first, etc.),
+invoke `@{advisor-skill}` with this prompt:
 
 ```
-{adviser context — relevant code snippets, current design, specific question or concern}
+{advisor context — relevant code snippets, current design, specific question or concern}
 
 Return your response in this exact format:
 
@@ -126,11 +126,11 @@ Return your response in this exact format:
 {the ID returned by mem_save if you persisted advice to engram; omit this section if engram
 is unavailable}
 
-Do NOT return an SDD envelope — advisers return the structured advice format above, not an
+Do NOT return an SDD envelope — advisors return the structured advice format above, not an
 envelope. Persist advice via mem_save if engram is available.
 ```
 
-> **Copilot note**: Adviser agent files load their own SKILL.md — the orchestrator does not
+> **Copilot note**: Advisor agent files load their own SKILL.md — the orchestrator does not
 > inject the skill. The prompt above provides the question context and return-format contract.
 > Internal references within invocation prompts use `launch-templates.md` (installed name).
 

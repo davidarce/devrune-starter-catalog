@@ -1,6 +1,6 @@
 ---
 name: sdd-review
-description: 'Use when reviewing code changes before commit, comparing implementation against SDD plan, or doing standalone code review with adviser consultation.'
+description: 'Use when reviewing code changes before commit, comparing implementation against SDD plan, or doing standalone code review with advisor consultation.'
 argument-hint: "[change_name?]"
 disable-model-invocation: false
 allowed-tools: Bash(git:*), Bash(pwd), Bash(find:*), Read, Write, Glob, Grep, AskUserQuestion, Skill
@@ -138,13 +138,13 @@ Use the full content from Step 2 as the plan context for your review. If neither
 
 ### Step 3: Report Findings
 
-**Quick path**: If `git diff --stat` shows ≤50 lines changed across ≤3 files, skip adviser skill consultation and proceed directly to the review report. Document 'Adviser consultation skipped — small change (≤50 lines, ≤3 files)' in the report.
+**Quick path**: If `git diff --stat` shows ≤50 lines changed across ≤3 files, skip advisor skill consultation and proceed directly to the review report. Document 'Advisor consultation skipped — small change (≤50 lines, ≤3 files)' in the report.
 
 Format your review as:
 
 1. **Summary** — What the changes accomplish (1-2 sentences)
 2. **Plan Alignment** — (SDD mode only) Tasks completed vs pending
-3. **Critical Issues** — Must be addressed before commit. If a Critical Issue involves domain logic, architecture patterns, or test coverage gaps, check if relevant adviser skills are installed (e.g., skills matching `*-adviser` pattern) and invoke them via the Skill tool to get a detailed diagnosis before reporting.
+3. **Critical Issues** — Must be addressed before commit. If a Critical Issue involves domain logic, architecture patterns, or test coverage gaps, check if relevant advisor skills are installed (e.g., skills matching `*-advisor` pattern) and invoke them via the Skill tool to get a detailed diagnosis before reporting.
 4. **Minor Improvements** — Nice to have, not blocking
 5. **What's Done Well** — Acknowledge good practices
 6. **Actionable Next Steps** — Specific recommendations
@@ -224,7 +224,7 @@ Your **LAST output MUST be the SDD Envelope**. Nothing may follow the envelope.
 
 ## Gotchas
 
-- **Reporting Critical Issues without specialist diagnosis** — before finalizing any Critical Issue, check for available `*-adviser` skills and invoke the relevant one via the Skill tool. Reporting domain logic or test coverage gaps without adviser input produces vague, unactionable feedback.
+- **Reporting Critical Issues without specialist diagnosis** — before finalizing any Critical Issue, check for available `*-advisor` skills and invoke the relevant one via the Skill tool. Reporting domain logic or test coverage gaps without advisor input produces vague, unactionable feedback.
 - **Re-running git commands when Step 0 already resolved them** — Step 0 stashes git status, diff stat, full diff, and recent log via `git -C <target_path>`. Use those values directly; re-executing git commands wastes turns and may produce stale results if the working tree changes mid-review.
 - **Blocking on minor issues** — distinguish Critical (must fix before commit) from Minor (nice-to-have). Marking minor issues as blockers stalls workflow unnecessarily.
 - **Making code changes during review** — the review phase analyzes only; never modifies files. Any fixes belong in a follow-up implementation task.
@@ -236,7 +236,7 @@ Your **LAST output MUST be the SDD Envelope**. Nothing may follow the envelope.
 - 🚫 **Vague feedback** — provide specific, actionable recommendations
 - 🚫 **Blocking on minor issues** — distinguish critical from nice-to-have
 - 🚫 **Making code changes** — review only analyzes, never modifies
-- 🚫 **Reporting Critical Issues without specialist diagnosis** — if the issue touches domain logic or test patterns, check for available adviser skills (matching `*-adviser` pattern) and invoke the relevant one before finalising the report
+- 🚫 **Reporting Critical Issues without specialist diagnosis** — if the issue touches domain logic or test patterns, check for available advisor skills (matching `*-advisor` pattern) and invoke the relevant one before finalising the report
 - 🚫 **Invoking git:commit or other flow skills directly** — return the envelope; the orchestrator decides what runs next
 - 🚫 **Using legacy .spec references** — all context lives in `.sdd/{change-name}/`
 
@@ -248,7 +248,7 @@ Related SDD workflow skills:
 - [sdd-implement](../sdd-implement/SKILL.md) — implementation phase
 
 Related specialist skills (auto-invoked for Critical Issues):
-- Any installed adviser skills matching `*-adviser` pattern (e.g., `architect-adviser`, `unit-test-adviser`, etc.) -- discovered dynamically from the skills directory
+- Any installed advisor skills matching `*-advisor` pattern (e.g., `architect-advisor`, `unit-test-advisor`, etc.) -- discovered dynamically from the skills directory
 
 Shared contracts:
 - [envelope-contract](../_shared/envelope-contract.md) — standard SDD envelope format

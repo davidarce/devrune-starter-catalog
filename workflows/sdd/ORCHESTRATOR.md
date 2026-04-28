@@ -23,7 +23,7 @@
 | plan | `sdd-plan` | `{WORKFLOW_MODEL_PLANNER}` | |
 | implement | `sdd-implement` | `{WORKFLOW_MODEL_IMPLEMENTER}` | |
 | review | `sdd-review` | `{WORKFLOW_MODEL_REVIEWER}` | |
-| adviser | `*-adviser` | `{WORKFLOW_MODEL_ADVISER}` ⭐ | `general-purpose` (hardcoded) |
+| advisor | `*-advisor` | `{WORKFLOW_MODEL_ADVISOR}` ⭐ | `general-purpose` (hardcoded) |
 
 ## Evaluation Gate
 
@@ -74,19 +74,19 @@ mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-
 
 4. **Show** executive summary to user (verbatim from envelope). For parallel implement waves: show per-batch status first, then the aggregated wave status.
 5. **Guidance loop** (plan phase only): After `plan` phase returns `status: guidance_requested`:
-   a. Extract `requested_advisers[]` and `guidance_context` from envelope.
+   a. Extract `requested_advisors[]` and `guidance_context` from envelope.
    b. Increment `guidance_round` in state.yaml (for tracking only — no maximum).
-   c. Launch all advisers in parallel using the Adviser Consultation Template from `{WORKFLOW_DIR}/_shared/adviser-templates.md`. Use `run_in_background: true` for each.
-   d. Wait for all adviser background tasks to complete.
-   e. Collect the summary and engram observation ID returned by each adviser.
-      (Each adviser persists its own output to engram and returns the observation ID.)
-      If an adviser reports engram unavailable: keep its returned inline summary text for step f.
-   f. Re-launch sdd-plan using the Plan Re-entry with Guidance Template from `{WORKFLOW_DIR}/_shared/adviser-templates.md`.
-      - For each adviser: include its observation ID in the GUIDANCE block (planner fetches full content via mem_get_observation).
-      - If engram unavailable for an adviser: include its inline summary text in the GUIDANCE block instead.
+   c. Launch all advisors in parallel using the Advisor Consultation Template from `{WORKFLOW_DIR}/_shared/advisor-templates.md`. Use `run_in_background: true` for each.
+   d. Wait for all advisor background tasks to complete.
+   e. Collect the summary and engram observation ID returned by each advisor.
+      (Each advisor persists its own output to engram and returns the observation ID.)
+      If an advisor reports engram unavailable: keep its returned inline summary text for step f.
+   f. Re-launch sdd-plan using the Plan Re-entry with Guidance Template from `{WORKFLOW_DIR}/_shared/advisor-templates.md`.
+      - For each advisor: include its observation ID in the GUIDANCE block (planner fetches full content via mem_get_observation).
+      - If engram unavailable for an advisor: include its inline summary text in the GUIDANCE block instead.
    g. After sdd-plan re-entry returns envelope: loop back to step 1 (Post-Phase Protocol from start).
    - After non-plan phases or after `status: ok/warning/blocked/failed`: skip this step.
-   - The guidance loop runs as many times as sdd-plan requests guidance_requested. The user controls plan quality via crit review — if during a crit iteration the planner needs more adviser input, it can request guidance again.
+   - The guidance loop runs as many times as sdd-plan requests guidance_requested. The user controls plan quality via crit review — if during a crit iteration the planner needs more advisor input, it can request guidance again.
 6. **Crit detection** (plan phase only): After `plan` phase with `status: ok`, run `which crit` (Bash).
    - If crit is found: auto-launch Crit Plan Review Protocol (see dedicated section below). Skip step 7.
    - If crit is NOT found: proceed to step 7 (existing flow, no behavioral change).

@@ -1,4 +1,4 @@
-# Gotchas — unit-test-adviser
+# Gotchas — unit-test-advisor
 
 Common mistakes Claude makes when writing or reviewing unit tests. Check these before finalizing your output.
 

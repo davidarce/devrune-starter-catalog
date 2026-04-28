@@ -1,4 +1,4 @@
-# Gotchas — api-first-adviser
+# Gotchas — api-first-advisor
 
 Common mistakes Claude makes when designing or reviewing APIs. Check these before finalizing your output.
 

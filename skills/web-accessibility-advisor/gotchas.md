@@ -1,4 +1,4 @@
-# Gotchas — web-accessibility-adviser
+# Gotchas — web-accessibility-advisor
 
 Common mistakes Claude makes when implementing or reviewing web accessibility. Check these before finalizing your output.
 

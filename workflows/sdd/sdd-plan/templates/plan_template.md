@@ -63,9 +63,9 @@ This prevents the implementer from having to reverse-engineer the current state.
 ## Team Selection
 
 <!--
-Adviser skills identified during planning. These are NOT invoked by sdd-plan directly.
+Advisor skills identified during planning. These are NOT invoked by sdd-plan directly.
 If guidance is needed, sdd-plan returns a guidance_requested envelope listing these skills.
-The orchestrator then launches each adviser, collects guidance, and re-enters sdd-plan
+The orchestrator then launches each advisor, collects guidance, and re-enters sdd-plan
 with the recommendations. See SKILL.md steps 5, 7, and 8 for the full flow.
 -->
 
@@ -76,13 +76,13 @@ with the recommendations. See SKILL.md steps 5, 7, and 8 for the full flow.
 ## Advice Received
 
 <!--
-Adviser recommendations integrated into the plan. This section is populated during
-Guidance Integration re-entry (step 8) — after the orchestrator collects adviser
+Advisor recommendations integrated into the plan. This section is populated during
+Guidance Integration re-entry (step 8) — after the orchestrator collects advisor
 outputs and re-launches sdd-plan with a GUIDANCE block.
-For each adviser: document what was integrated and what was skipped (with rationale).
+For each advisor: document what was integrated and what was skipped (with rationale).
 -->
 
-_No advice received yet. Advisers will be consulted by the orchestrator if guidance is requested._
+_No advice received yet. Advisors will be consulted by the orchestrator if guidance is requested._
 
 ## 3. Implementation Tasks
 

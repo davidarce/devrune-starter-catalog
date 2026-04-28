@@ -20,7 +20,7 @@ Security policy blocks all compound `cd && git/gh` commands (even for `/tmp`). U
 
 ## Sub-agent must load sdd-review via Skill tool
 
-The sub-agent loads sdd-review using `Skill("sdd-review")` — not by reading the SKILL.md file manually. Advisers (`*-adviser`) are also loaded via the Skill tool.
+The sub-agent loads sdd-review using `Skill("sdd-review")` — not by reading the SKILL.md file manually. Advisors (`*-advisor`) are also loaded via the Skill tool.
 
 ## Keep orchestrator context clean
 

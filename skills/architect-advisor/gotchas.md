@@ -1,4 +1,4 @@
-# Gotchas — architect-adviser
+# Gotchas — architect-advisor
 
 Common mistakes Claude makes when reviewing or advising on architecture. Check these before finalizing your output.
 
