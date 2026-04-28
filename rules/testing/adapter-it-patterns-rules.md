@@ -2,7 +2,7 @@
 name: adapter-it-patterns
 scope: testing
 applies-to:
-  - integration-test-adviser
+  - integration-test-advisor
 description: "Adapter integration test patterns with WireMock for HTTP service simulation"
 paths:
   - "**/*IT.java"

@@ -2,7 +2,7 @@
 name: mother-pattern
 scope: testing
 applies-to:
-  - unit-test-adviser
+  - unit-test-advisor
 description: "Mother builder pattern, test data construction, BDDMockito"
 paths:
   - "**/*Mother.java"

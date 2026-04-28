@@ -2,7 +2,7 @@
 name: microfrontends
 scope: tech
 applies-to:
-  - component-adviser
+  - component-advisor
 description: 'Microfrontend architecture: host/shell mediator pattern, EventBus communication, no MFE versioning, zero breaking changes.'
 paths:
   - "**/*.{tsx,ts}"

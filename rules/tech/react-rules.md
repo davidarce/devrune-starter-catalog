@@ -2,8 +2,8 @@
 name: react
 scope: tech
 applies-to:
-  - component-adviser
-  - frontend-test-adviser
+  - component-advisor
+  - frontend-test-advisor
 description: 'React and TypeScript coding standards: component patterns, hooks, props, naming, file structure.'
 paths:
   - "**/*.{tsx,jsx}"

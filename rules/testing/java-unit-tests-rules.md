@@ -2,7 +2,7 @@
 name: java-unit-tests
 scope: testing
 applies-to:
-  - unit-test-adviser
+  - unit-test-advisor
 description: "Java Unit Test Standards"
 paths:
   - "**/*Test.java"
