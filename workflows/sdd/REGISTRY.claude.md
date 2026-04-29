@@ -1,7 +1,3 @@
-> **Agent note — OpenCode and Copilot**: Your SDD Orchestrator instructions are embedded natively (as your system prompt / agent file). Any step below that says "read `ORCHESTRATOR.md` directly" or "re-read `ORCHESTRATOR.md`" does **not** apply to you — skip those steps.
->
-> **Codex, Factory, and Claude agents**: All instructions below apply in full.
-
 Structured workflow: explore → plan → implement → review. Evaluate BEFORE coding.
 
 ## SDD — Evaluation Gate (HIGHEST PRIORITY — execute BEFORE any other action)
@@ -29,7 +25,7 @@ When a user describes work that involves code changes, you MUST evaluate BEFORE 
 ## SDD — How to Start (MANDATORY)
 
 When SDD is triggered:
-1. Load `Skill("sdd-orchestrator")` — if unavailable, read `{WORKFLOW_DIR}/ORCHESTRATOR.md` directly _(Codex/Factory/Claude only — OpenCode and Copilot: skip the fallback; Skill() is always available)_
+1. Load `Skill("sdd-orchestrator")` — if unavailable, read `{WORKFLOW_DIR}/ORCHESTRATOR.md` directly
 2. Create artifact directory: `mkdir -p .sdd/{change-name}` (use RELATIVE path, not absolute)
 3. Follow the Orchestrator instructions to launch sub-agents via the `Agent` tool
 
@@ -42,11 +38,9 @@ When SDD is triggered:
 3. After EVERY sub-agent, execute the Post-Phase Protocol from ORCHESTRATOR.md — NEVER skip it.
 4. Skills return envelopes; the orchestrator decides next steps. Auto-transitions: explore(ok)→plan, implement(ok)→review.
 
-Full orchestrator instructions: {WORKFLOW_DIR}/ORCHESTRATOR.md _(Codex/Factory/Claude only)_
+Full orchestrator instructions: {WORKFLOW_DIR}/ORCHESTRATOR.md
 
-### SDD -- Compaction Recovery (MANDATORY — Codex, Factory, and Claude only)
-
-> **OpenCode and Copilot agents**: Your orchestrator is embedded natively — compaction recovery is handled differently. Skip this section.
+### SDD -- Compaction Recovery (MANDATORY)
 
 After compaction, if memory has `sdd/*/active-workflow` observations starting with "ACTIVE":
 
@@ -57,3 +51,48 @@ After compaction, if memory has `sdd/*/active-workflow` observations starting wi
 5. Resume as delegate-only orchestrator via sub-agents, NEVER execute phase work inline.
 
 If no `active-workflow` marker is found, do nothing.
+
+## Memory Protocols
+
+### `mem_save` format
+
+When saving an observation, use this structure:
+
+- **title**: Verb + what — short, searchable (e.g. "Fixed N+1 query in UserList")
+- **type**: `bugfix` | `decision` | `architecture` | `discovery` | `pattern` | `config` | `preference`
+- **content**: What was done, Why, Where (files affected), Learned (gotchas)
+
+### Two-Step Recovery Enforcement (mandatory)
+
+`mem_search` returns **truncated 300-character previews** — never treat search results as complete content. Any engram read that requires full content MUST use the two-step pattern:
+
+1. **Step 1 — Search**: `mem_search(query: "...")` to locate the observation ID and verify it exists.
+2. **Step 2 — Retrieve**: `mem_get_observation(id: <id>)` to get the full, untruncated content.
+
+**Rules:**
+- NEVER use `mem_search` results as the final content — they are previews only.
+- ALWAYS follow up with `mem_get_observation` when you need to read, parse, or act on saved content.
+- If `mem_search` returns no results, there is nothing to retrieve — do not call `mem_get_observation`.
+
+### Engram Availability Guard
+
+Engram tools (`mem_save`, `mem_search`, `mem_context`, etc.) depend on an MCP server that may not be installed or configured. All engram operations MUST follow the availability guard pattern:
+
+**Detection**: At the start of a session or workflow, attempt a lightweight engram call (e.g., `mem_context`). If it succeeds, engram is available. If it fails or the tool is not recognized, engram is unavailable.
+
+**Guard rules:**
+- **If available**: Use engram normally — save, search, recover as documented above.
+- **If unavailable**: Skip ALL engram operations silently. Do not emit errors, warnings, or user-facing messages about engram absence.
+- **Never block workflow**: No task, phase, or operation should fail because engram is not available. Engram is always complementary, never required.
+- **Do not retry**: If an engram call fails, skip it and continue. Do not retry or enter a loop.
+
+**Pattern:**
+```
+1. Attempt engram operation (mem_save, mem_search, etc.)
+2. If tool is unavailable or call fails -> skip silently, continue workflow
+3. If tool succeeds -> use the result normally
+```
+
+### Session close protocol (mandatory)
+
+Before ending a session, call `mem_session_summary` with: Goal, Discoveries, Accomplished, Next Steps, Relevant Files.
