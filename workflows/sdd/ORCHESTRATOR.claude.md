@@ -105,10 +105,11 @@ mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-
 7. **Ask or auto-continue**:
    - explore `ok` → auto-launch plan (no ask)
    - explore `warning/blocked` → ask user
+   - plan `ok` (post-crit, approved — `crit_completed: true` in state.yaml) → auto-launch implement (no ask — Crit already captured human approval inline)
    - implement `ok` → auto-launch review (no ask)
    - All other cases → `AskUserQuestion`: **Continue to {next}** / **Review artifacts** / **Abort**
 
-   **Crit confirmation guard**: If `which crit` succeeds after plan `ok`: check `crit_completed` in state.yaml. If absent/false: MUST auto-launch Crit Plan Review (return to step 6). If true: ask user normally.
+   **Crit confirmation guard**: If `which crit` succeeds after plan `ok`: check `crit_completed` in state.yaml. If absent/false: MUST auto-launch Crit Plan Review (return to step 6). If true: auto-launch implement directly (no ask — see plan post-crit rule above). This guard mainly fires on compaction recovery, when step 7 is re-entered after Crit has already approved.
 
 ## Crit Plan Review Protocol
 
@@ -121,7 +122,7 @@ Triggered by Post-Phase step 6 when `which crit` succeeds after a plan phase.
 4. **Parse**: Extract comments where `resolved` is `false` or missing.
 5. **Branch**:
    - **Unresolved comments**: Format as CRIT_FEEDBACK markdown (see format below). Re-launch `sdd-planner` via `Agent(subagent_type: 'sdd-planner', ...)` with the CRIT_FEEDBACK block in the prompt. After envelope returns, increment `plan_review_round` and loop back to step 1.
-   - **No unresolved comments**: Plan approved. Show "Plan approved via Crit review." Proceed to Post-Phase step 7.
+   - **No unresolved comments**: Plan approved. Set `crit_completed: true` in `.sdd/{change}/state.yaml`. Show "Plan approved via Crit review. Auto-launching implement phase." Proceed to Post-Phase step 7.
 
 **CRIT_FEEDBACK format** (injected into sdd-planner re-entry prompt):
 
