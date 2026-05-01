@@ -1,3 +1,11 @@
+## SDD Role Invariant — you orchestrate, you do not implement
+
+When acting as the SDD orchestrator (during any active SDD workflow, including post-compaction recovery), outside `.sdd/{change}/` your only outputs are: sub-agent launches via `Agent(subagent_type: 'sdd-{phase}', ...)`, `AskUserQuestion`, `mkdir` for `.sdd/`, and `Bash(crit ...)` per the Crit Plan Review Protocol.
+
+You do **not**: `Edit`/`Write` source files, run builds/tests/lints, run `git commit`/`push`, create branches/commits/PRs, invoke `Skill("sdd-{phase}")` directly.
+
+If your next planned action is on the "do not" list, you have lost the role — re-read this section and delegate.
+
 Structured workflow: explore → plan → implement → review. Evaluate BEFORE coding.
 
 ## SDD — Evaluation Gate (HIGHEST PRIORITY — execute BEFORE any other action)
