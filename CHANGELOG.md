@@ -5,6 +5,16 @@ All notable changes to the DevRune Starter Catalog will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.19](https://github.com/davidarce/devrune-starter-catalog/compare/v0.2.18...v0.2.19) (2026-05-01)
+
+
+### Bug Fixes
+
+* **rules:** update applies_to from *-adviser to *-advisor ([db2d31b](https://github.com/davidarce/devrune-starter-catalog/commit/db2d31b8fb681fec4fffc4b34f7219212836223f))
+* **rules:** update applies_to from *-adviser to *-advisor ([e4dcf4b](https://github.com/davidarce/devrune-starter-catalog/commit/e4dcf4beecd93cbf83be92e288fc11c8cb083d80))
+* **sdd:** complete adviser→advisor rename in workflow + skills ([518b19c](https://github.com/davidarce/devrune-starter-catalog/commit/518b19cee7601ee936ea94a7e90c1dd0fdc4eef1))
+* **sdd:** complete adviser→advisor rename in workflow + skills ([6f86905](https://github.com/davidarce/devrune-starter-catalog/commit/6f869051aa0b7e44c24544e254d2494176be9298))
+
 ## [0.2.18] — 2026-04-27
 
 ### Added — Workspace-aware skills contract
