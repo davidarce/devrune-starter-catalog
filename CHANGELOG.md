@@ -5,6 +5,13 @@ All notable changes to the DevRune Starter Catalog will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0](https://github.com/davidarce/devrune-starter-catalog/compare/v0.2.21...v0.3.0) (2026-05-01)
+
+
+### Features
+
+* **sdd:** auto-launch implement after Crit plan approval ([#23](https://github.com/davidarce/devrune-starter-catalog/issues/23)) ([9c59a88](https://github.com/davidarce/devrune-starter-catalog/commit/9c59a88c90e9306d0954f464c1adc4ce5cfc3a5e)), closes [#22](https://github.com/davidarce/devrune-starter-catalog/issues/22)
+
 ## [0.2.18] — 2026-04-27
 
 ### Added — Workspace-aware skills contract
