@@ -5,6 +5,13 @@ All notable changes to the DevRune Starter Catalog will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1](https://github.com/davidarce/devrune-starter-catalog/compare/v0.3.0...v0.3.1) (2026-05-01)
+
+
+### Bug Fixes
+
+* **sdd:** anchor artifact paths to {project path} and cite SKILL.md via {SKILLS_PATH} ([#31](https://github.com/davidarce/devrune-starter-catalog/issues/31)) ([587580b](https://github.com/davidarce/devrune-starter-catalog/commit/587580bb340df01f96685f2d6194af40b138f2b4)), closes [#29](https://github.com/davidarce/devrune-starter-catalog/issues/29)
+
 ## [0.3.0](https://github.com/davidarce/devrune-starter-catalog/compare/v0.2.21...v0.3.0) (2026-05-01)
 
 
