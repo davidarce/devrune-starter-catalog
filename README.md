@@ -31,6 +31,7 @@ workflows:
 - [Using this catalog with DevRune](#-using-this-catalog-with-devrune)
 - [Catalog contract (build your own)](#-catalog-contract-build-your-own)
 - [Contributing](#-contributing)
+- [Releases](#-releases)
 - [License](#-license)
 
 ---
@@ -330,6 +331,23 @@ This catalog is **community-curated** — new advisor skills, new rule packs, ne
 - 🐛 Issues and discussions: [github.com/davidarce/devrune-starter-catalog/issues](https://github.com/davidarce/devrune-starter-catalog/issues)
 - 🍴 **Fork-friendly by design** — the MIT license and the flat layout are intentional. Use your own fork as your team's source of truth; DevRune doesn't care which catalog it points at.
 - ✅ Keep additions **content-only** (Markdown + YAML). Logic belongs in [DevRune](https://github.com/davidarce/DevRune).
+
+---
+
+## 🚀 Releases
+
+Releases are automated by [release-please](https://github.com/googleapis/release-please) and driven by [Conventional Commits](https://www.conventionalcommits.org/). You don't tag manually.
+
+**Flow**
+
+1. Land a PR on `main` with a Conventional Commit (`feat:` → minor, `fix:` → patch, `feat!:` / `BREAKING CHANGE:` → major after 1.0).
+2. release-please opens (or updates) a Release PR titled `chore: release X.Y.Z` with the version bump and a generated `CHANGELOG.md` diff.
+3. Merging that Release PR creates the `vX.Y.Z` tag and publishes the GitHub Release as **Latest** — that tag is what DevRune installs resolve.
+
+**Notes**
+
+- Pre-1.0 (`0.x.y`): `feat!:` bumps minor, not major. Major is reserved for the deliberate `1.0.0` graduation.
+- `chore:`, `docs:`, `test:`, `ci:`, `build:`, `style:` are excluded from the changelog. Use `feat:` / `fix:` / `refactor:` / `perf:` for changelog-worthy content updates (including catalog content curation).
 
 ---
 
