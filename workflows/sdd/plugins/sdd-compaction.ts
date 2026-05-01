@@ -23,6 +23,17 @@ export const SddCompaction: Plugin = async (_ctx) => {
         const nextStep = nextMatch?.[1] ?? "check state.yaml";
         output.context.push(`## SDD Workflow Recovery (CRITICAL)
 ACTIVE SDD workflow: ${c.name}
+
+## Role Invariant — you orchestrate, you do not implement
+
+Outside .sdd/{change}/, your only outputs are: sub-agent launches via Task(...), AskUserQuestion, mkdir for .sdd/, and Bash(crit ...) per the Crit Plan Review Protocol.
+
+You do NOT: Edit/Write source files, run builds/tests/lints, run git commit/push, create branches/commits/PRs, invoke Skill("sdd-{phase}") directly.
+
+If your next planned action is on the "do not" list, you have lost the role — re-read ORCHESTRATOR.opencode.md and delegate.
+
+## Recovery
+
 Current phase: ${currentPhase}
 NEXT: ${nextStep}
 
