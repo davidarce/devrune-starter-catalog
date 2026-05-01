@@ -29,19 +29,19 @@ Subagent type mapping per phase:
 Task(
   description: '{phase} for {change-name}',
   subagent_type: '{subagent type from table above}',
-  prompt: 'Your instructions are in {WORKFLOW_DIR}/sdd-{phase}/SKILL.md — read it first, then follow those instructions.
+  prompt: 'Your instructions are in {SKILLS_PATH}/sdd-{phase}/SKILL.md — read it first, then follow those instructions.
 
   CONTEXT:
   - Project: {project path}
   - Change: {change-name}
-  - Artifact directory: .sdd/{change-name}/ (already created)
-  - Previous artifacts: {list of .sdd/{change-name}/ files to read}
+  - Artifact directory: {project path}/.sdd/{change-name}/ (already created)
+  - Previous artifacts: {list of {project path}/.sdd/{change-name}/ files to read}
 
   TASK:
   {specific task description for this phase}
 
   PERSISTENCE: See {project path}/{WORKFLOW_DIR}/_shared/persistence-contract.md
-  - Primary: always write to .sdd/{change-name}/
+  - Primary: always write to {project path}/.sdd/{change-name}/
   - Engram: save summary if available, skip silently if not
   - Save significant discoveries/decisions/bugfixes to engram independently of phase artifacts
 
@@ -65,12 +65,12 @@ The implement phase is special: the orchestrator reads plan.md and launches one 
 Task(
   description: 'implement batch {batch-id} for {change-name}',
   subagent_type: '{WORKFLOW_SUBAGENT_IMPLEMENTER}',
-  prompt: 'Your instructions are in {WORKFLOW_DIR}/sdd-implement/SKILL.md — read it first, then follow those instructions.
+  prompt: 'Your instructions are in {SKILLS_PATH}/sdd-implement/SKILL.md — read it first, then follow those instructions.
 
   CONTEXT:
   - Project: {project path}
   - Change: {change-name}
-  - Artifact directory: .sdd/{change-name}/
+  - Artifact directory: {project path}/.sdd/{change-name}/
   - Previous artifacts: exploration.md, plan.md
 
   TASK:
@@ -96,7 +96,7 @@ Task(
   or launch additional Task() calls for other batches. The orchestrator owns progression.
 
   PERSISTENCE: See {project path}/{WORKFLOW_DIR}/_shared/persistence-contract.md
-  - Primary: always write to .sdd/{change-name}/
+  - Primary: always write to {project path}/.sdd/{change-name}/
   - Engram: save summary if available, skip silently if not
 
   QUALITY GATE: After the LAST task of each batch, run the Phase Checkpoint criteria
@@ -133,12 +133,12 @@ When the orchestrator re-enters `sdd-plan` after a Crit review round:
 Task(
   description: 'plan re-entry (crit round {N}) for {change-name}',
   subagent_type: '{WORKFLOW_SUBAGENT_PLANNER}',
-  prompt: 'Your instructions are in {WORKFLOW_DIR}/sdd-plan/SKILL.md — read it first, then follow those instructions.
+  prompt: 'Your instructions are in {SKILLS_PATH}/sdd-plan/SKILL.md — read it first, then follow those instructions.
 
   CONTEXT:
   - Project: {project path}
   - Change: {change-name}
-  - Artifact directory: .sdd/{change-name}/
+  - Artifact directory: {project path}/.sdd/{change-name}/
   - Previous artifacts: exploration.md, plan.md (EXISTING — revise, do not recreate)
 
   CRIT_FEEDBACK (Round {N}):
@@ -152,7 +152,7 @@ Task(
   Re-run the Detail Quality Gate.
 
   PERSISTENCE: See {project path}/{WORKFLOW_DIR}/_shared/persistence-contract.md
-  - Primary: always write to .sdd/{change-name}/
+  - Primary: always write to {project path}/.sdd/{change-name}/
   - Engram: save summary if available, skip silently if not
 
   ENVELOPE: Your LAST output MUST be the SDD Envelope as a markdown table per

@@ -26,14 +26,14 @@ Invoke `@sdd-{phase}` with this prompt:
 CONTEXT:
 - Project: {project path}
 - Change: {change-name}
-- Artifact directory: .sdd/{change-name}/ (already created)
-- Previous artifacts: {list of .sdd/{change-name}/ files to read}
+- Artifact directory: {project path}/.sdd/{change-name}/ (already created)
+- Previous artifacts: {list of {project path}/.sdd/{change-name}/ files to read}
 
 TASK:
 {specific task description for this phase}
 
 PERSISTENCE: See {project path}/.github/instructions/sdd-orchestrator/_shared/persistence-contract.md
-- Primary: always write to .sdd/{change-name}/
+- Primary: always write to {project path}/.sdd/{change-name}/
 - Engram: save summary if available, skip silently if not
 - Save significant discoveries/decisions/bugfixes to engram independently of phase artifacts
 
@@ -59,7 +59,7 @@ Invoke `@sdd-implementer` with this prompt:
 CONTEXT:
 - Project: {project path}
 - Change: {change-name}
-- Artifact directory: .sdd/{change-name}/
+- Artifact directory: {project path}/.sdd/{change-name}/
 - Previous artifacts: exploration.md, plan.md
 
 TASK:
@@ -89,7 +89,7 @@ are the primary communication channel. Mark completed tasks as [X] in plan.md IM
 after each task.
 
 PERSISTENCE: See {project path}/.github/instructions/sdd-orchestrator/_shared/persistence-contract.md
-- Primary: always write to .sdd/{change-name}/
+- Primary: always write to {project path}/.sdd/{change-name}/
 - Engram: save summary if available, skip silently if not
 
 ENVELOPE: Your LAST output MUST be the SDD Envelope as a markdown table per
@@ -146,7 +146,7 @@ Invoke `@sdd-planner` with this prompt:
 CONTEXT:
 - Project: {project path}
 - Change: {change-name}
-- Artifact directory: .sdd/{change-name}/
+- Artifact directory: {project path}/.sdd/{change-name}/
 - Previous artifacts: exploration.md, plan.md (EXISTING — revise, do not recreate)
 
 CRIT_FEEDBACK (Round {N}):
@@ -161,7 +161,7 @@ Re-run the Detail Quality Gate.
 Return the SDD Envelope.
 
 PERSISTENCE: See {project path}/.github/instructions/sdd-orchestrator/_shared/persistence-contract.md
-- Primary: always write to .sdd/{change-name}/
+- Primary: always write to {project path}/.sdd/{change-name}/
 - Engram: save summary if available, skip silently if not
 - Save significant discoveries/decisions/bugfixes to engram independently of phase artifacts
 

@@ -31,7 +31,7 @@ When a user describes work that involves code changes, you MUST evaluate BEFORE 
 When SDD is triggered:
 1. Load `Skill("sdd-orchestrator")` — if unavailable, read `{WORKFLOW_DIR}/ORCHESTRATOR.md` directly _(Codex/Factory only — OpenCode and Copilot: skip the fallback; Skill() is always available)_
 2. Read `{WORKFLOW_DIR}/_shared/launch-templates.md` — copy-paste templates for `Task()` calls
-3. Create artifact directory: `mkdir -p .sdd/{change-name}` (use RELATIVE path, not absolute)
+3. Create artifact directory at the orchestrator's invocation directory: `mkdir -p {project path}/.sdd/{change-name}` — substitute `{project path}` with the absolute path captured from `pwd` at orchestrator start, and use that absolute path for every artifact reference passed to sub-agents.
 4. Follow the Orchestrator instructions to launch sub-agents via `Task()` tool
 
 **Do NOT** call sub-agent skills (`Skill("sdd-explore")`, `Skill("sdd-plan")`, etc.) directly — those are loaded BY the sub-agents INSIDE a `Task()`. The orchestrator launches `Task()`, the sub-agent loads the Skill.
