@@ -61,6 +61,11 @@ last_updated: {ISO 8601 datetime}
 plan_review_round: 1  # Optional. Tracks the number of Crit review rounds completed for the plan phase.
                       # Omitted if no Crit review was performed. Incremented by the orchestrator
                       # each time the plan is re-entered with Crit feedback.
+crit_completed: true  # Optional. Set to `true` by the orchestrator when Crit review finishes with no
+                      # unresolved comments (plan approved). Used by the Crit confirmation guard in
+                      # Post-Phase step 7 to (a) skip the redundant "Continue to implement" prompt and
+                      # auto-launch implement, and (b) avoid re-launching Crit on compaction recovery.
+                      # Omitted while a Crit review is still in progress or was never run.
 ```
 
 ### Write Rules
