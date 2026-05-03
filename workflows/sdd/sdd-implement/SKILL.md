@@ -6,311 +6,126 @@ disable-model-invocation: false
 allowed-tools: Bash, Bash(tree:*), Read, Glob, Grep, Write, Edit, Task, mcp__atlassian__jira_get_issue
 ---
 
-<meta prompt 1 = "System: Senior Developer Agent">
-You are an **autonomous agent**. Make confident decisions, work in small, certain steps, and choose the most efficient path for each task.
+Execute the implementation plan in small, certain steps. Make confident decisions and use tools without asking permission.
 
-**Provenance & State**
-Two critical files contain the context for implementation:
-- `.sdd/{change-name}/exploration.md` — curated context, selected files, and handoff prompt from discovery phase
-- `.sdd/{change-name}/plan.md` — detailed implementation plan with tasks, architecture decisions, and clarifications
+Two files contain the context for implementation:
 
-**Your Operating Philosophy**
-- **Autonomy:** Decide and act without asking permission—you know the tools, use them.
-- **Precision:** Prefer small, certain steps over large, uncertain ones.
+- `.sdd/{change-name}/exploration.md` — curated context, selected files, handoff prompt from the discovery phase.
+- `.sdd/{change-name}/plan.md` — detailed implementation plan with tasks, architecture decisions, and clarifications.
 
-**First Steps (MANDATORY)**
+## First Steps (MANDATORY)
 
-1. **Read the exploration file** from `.sdd/{change-name}/exploration.md` to understand:
-    - Selected files and their relationships
-    - Handoff prompt with task requirements
-    - Architecture context
-
-2. **Be prepared**: In some cases, the plan may not exist since the feature is too simple.
-
-3. **Read the implementation plan (if exists)** from `.sdd/{change-name}/plan.md` to understand:
-    - Detailed implementation tasks
-    - Files to modify
-    - Clarifications and decisions made during planning
-
-4. **Pre-flight Detail Check (WARNING — non-blocking)**
-
-   After reading plan.md, quickly scan the Implementation Tasks section:
-    - Do non-trivial tasks have `**Details for TXXX**:` blocks?
-    - Does Section 2 have populated Contract Specifications (if new types exist)?
-    - Are Before/After states documented for modification tasks?
-
-   If detail is sparse, note this in your implementation log but DO NOT block execution.
-   Work with whatever detail is available and make reasonable design decisions.
-   Plans created before the detail quality improvements may lack these sections.
-
-**Engram Recovery Fallback**: If `exploration.md` or `plan.md` is not found, and engram tools are available, use the **mandatory two-step recovery** pattern (`mem_search` returns truncated ~300-char previews — you MUST follow with `mem_get_observation` to get full content):
-
-1. For exploration:
-    - Step 1: `mem_search(query: "sdd/{change-name}/explore", project: "{project}")` — returns observation ID + truncated preview
-    - Step 2 (REQUIRED): `mem_get_observation(id: {observation-id from step 1})` — returns complete, untruncated content
-2. For plan:
-    - Step 1: `mem_search(query: "sdd/{change-name}/plan", project: "{project}")` — returns observation ID + truncated preview
-    - Step 2 (REQUIRED): `mem_get_observation(id: {observation-id from step 1})` — returns complete, untruncated content
-
-**NEVER** use `mem_search` results directly as artifact content. The preview is always truncated and incomplete.
-
-Use recovered content as context. If neither file nor engram has the required artifact, return envelope with `status: blocked`.
+1. **Read** `.sdd/{change-name}/exploration.md` for selected files, relationships, and architecture context.
+2. The plan file may not exist when the feature is too simple. **Read** `.sdd/{change-name}/plan.md` if present for detailed tasks, file targets, and clarifications.
+3. **Pre-flight detail check (non-blocking)**: scan plan.md's Implementation Tasks section. If non-trivial tasks lack `**Details for TXXX**:` blocks, Section 2 is missing Contract Specifications when new types exist, or Before/After is absent for modification tasks — note it in your implementation log but do not block. Plans created before the detail-quality improvements may lack these sections; work with whatever detail is available and make reasonable design decisions.
+4. **Engram fallback**: if `exploration.md` or `plan.md` is missing, recover via the two-step pattern in `_shared/persistence-contract.md`. If neither file nor engram has the artifact, return envelope with `status: blocked`.
 
 ## Batch Execution (wave-scoped)
 
-Your launch prompt from the orchestrator specifies the batches you own. Honor that scope.
+The orchestrator's launch prompt specifies which batches you own. Honor that scope.
 
 ### Wave-scoped mode (default when launched by orchestrator)
 
 The prompt contains one of:
-  - `Batches: A, B` (parallel batches in this wave — you own ALL listed batches)
-  - `Batch: C` (single sequential batch)
-  - `Previously completed batches: X, Y` (do not re-execute these)
+- `Batches: A, B` — parallel batches in this wave; you own ALL listed
+- `Batch: C` — single sequential batch
+- `Previously completed batches: X, Y` — do not re-execute these
 
 Rules:
+
 1. Implement tasks in the listed batch(es) in the order given by the Batch Assignment Table.
 2. Execute tasks within each batch sequentially (same file).
-3. Between batches in the same wave (if prompt lists multiple): sequential is safe.
-4. NEVER infer additional batches or launch Task()/Agent() to implement them.
-5. Quality gate: after the LAST task of each batch, run the Phase Checkpoint from plan.md.
-6. Mark [X] as each task completes.
-7. Return envelope with status reflecting this wave only.
+3. Between batches in the same wave, sequential is safe.
+4. NEVER infer additional batches or launch `Task()`/`Agent()` to implement them — the orchestrator owns wave progression.
+5. Mark `[X]` in `plan.md` IMMEDIATELY as each task completes (not in bulk at the end).
+6. After the LAST task of each batch, run the Phase Checkpoint from `plan.md` for that batch's phase. If any Checkpoint bullet fails: STOP, return envelope with `status: failed`.
+7. Return envelope with status reflecting THIS wave only.
 
 ### Standalone fallback mode (no batch directive in prompt)
 
-If the prompt has no "Batch:" / "Batches:" directive:
-1. Read the full Batch Assignment Table from plan.md.
-2. Execute all batches sequentially (ignore Parallel=Yes — no Task() self-orchestration).
-3. Run Phase Checkpoints after each batch.
-4. Mark [X] as each task completes.
-5. Return envelope when all batches done.
+If the prompt has no `Batch:` / `Batches:` directive:
+
+1. Read the full Batch Assignment Table from `plan.md`.
+2. Execute all batches sequentially (ignore `Parallel=Yes` — no `Task()` self-orchestration here).
+3. Run Phase Checkpoints after each batch, marking `[X]` per task.
+4. Return envelope when all batches done.
 
 This fallback preserves backward compatibility for direct skill invocations (e.g. `/sdd-implement {change}`).
 
-**Explore & Understand (as needed)**
+## Implementation Notes
 
-- **Map structure fast:** use `tree` bash command (adapts depth to size, shows all roots when no `path` is given).
-
-  ```bash
-  tree --gitignore -L 6
-  ```
-
-  Drill down into a directory by adding `path` (optionally bound the depth):
-
-  ```bash
-  tree --gitignore -L 3 path/to/subdirectory
-  ```
-
-* **Surface symbols/usages/paths:** `Read`, `Glob`, `Grep`
-* **Summarize APIs:** `Grep`, `Read` on key paths
-
-**Slices doctrine (when selection must stay lean)**
-- MUST read the relevant sections with `Grep` before slicing
-- Use Read with offset and limit parameters to extract relevant sections. Always include surrounding context (imports, class declaration) so the slice is self-contained.
-- Prefer 80–150+ line self-contained slices over micro-fragments
-- If you omit critical context, the task will fail
-
-**Implement Changes**
-
-Go straight to `Edit` when the change is clear. Examples:
-
-- Edit Root/File.java to replace all occurrences of "OldService" with "NewService".
-- Write Root/newFile.java with the provided implementation details.
-- **Tracking progress (NOT OPTIONAL)**: Always mark plan tasks as done when implemented and validated -> [X]
-    - After each batch completes successfully, mark ALL its tasks as `[X]` in plan.md
-
-**Architecture Planning (optional)**
-If you need a high-level plan, check if an architect advisor skill is installed (e.g., `*-architect-advisor`) and use it as a subagent. File selection is essential before doing so:
-
-```text
-Plan: Outline the approach to migrate X → Y given the following files.
-- Root/src/feature
-- Root/src/shared/types
-```
-
-**Multi-Root Hygiene (efficient)**
-
-* The context session may already list roots—scan the provenance banner and partial tree first; no extra call needed.
-* To (re)surface all roots, call `tree --gitignore -L 6` **without** a `path`, e.g.
-  ```bash
-  tree --gitignore -L 6
-  ```
-* Drill down by adding `path:"<RootName>/subdir"` to focus on a specific area.
-
-**Operational Notes**
-
-* File selection and scope are defined in plan.md — stay within that scope. Do not explore or modify files outside the planned boundaries.
-* Verify results with targeted `Read` slices and follow-up `Grep` checks when helpful.
-
----
-
-## Large File Creation Strategy (MANDATORY)
-
-When creating NEW files that will exceed ~150 lines:
-
-1. **Write** the file with scaffolding + first logical section only (~100-150 lines max)
-2. **Edit** to append each remaining section incrementally
-3. **Never** send >200 lines in a single Write call — large payloads cause permission hook timeouts
-
-When a Write or Edit call **FAILS** (timeout, rejected, permission error):
-
-1. **Do NOT retry the same call** — retrying identical failing calls wastes turns
-2. **Split the content in half** and try smaller chunks
-3. If still failing after 2 split retries, return envelope with `status=failed` and include the blocked file path in risks
-
-This prevents permission hook timeouts on large content and avoids wasting turns in retry loops.
-
----
+- **Surface symbols/usages/paths** with `Read`, `Glob`, `Grep`. Map structure with `tree --gitignore -L 6` (drill with `path/to/subdirectory` and depth `-L 3` as needed).
+- **Stay within plan scope.** File selection is defined in `plan.md`. Do not explore or modify files outside the planned boundaries.
+- **Slices**, when needed: read with `Grep`/`Read` first, prefer 80–150+ line self-contained sections, always include surrounding context (imports, class declaration). Omitting critical context fails the task.
+- **Architecture planning** (optional): if a design decision needs specialist input, invoke an `*-advisor` skill as a sub-agent with the relevant file selection. Do not invoke other SDD phase skills.
 
 ## Quality Gate (per-batch, driven by plan Phase Checkpoints)
 
-After the LAST task of each batch completes, run the Phase Checkpoint for that batch's phase.
+After the LAST task of each batch:
 
-1. Locate the `**Checkpoint**:` block in plan.md that covers the batch's phase.
-2. Each bullet under the Checkpoint is a verifiable assertion — translate to a shell command
-   where possible:
-   - "Project builds without errors" → detect build runner, run it
-   - "All N integration test scenarios pass" → run the test runner
-   - "Linting passes" → run the linter
-3. If a Checkpoint bullet does not translate to a command (e.g. "documentation updated"),
-   verify by re-reading the relevant file.
-4. If ANY Checkpoint bullet fails: STOP, return envelope with `status: failed`.
-5. If the plan defines no Checkpoint for this batch's phase, default to runner-detected
-   `build` + `test` commands.
+1. Locate the `**Checkpoint**:` block in `plan.md` for the batch's phase.
+2. Each bullet is a verifiable assertion — translate to a shell command where possible:
+   - "Project builds without errors" → detect the build runner, run it.
+   - "All N integration test scenarios pass" → run the test runner.
+   - "Linting passes" → run the linter.
+3. If a bullet doesn't translate to a command (e.g. "documentation updated"), verify by re-reading the relevant file.
+4. If ANY bullet fails: STOP, return envelope with `status: failed`.
+5. If `plan.md` defines no Checkpoint for this batch's phase, default to runner-detected `build` + `test`.
 
-**The quality gate is per-batch, not per-task.** Per-task test runs are wasteful and the
-old rule is REMOVED.
+The gate is **per-batch, not per-task**.
 
----
+## Large File Creation (mandatory)
 
-## Engram Persistence (Optional — Complementary to .sdd/ Files)
+When creating NEW files that will exceed ~150 lines:
 
-After all tasks are complete and post-implementation verification passes, persist a progress summary to engram if available.
+1. `Write` the file with scaffolding + first logical section only (~100–150 lines max).
+2. `Edit` to append each remaining section incrementally.
+3. Never send >200 lines in a single `Write` — large payloads cause permission hook timeouts.
 
-**Availability guard**: Check whether engram tools (`mem_save`) exist as callable tools. If they do NOT exist, skip this entire section silently — do NOT error, do NOT warn the user.
+When a `Write` or `Edit` call **fails** (timeout, rejected, permission error):
 
-If engram tools ARE available:
+1. Do NOT retry the same call — retrying identical failing calls wastes turns.
+2. Split the content in half and try smaller chunks.
+3. If still failing after 2 split retries, return envelope with `status: failed` and include the blocked file path in `risks`.
 
-```
-mem_save(
-  title: "sdd/{change-name}/implement-progress",
-  topic_key: "sdd/{change-name}/implement-progress",
-  type: "architecture",
-  project: "{project-name from context}",
-  content: "# Implementation Progress: {change-name}\n\n## Completed Tasks\n{list all [X] tasks from plan.md}\n\n## Status\n{ok/failed + brief explanation}\n\n## Files Modified\n{list of files changed}"
-)
-```
+## Persistence
 
-If engram tools are NOT available, skip this step silently. Never let engram unavailability block the workflow.
+Save the implement-progress artifact and any general-knowledge discoveries (bug fixes, gotchas, conventions) per `_shared/persistence-contract.md` (Phase Artifact Save Convention + General Knowledge Persistence Mandate). For this phase, `title`/`topic_key` is `sdd/{change}/implement-progress`.
 
-Note the observation ID returned by `mem_save` — include it as `engram_ref` in your envelope if available.
+## Return Envelope
 
----
+Return the SDD Envelope as your **last** output (format: `_shared/envelope-contract.md`). Nothing may follow it.
 
-## General Knowledge Persistence (Optional — When Engram Available)
+| Field            | Value                                                                                          |
+|------------------|------------------------------------------------------------------------------------------------|
+| Status           | `ok` (all wave tasks pass + Phase Checkpoint succeeds) · `failed` (any task or Checkpoint fails) |
+| Phase            | `implement`                                                                                    |
+| Change           | `{change-name}`                                                                                |
+| Artifacts        | `.sdd/{change-name}/plan.md` (with `[X]` markers showing this wave's completed tasks)          |
+| Next Recommended | `/sdd-review {change-name}`                                                                    |
+| Risks            | Flaky tests, deprecation notices, partial coverage; or "None"                                  |
+| Engram Ref       | Observation ID from the persistence step, or omit if engram unavailable                        |
 
-Beyond the SDD phase artifact above, if you discovered important knowledge during implementation that would benefit future sessions, save it to engram:
+Do NOT invoke commit/review/any other SDD skill — return the envelope; the orchestrator decides next steps.
 
-- Bug fixes and their root causes
-- Code patterns established or conventions discovered
-- Build/test gotchas or workarounds
-- Architecture constraints discovered during implementation
+## Self-Check (before returning the envelope)
 
-For each:
-```
-mem_save(
-  title: "{short searchable description}",
-  type: "{bugfix|decision|discovery|pattern}",
-  project: "{project-name}",
-  content: "**What**: {description}\n**Why**: {reasoning}\n**Where**: {files affected}\n**Learned**: {gotchas or edge cases}"
-)
-```
-
-If engram tools are NOT available, skip silently.
-
----
-
-## Return Envelope (MANDATORY)
-
-See [envelope contract](../_shared/envelope-contract.md) for format.
-
-Your LAST output MUST be the SDD Envelope. Nothing may follow it.
-
-**Rules:**
-1. The envelope is your FINAL output. Nothing after it.
-2. Do NOT invoke any other SDD skill (via Skill tool or by reading another SKILL.md). Return the envelope; the orchestrator decides next steps.
-
-**Phase-specific guidance for implement:**
-
-| Field | Value |
-|-------|-------|
-| **Status** | `ok` when ALL tasks pass quality gate and post-implementation verification succeeds. `failed` if ANY task fails its quality gate or build breaks. |
-| **Phase** | `implement` |
-| **Change** | `{change-name}` |
-
-- **Artifacts**: Include `plan.md` with `[X]` markers showing completed tasks (path: `.sdd/{change-name}/plan.md`)
-- **Engram Ref**: If you persisted to engram in the previous step, include the observation ID as `engram_ref` in the envelope table. Omit if engram was not used.
-- **Next Recommended**: `/sdd-review {change-name}`
-- **Risks**: Include any warnings encountered during implementation (flaky tests, deprecation notices, partial coverage). Use "None" if clean.
-
----
-
-## Success Criteria
-
-✅ **Both context files read** — exploration.md AND plan.md
-✅ **All plan tasks completed** — every task from the plan is implemented
-✅ **Batch execution followed** — Batch Assignment Table used to determine parallelism and ordering
-✅ **Quality gate passed per batch** — Phase Checkpoint from plan.md verified after each batch's last task
-✅ **Code compiles/builds** — no syntax errors or build failures
-✅ **Tests pass** — if tests exist, they should pass
-✅ **No regressions** — existing functionality still works
-✅ **Envelope returned with correct fields** — status, phase, change, artifacts, next_recommended, risks
-
-## Gotchas
-
-- **Writing large files (>150 lines) in a single Write call** — split into Write (scaffolding, ~100-150 lines) then Edit to append remaining sections. Never send >200 lines in one Write; large payloads cause permission hook timeouts that waste turns.
-- **Retrying identical failed tool calls** — if Write/Edit fails, split the content in half rather than retrying the same call. Retrying an identical call that already failed will fail again for the same reason.
-- **Skipping the quality gate** — run tests or build after EVERY task, not just at the end. A failed quality gate means stop immediately; continuing after failure compounds broken state across multiple tasks.
-- **Executing parallel batches sequentially** — when the Batch Assignment Table shows `Parallel=Yes`, launch ALL ready parallel batches as simultaneous Task calls in a single message. Sequential execution of parallel batches wastes time.
-- **Ignoring the Batch Assignment Table** — never define or infer parallelism from task text. The table is the single source of truth for execution order and parallelism.
-- **Forgetting to mark [X]**: Sub-agents frequently skip marking tasks as [X] in plan.md after completing them. This breaks traceability and forces manual cleanup. After EVERY successfully completed task, immediately Edit plan.md to change [ ] to [X] for that task. Do this per-task, not at the end.
-
-## Anti-patterns to Avoid
-
-- 🚫 **Skipping exploration.md** — this contains critical context from discovery
-- 🚫 **Skipping plan.md** — this contains the detailed implementation tasks
-- 🚫 **Large, uncertain changes** — prefer small, verified steps
-- 🚫 **Not verifying changes** — always run build/lint/tests after implementation
-- 🚫 **Implementing without reading plan tasks** — follow the plan systematically
-- 🚫 **Skipping tracking progress** — always mark plan tasks as done when implemented and validated
-- 🚫 **Leaving broken code** — fix any issues before marking as complete
-- 🚫 **Executing parallel batches sequentially** — use Task tool to launch parallel batches simultaneously
-- 🚫 **Ignoring Batch Assignment Table** — always read and follow the table from plan.md
-- 🚫 **Continuing after batch failure** — fail-fast: stop immediately if any task in any batch fails
-- 🚫 **Skipping tests when test runner exists** — if a test runner is detected, tests MUST run after each task
-- 🚫 **Continuing after test failure** — a failed quality gate means STOP, do not proceed to next task
-- 🚫 **Writing large files in a single call** — split files >150 lines into Write (scaffolding) + Edit (append sections); never send >200 lines in one Write call
-- 🚫 **Retrying identical failed tool calls** — if Write/Edit fails, split content into smaller chunks instead of retrying the same payload
-- 🚫 **Completing tasks without marking [X] in plan.md** — this is the #1 traceability failure. Mark EACH task as [X] immediately after it passes quality gate, not in bulk at the end. The orchestrator and future sessions rely on [X] markers to know what was done.
-- 🚫 **Invoking commit or review skills directly** — return the envelope; the orchestrator handles next steps
+- Both `exploration.md` and `plan.md` were read.
+- Tasks were implemented strictly within the wave/batch scope from the launch prompt; no additional batches were launched or inferred.
+- Each completed task has `[X]` in `plan.md` (uppercase X — lowercase `[x]` is treated as incomplete by the parser).
+- The Phase Checkpoint for this batch's phase was run (not a generic suite); a failed Checkpoint produced `status: failed` and stopped further work.
+- For NEW files >150 lines: scaffolding via `Write` first, sections appended via `Edit`. No `Write` payload exceeded ~200 lines.
+- Failed `Write`/`Edit` calls were split in half, not retried identically.
+- Did not edit files outside `plan.md`'s scope.
 
 ## References
 
-Related SDD workflow skills:
-- [sdd-explore](../sdd-explore/SKILL.md) — previous phase: discovery and file curation
-- [sdd-plan](../sdd-plan/SKILL.md) — previous phase: implementation planning
-- [sdd-review](../sdd-review/SKILL.md) — next phase: review changes against the plan
+Related SDD workflow skills: [sdd-explore](../sdd-explore/SKILL.md), [sdd-plan](../sdd-plan/SKILL.md), [sdd-review](../sdd-review/SKILL.md). Specialist skills: any installed `*-advisor`. Shared contracts: [persistence-contract](../_shared/persistence-contract.md), [envelope-contract](../_shared/envelope-contract.md).
 
-Related specialist skills (for subagent invocation):
-- Any installed advisor skills matching `*-advisor` pattern -- discovered dynamically from the skills directory
-
-Shared contracts:
-- [Persistence Contract](../_shared/persistence-contract.md) — shared persistence rules for SDD skills
-</meta prompt 1>
 <user_instructions>
 
 - $ARGUMENTS
 
 - change_name: $1
 - instructions: $2
-  </user_instructions>
+</user_instructions>

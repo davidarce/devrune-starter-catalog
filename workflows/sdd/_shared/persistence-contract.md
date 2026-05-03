@@ -209,6 +209,31 @@ to engram before returning:
 Do NOT return without saving what you learned.
 ```
 
+## Phase Artifact Save Convention
+
+When a phase completes, save a structured summary to engram (subject to the Engram Availability Guard). Per-phase parameters:
+
+| Phase | `title` / `topic_key`                  | Content summary                                                       |
+|-------|-----------------------------------------|------------------------------------------------------------------------|
+| explore   | `sdd/{change}/explore`              | Objective, Architecture, Selected Files (paths + one-liner), Relationships, Ambiguities |
+| plan      | `sdd/{change}/plan`                 | Full plan.md content (small enough to fit; otherwise summarize sections) |
+| implement | `sdd/{change}/implement-progress`   | Completed tasks (the `[X]` list), final status (ok/failed), files modified |
+| review    | `sdd/{change}/review-report`        | Summary, Plan Alignment, Critical Issues, Minor Improvements, final status |
+
+Common arguments:
+
+```
+mem_save(
+  title: "<from table>",
+  topic_key: "<same as title>",
+  type: "architecture",
+  project: "{project}",
+  content: "<phase-specific summary>"
+)
+```
+
+Note the returned observation ID and include it as `engram_ref` in the SDD envelope. If engram is unavailable, skip silently — do not error.
+
 ## General Knowledge Persistence Mandate
 
 Sub-agents MUST save significant discoveries to engram before returning, independent of the phase artifact save. This applies to:
