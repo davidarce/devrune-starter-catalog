@@ -1,17 +1,15 @@
 # SDD Launch Templates
 
-<!-- SYNC WITH: launch-templates.copilot.md, launch-templates.opencode.md
-     When editing invocation syntax, contract sections (WAVE-SCOPE, QUALITY GATE,
-     PERSISTENCE, ENVELOPE), or template structure in this file, apply equivalent
-     changes to the other two variant files listed above. Each file targets a
-     different invocation mechanism (Agent() / @agent-name / Task()) but carries
-     the same operational contract. -->
+<!-- SYNC WITH: launch-templates.copilot.md, launch-templates.opencode.md, launch-templates.md
+     When editing invocation syntax or template structure, apply equivalent changes to the
+     other variant files. The operational contract (persistence, envelope, wave-scope, quality
+     gate) lives in each phase's SKILL.md and in _shared/{persistence,envelope}-contract.md —
+     not in launch prompts. Launch prompts carry dynamic context only. -->
+
+Launch prompts carry **dynamic context only** — project path, change name, artifact list, batch directive. The full operational contract for each phase (persistence, envelope format, wave-scope discipline, quality gate, large-file rules) lives in `sdd-{phase}/SKILL.md` and the shared contracts (`_shared/persistence-contract.md`, `_shared/envelope-contract.md`). Sub-agents auto-load their assigned skill via the `skills:` frontmatter in the agent file (e.g. `sdd-planner.md` has `skills: [sdd-plan]`); no skill-load directive is needed in the prompt.
 
 ## Generic Sub-Agent Template
 
-All SDD phases use this template. Replace `{phase}` with explore/plan/implement/review.
-
-Subagent type mapping per phase:
 | Phase | Subagent Type |
 |-------|---------------|
 | explore | `sdd-explorer` |
@@ -31,29 +29,15 @@ Agent(
   - Previous artifacts: {list of {project path}/.sdd/{change-name}/ files to read}
 
   TASK:
-  {specific task description}
-
-  PERSISTENCE: See {project path}/.claude/skills/sdd-orchestrator/_shared/persistence-contract.md
-  - Primary: always write to {project path}/.sdd/{change-name}/
-  - Engram: save summary if available, skip silently if not
-  - Save significant discoveries/decisions/bugfixes to engram independently of phase artifacts
-
-  ENVELOPE: Your LAST output MUST be the SDD Envelope as a markdown table per
-  `_shared/envelope-contract.md`. Nothing may follow the envelope.'
+  {specific task description}'
 )
 ```
-
-> **Claude note**: Sub-agents auto-load their assigned skill via the `skills:` frontmatter in their
-> agent file (e.g. `sdd-planner.md` has `skills: [sdd-plan]`). The prompt above carries ONLY the
-> dynamic context — no Skill-load directive is needed or should be added.
 
 ---
 
 ## Implement Phase: Sequential Batch Template (foreground)
 
-The implement phase is special: the orchestrator reads plan.md and launches one sub-agent per batch
-or wave. Use this template for `Parallel=No` batches or when a batch has dependencies on other
-batches in the same wave.
+For `Parallel=No` batches, or batches that depend on other batches in the same wave.
 
 ```
 Agent(
@@ -67,29 +51,10 @@ Agent(
   - Previous artifacts: exploration.md, plan.md
 
   TASK:
-  Implement ONLY the following batches from this wave:
+  Implement ONLY these batches from this wave:
   {paste batch table rows for this wave only}
 
-  Previously completed batches: {list of completed batch IDs}
-
-  WAVE-SCOPE DISCIPLINE:
-  - Implement ONLY the listed batches above.
-  - Do NOT infer additional batches from the Batch Assignment Table.
-  - Do NOT launch Agent()/Task() calls to implement other batches — orchestrator manages progression.
-  - Mark ONLY listed batch tasks as [X] in plan.md IMMEDIATELY after each task.
-  - Return envelope with status reflecting THIS wave only.
-
-  QUALITY GATE (per-batch):
-  After the LAST task of each batch: read the Phase Checkpoint block from plan.md that covers
-  this batch phase. Run each checkpoint bullet as a verifiable command (build/test/lint).
-  If any checkpoint fails: STOP, return envelope with status: failed.
-
-  PERSISTENCE: See {project path}/.claude/skills/sdd-orchestrator/_shared/persistence-contract.md
-  - Primary: always write to {project path}/.sdd/{change-name}/
-  - Engram: save summary if available, skip silently if not
-
-  ENVELOPE: Your LAST output MUST be the SDD Envelope as a markdown table per
-  `_shared/envelope-contract.md`. Nothing may follow the envelope.'
+  Previously completed batches: {list of completed batch IDs}'
 )
 ```
 
@@ -97,52 +62,26 @@ Agent(
 
 ## Implement Phase: Parallel Batch Template (background)
 
-Use this template for `Parallel=Yes` batches with no cross-dependencies within the wave. Launch all
-such batches simultaneously using multiple Agent() calls in a single message.
-
-The orchestrator waits for all background agents to complete via notification before running the
-Post-Phase Protocol.
+For `Parallel=Yes` batches with no cross-dependencies. Launch all such batches simultaneously via multiple `Agent()` calls in a single message.
 
 ```
 Agent(
   description: 'implement batch {batch-id} for {change-name}',
   subagent_type: 'sdd-implementer',
   run_in_background: true,
-  prompt: 'CONTEXT:
+  prompt: 'BACKGROUND MODE: you cannot interact with the user (no AskUserQuestion). Write all output to {project path}/.sdd/{change-name}/ files — they are the primary communication channel.
+
+  CONTEXT:
   - Project: {project path}
   - Change: {change-name}
   - Artifact directory: {project path}/.sdd/{change-name}/
   - Previous artifacts: exploration.md, plan.md
 
   TASK:
-  Implement ONLY the following batch from this wave:
+  Implement ONLY this batch from the wave:
   {paste batch table rows for this batch only}
 
-  Previously completed batches: {list of completed batch IDs}
-
-  WAVE-SCOPE DISCIPLINE:
-  - Implement ONLY the listed batch above.
-  - Do NOT infer additional batches from the Batch Assignment Table.
-  - Do NOT launch Agent()/Task() calls to implement other batches — orchestrator manages progression.
-  - Mark ONLY listed batch tasks as [X] in plan.md IMMEDIATELY after each task.
-  - Return envelope with status reflecting THIS batch only.
-
-  QUALITY GATE (per-batch):
-  After the LAST task of each batch: read the Phase Checkpoint block from plan.md that covers
-  this batch phase. Run each checkpoint bullet as a verifiable command (build/test/lint).
-  If any checkpoint fails: STOP, return envelope with status: failed.
-
-  BACKGROUND MODE: You are running as a background sub-agent. You cannot interact with the user
-  (no AskUserQuestion). Write ALL output to .sdd/{change-name}/ files — these artifact files are
-  the primary communication channel. Mark completed tasks as [X] in plan.md IMMEDIATELY after
-  each task.
-
-  PERSISTENCE: See {project path}/.claude/skills/sdd-orchestrator/_shared/persistence-contract.md
-  - Primary: always write to {project path}/.sdd/{change-name}/
-  - Engram: save summary if available, skip silently if not
-
-  ENVELOPE: Your LAST output MUST be the SDD Envelope as a markdown table per
-  `_shared/envelope-contract.md`. Nothing may follow the envelope.'
+  Previously completed batches: {list of completed batch IDs}'
 )
 ```
 
@@ -150,38 +89,21 @@ Agent(
 
 ## Background Execution Guide
 
-### When to Use Background Mode
+`run_in_background: true` is allowed ONLY for `Parallel=Yes` implement batches. Every other phase and batch type must use foreground.
 
-Only use `run_in_background: true` for `Parallel=Yes` implement batches with no cross-dependencies
-within the same wave. All other phases and batch types must use foreground (`run_in_background: false`).
+| Phase | Default Mode | Background Allowed? |
+|-------|--------------|---------------------|
+| explore | foreground | No (orchestrator needs envelope for auto-transition) |
+| plan | foreground | No (Deep Interview is interactive) |
+| implement (sequential) | foreground | No (dependent or `Parallel=No`) |
+| implement (parallel) | background | Yes (`Parallel=Yes`, no cross-deps) |
+| review | foreground | No (single pass; needs envelope for fix-cycle decision) |
 
-### Default Mode Per Phase
-
-| Phase | Default Mode | Background Allowed? | Rationale |
-|-------|-------------|---------------------|-----------|
-| explore | foreground | No | Interactive: orchestrator needs envelope immediately for auto-transition to plan. Short duration. |
-| plan | foreground | No | Interactive: Deep Interview requires user Q&A. Orchestrator needs plan.md for Crit review protocol. |
-| implement (sequential batch) | foreground | No | Batch has dependencies or is Parallel=No; must complete before next batch starts. |
-| implement (parallel batch) | background | Yes | Parallel=Yes batches with no cross-dependencies benefit from concurrent execution. |
-| review | foreground | No | Single pass, needs envelope for Post-Review Fix Cycle decisions. Short duration. |
-
-### Output Capture
-
-Background Agent() returns when complete; the orchestrator reads the envelope from the Agent()
-return value (same as foreground). Sub-agents also write all artifacts to `.sdd/{change}/` files
-(plan.md markers, state files) as the primary persistence channel.
-
-### Limitation
-
-Background sub-agents cannot interact with the user (no AskUserQuestion). Only implement phase
-sub-agents using the Parallel Batch Template are safe for background execution since they do not
-require user interaction during implementation.
+Background `Agent()` returns when complete; the orchestrator reads the envelope from the return value (same as foreground). Sub-agents also write all artifacts to `.sdd/{change}/` files as the primary persistence channel.
 
 ---
 
 ## Plan Phase: Re-entry with Crit Feedback Template
-
-When the orchestrator re-enters `sdd-plan` after a Crit review round:
 
 ```
 Agent(
@@ -195,27 +117,11 @@ Agent(
   - Previous artifacts: exploration.md, plan.md (EXISTING — revise, do not recreate)
 
   CRIT_FEEDBACK (Round {N}):
-  {formatted markdown list of unresolved comments from .crit.json}
-
-  TASK:
-  Address each comment in the CRIT_FEEDBACK block by revising plan.md.
-  Reply to each addressed comment using:
-    crit comment --plan {change-name} --reply-to {id} --author "Claude Code" "<what you did>"
-  Skip the Deep Interview and Advice Phase (already completed).
-  Re-run the Detail Quality Gate.
-
-  PERSISTENCE: See {project path}/.claude/skills/sdd-orchestrator/_shared/persistence-contract.md
-  - Primary: always write to {project path}/.sdd/{change-name}/
-  - Engram: save summary if available, skip silently if not
-  - Save significant discoveries/decisions/bugfixes to engram independently of phase artifacts
-
-  ENVELOPE: Your LAST output MUST be the SDD Envelope as a markdown table per
-  `_shared/envelope-contract.md`. Nothing may follow the envelope.'
+  {formatted markdown list of unresolved comments from .crit.json}'
 )
 ```
 
-The orchestrator populates `{formatted markdown list}` using the CRIT_FEEDBACK format defined in
-the Crit Plan Review Protocol section of ORCHESTRATOR.md.
+The orchestrator populates `{formatted markdown list}` using the CRIT_FEEDBACK format defined in the Crit Plan Review Protocol section of ORCHESTRATOR.md.
 
 ## Initial Workflow Marker
 
@@ -231,4 +137,3 @@ mem_save(
 ```
 
 This enables compaction recovery (see `_shared/recovery.md`).
-
