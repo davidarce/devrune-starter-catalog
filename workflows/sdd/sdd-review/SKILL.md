@@ -164,7 +164,7 @@ Do **not** invoke any other SDD skill or `git commit` directly — return the en
 
 ## References
 
-Related SDD workflow skills: [sdd-explore](../sdd-explore/SKILL.md), [sdd-plan](../sdd-plan/SKILL.md), [sdd-implement](../sdd-implement/SKILL.md). Specialist skills: any installed `*-advisor`. Shared contracts: [envelope-contract](../_shared/envelope-contract.md), [persistence-contract](../_shared/persistence-contract.md).
+Specialist skills: any installed `*-advisor`. Shared contracts: [envelope-contract](../_shared/envelope-contract.md), [persistence-contract](../_shared/persistence-contract.md).
 
 <user_instructions>
 

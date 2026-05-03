@@ -48,7 +48,7 @@ Token budget for the final selection: target **50–80k tokens** across files + 
 5. **Build selection iteratively**
    - Add ALL task-relevant files as full files or directories.
    - Update `### Selected Code Structure` and `### Selected Files Tree` after each batch via `Edit`.
-   - **Mode priority**: full files > slices > codemaps. Prefer full files when they fit; use slices for large files; use codemaps for architectural awareness only when budget-constrained. The next model cannot ask for more — when in doubt, include the full file. See [References: file slicing](#references-file-slicing) at the bottom for slice quality rules.
+   - **Mode priority**: full files > slices > codemaps. Prefer full files when they fit; use slices for large files; use codemaps for architectural awareness only when budget-constrained. The next model cannot ask for more — when in doubt, include the full file. See [references/file_slicing.md](references/file_slicing.md) for slice quality rules.
 
 6. **Craft the handoff prompt** (MANDATORY)
 
@@ -103,20 +103,9 @@ Do **not** invoke `sdd-plan` (or any other SDD skill) yourself — return the en
 - Jira ticket fetched (Step 2) when a ticket ID was provided.
 - Did not invoke any other SDD skill, did not edit code outside `.sdd/{change-name}/`.
 
-## References: file slicing
-
-Use slices only when budget-constrained; otherwise prefer full files. Each slice MUST include:
-
-- A descriptive `description` explaining what it contains, why it's relevant, and how it relates to other code (e.g. *"UserAuth.login() and logout() — session management called by LoginView, creates Token objects"*).
-- Imports / type declarations / helper methods needed for the slice to read self-sufficiently.
-- Natural boundaries (class/function blocks, not arbitrary lines).
-- ≥100–200 lines per slice when possible — micro-fragments lose context.
-
-Exclude unrelated functionality, deprecated code, and test fixtures not needed for understanding. Preview each slice before adding it.
-
 ## References
 
-Related SDD workflow skills: [sdd-plan](../sdd-plan/SKILL.md), [sdd-implement](../sdd-implement/SKILL.md), [sdd-review](../sdd-review/SKILL.md). Shared contracts: [persistence-contract](../_shared/persistence-contract.md), [envelope-contract](../_shared/envelope-contract.md).
+Shared contracts: [persistence-contract](../_shared/persistence-contract.md), [envelope-contract](../_shared/envelope-contract.md). Phase-specific reference material: [file_slicing.md](references/file_slicing.md).
 
 <user_instructions>
 

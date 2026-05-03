@@ -189,7 +189,7 @@ Do NOT invoke `sdd-implement` or any other SDD skill — return the envelope; th
 
 ## References
 
-Related SDD workflow skills: [sdd-explore](../sdd-explore/SKILL.md), [sdd-implement](../sdd-implement/SKILL.md), [sdd-review](../sdd-review/SKILL.md). Specialist skills for planning advice: see the table in step 5 above. Shared contracts: [persistence-contract](../_shared/persistence-contract.md), [envelope-contract](../_shared/envelope-contract.md). Methodology: [interview_guide.md](references/interview_guide.md).
+Specialist skills for planning advice: see the table in step 5 above. Shared contracts: [persistence-contract](../_shared/persistence-contract.md), [envelope-contract](../_shared/envelope-contract.md). Methodology: [interview_guide.md](references/interview_guide.md).
 
 <user_instructions>
 

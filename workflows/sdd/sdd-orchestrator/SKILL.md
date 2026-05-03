@@ -32,8 +32,6 @@ allowed-tools:
 
 # SDD Orchestrator
 
-!`mkdir -p .sdd/$1`
-
 Coordinates the SDD (Spec-Driven Development) workflow via sub-agents: explore → plan → implement → review.
 
 ## Instructions
