@@ -1,18 +1,7 @@
 # SDD Launch Templates
 
-<!-- SYNC WITH: launch-templates.claude.md, launch-templates.copilot.md, launch-templates.md
-     When editing invocation syntax or template structure, apply equivalent changes to the
-     other variant files. The operational contract (persistence, envelope, wave-scope, quality
-     gate) lives in each phase's SKILL.md and in _shared/{persistence,envelope}-contract.md —
-     not in launch prompts. Launch prompts carry dynamic context only. -->
-
-> **Note**: this file is consumed by the **OpenCode** variant only. The installed name is always `launch-templates.md` (devrune install strips the `.opencode.md` suffix). All internal references use `launch-templates.md`.
-
-Launch prompts carry **dynamic context only** — project path, change name, artifact list, batch directive. The full operational contract for each phase (persistence, envelope format, wave-scope discipline, quality gate, large-file rules) lives in `sdd-{phase}/SKILL.md` and the shared contracts (`_shared/persistence-contract.md`, `_shared/envelope-contract.md`).
-
-> **OpenCode note**: OpenCode agent files are 1-line prompts in `opencode.json` and have no native skill pre-loading mechanism. The "read SKILL.md first" directive at the top of every prompt is intentional and must be retained. If a future OpenCode renderer inlines SKILL.md content into the agent prompt, this directive can be dropped.
-
----
+<!-- SYNC WITH: launch-templates.claude.md, launch-templates.copilot.md, launch-templates.md -->
+<!-- OpenCode-only file. Installed name strips the .opencode.md suffix to launch-templates.md. -->
 
 ## Generic Sub-Agent Template
 

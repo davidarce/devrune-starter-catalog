@@ -1,12 +1,6 @@
 # SDD Launch Templates
 
-<!-- SYNC WITH: launch-templates.copilot.md, launch-templates.opencode.md, launch-templates.md
-     When editing invocation syntax or template structure, apply equivalent changes to the
-     other variant files. The operational contract (persistence, envelope, wave-scope, quality
-     gate) lives in each phase's SKILL.md and in _shared/{persistence,envelope}-contract.md —
-     not in launch prompts. Launch prompts carry dynamic context only. -->
-
-Launch prompts carry **dynamic context only** — project path, change name, artifact list, batch directive. The full operational contract for each phase (persistence, envelope format, wave-scope discipline, quality gate, large-file rules) lives in `sdd-{phase}/SKILL.md` and the shared contracts (`_shared/persistence-contract.md`, `_shared/envelope-contract.md`). Sub-agents auto-load their assigned skill via the `skills:` frontmatter in the agent file (e.g. `sdd-planner.md` has `skills: [sdd-plan]`); no skill-load directive is needed in the prompt.
+<!-- SYNC WITH: launch-templates.copilot.md, launch-templates.opencode.md, launch-templates.md -->
 
 ## Generic Sub-Agent Template
 
@@ -69,9 +63,7 @@ Agent(
   description: 'implement batch {batch-id} for {change-name}',
   subagent_type: 'sdd-implementer',
   run_in_background: true,
-  prompt: 'BACKGROUND MODE: you cannot interact with the user (no AskUserQuestion). Write all output to {project path}/.sdd/{change-name}/ files — they are the primary communication channel.
-
-  CONTEXT:
+  prompt: 'CONTEXT:
   - Project: {project path}
   - Change: {change-name}
   - Artifact directory: {project path}/.sdd/{change-name}/

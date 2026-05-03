@@ -1,12 +1,6 @@
 # SDD Launch Templates
 
-<!-- SYNC WITH: launch-templates.claude.md, launch-templates.opencode.md, launch-templates.md
-     When editing invocation syntax or template structure, apply equivalent changes to the
-     other variant files. The operational contract (persistence, envelope, wave-scope, quality
-     gate) lives in each phase's SKILL.md and in _shared/{persistence,envelope}-contract.md —
-     not in launch prompts. Launch prompts carry dynamic context only. -->
-
-Launch prompts carry **dynamic context only** — project path, change name, artifact list, batch directive. The full operational contract for each phase lives in the agent's `.agent.md` file (the renderer inlines the SKILL.md body) and in `_shared/persistence-contract.md` + `_shared/envelope-contract.md`. The agent file IS the system prompt; no skill-load directive is needed in the invocation prompt.
+<!-- SYNC WITH: launch-templates.claude.md, launch-templates.opencode.md, launch-templates.md -->
 
 ## Generic Sub-Agent Invocation
 

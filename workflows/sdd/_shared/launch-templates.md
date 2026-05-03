@@ -1,11 +1,6 @@
-> **Scope**: this file is consumed by **Codex and Factory** variants only.
-> Other variants use their own launch-template files.
-
----
-
 # SDD Launch Templates
 
-Launch prompts carry **dynamic context only** — project path, change name, artifact list, batch directive. The full operational contract for each phase (persistence, envelope format, wave-scope discipline, quality gate, large-file rules) lives in the phase's `SKILL.md` and the shared contracts under `_shared/` (`persistence-contract.md`, `envelope-contract.md`). Sub-agents load `sdd-{phase}/SKILL.md` at start; the launch prompt does NOT need to repeat the contract.
+<!-- Scope: consumed by Codex and Factory variants only. Other variants use their own launch-template files. -->
 
 ## Generic Sub-Agent Template
 
@@ -86,8 +81,6 @@ Task(
   Skill(skill: "sdd-implement", args: "{change-name}")
 
   If that fails, fall back to {project path}/{SKILLS_PATH}/sdd-implement/SKILL.md.
-
-  BACKGROUND MODE: you cannot interact with the user (no AskUserQuestion). Write all output to {project path}/.sdd/{change-name}/ files — they are the primary communication channel.
 
   CONTEXT:
   - Project: {project path}
