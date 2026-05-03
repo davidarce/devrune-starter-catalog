@@ -157,10 +157,5 @@ Task(
   2. If it applies: update the relevant task, add/modify Detail Block, adjust Before/After, or add a new task
   3. Document integration in ## Advice Received section
   Skip the Deep Interview, Team Selection, and Guidance Request steps (already completed).
-  Re-run the Detail Quality Gate.
-  Return the SDD Envelope with status: ok (or warning if recommendations could not be fully integrated).
-
-  PERSISTENCE: See {project path}/{WORKFLOW_DIR}/_shared/persistence-contract.md
-
-  IMPORTANT: Your LAST output MUST be the SDD Envelope per _shared/envelope-contract.md.'
+  Re-run the Detail Quality Gate.'
 )
