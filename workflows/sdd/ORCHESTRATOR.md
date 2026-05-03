@@ -56,6 +56,19 @@ mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-
   content: "ACTIVE SDD workflow: {change}. Orchestrator: {WORKFLOW_DIR}/ORCHESTRATOR.md. Phase: starting explore.")
 ```
 
+## Step 0b — PRD gate (before explore phase)
+
+After saving the active-workflow marker and before launching the explore sub-agent, give the user the option to draft a PRD when the brief looks thin. Catches poor context before burning tokens on exploration.
+
+1. Compute a 2-line TL;DR of what you understood (from user prompt + bound ticket body if present).
+2. Ask once via `AskUserQuestion`:
+   - "Draft a PRD first to challenge the scope" — recommend if the user prompt is short or no ticket / ticket body is empty.
+   - "Skip — scope is clear, go to explore" — recommend if context is rich.
+3. If the user picks **Draft PRD**: invoke `Skill("write-a-prd")` with the change-name. The skill runs the interview in your context and persists `.sdd/{change-name}/prd.md`. Continue to explore phase when it returns.
+4. If the user picks **Skip**: continue directly to the explore phase.
+
+The PRD is opt-in — never force it. `sdd-explore` and `sdd-plan` consume `prd.md` only when present; behaviour is unchanged when it isn't.
+
 ## Post-Phase Protocol (MANDATORY after EVERY sub-agent)
 
 1. **Parse** the SDD Envelope from sub-agent output (format: `{WORKFLOW_DIR}/_shared/envelope-contract.md`). For parallel implement waves: run steps 1–3 for EACH sub-agent envelope in the wave. Aggregate status: if all `ok` → wave is `ok`; if any `failed` → wave is `failed`; if any `warning` but none `failed` → wave is `warning`.

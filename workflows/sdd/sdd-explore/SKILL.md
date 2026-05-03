@@ -14,10 +14,11 @@ Token budget for the final selection: target **50–80k tokens** across files + 
 
 > **Incremental writing**: never accumulate all findings and write `exploration.md` in one giant `Write` at the end — that exceeds output token limits and loops the agent. Initialise the file with the template, then append/update sections via `Edit` after every 3–5 files discovered.
 
-1. **Create the session file** with the template
+1. **Read `prd.md` if present**, then create the session file with the template
+   - If `.sdd/{change-name}/prd.md` exists, read it FIRST as the source of intent (Problem / Solution / User Stories / Out of Scope / Further Notes). Use it to seed `## Objective` and `### Task:` directly. The PRD is the WHAT; exploration.md is the WHERE.
    - Path: `.sdd/{change-name}/exploration.md`
    - Template: [templates/exploration_template.md](templates/exploration_template.md) (do not omit any section)
-   - Use `Write` once to seed the file with placeholders. Fill `## Objective` immediately if the task is clear from the prompt.
+   - Use `Write` once to seed the file with placeholders. Fill `## Objective` immediately if the task is clear from the prompt or PRD.
 
 2. **Get Jira ticket details** (only when a ticket ID was provided)
    - Tool: `mcp__atlassian__jira_get_issue` with `{"issue_key": "<ticket_id>"}`

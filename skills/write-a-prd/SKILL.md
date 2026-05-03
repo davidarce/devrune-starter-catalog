@@ -1,0 +1,69 @@
+---
+name: write-a-prd
+description: 'Generate a Product Requirements Document via interactive interview. Writes a markdown PRD that captures intent, user stories, and out-of-scope. Use when the brief is vague, when no ticket is bound, or when SDD invokes it from Step 0b.'
+scope: [planning, intent]
+allowed-tools:
+  - Read
+  - Glob
+  - Grep
+  - AskUserQuestion
+  - Write
+  - Edit
+argument-hint: "[change-name]"
+model: sonnet
+---
+
+Generate a PRD that captures the user's intent before any code or codebase exploration commits to a direction. The PRD is the WHAT and WHY (user perspective). It explicitly avoids file paths, code snippets, module sketches, and implementation/testing details — those belong to the planning phase, not here.
+
+## Steps
+
+1. **Ask for context if missing.** If the user hasn't given a detailed problem description, ask once: *"Describe the problem and any solution ideas you have."*
+2. **Verify cheaply.** Use `Glob`/`Grep` to confirm assertions only when needed. Do NOT preemptively explore the whole repo — that's the explore phase's job.
+3. **Interview** using these three rules:
+   - **One question at a time.** Never batch.
+   - **For each question, propose your recommended answer.** The user confirms, rejects, or proposes a different one.
+   - **If the answer lives in the codebase, explore instead of asking.**
+4. **Bound the interview** with three checkpoints:
+   - **Vague-answer pushback (once per branch).** When the user replies "no sé" / "decide tú" / "lo que tú digas", give one honest pushback: *"Si tú no lo tienes claro, yo tampoco — la feature va a quedar vagamente implementada. ¿Pensamos juntos una respuesta razonable, o lo marco como Ambiguity y arrancamos sabiendo que tendremos que volver?"* If still no answer, mark that branch as an Ambiguity in `Further Notes` and move to the next branch.
+   - **Periodic stop offer (every ~3 rounds).** *"Tengo todavía N preguntas pendientes, pero con lo resuelto ya se podría arrancar. ¿Sigo o vamos?"*
+   - **Stop on signal.** When the user says "vamos" / "go" / "ya está" / "done", close the interview.
+5. **Write the PRD** to `{change-name}/prd.md` under the SDD artifact directory if invoked from SDD (i.e. `.sdd/{change-name}/prd.md`); otherwise to `prd.md` in the current directory. Create parent directories as needed. Use the template below.
+
+## PRD template
+
+```markdown
+## Problem Statement
+
+[The problem from the user's perspective — what they're trying to do and why it's painful or missing today.]
+
+## Solution
+
+[The solution from the user's perspective — what changes for them when this lands.]
+
+## User Stories
+
+A long, numbered list. Each story:
+
+`As <actor>, I want <feature>, so that <benefit>.`
+
+Cover all aspects of the feature, including edge cases surfaced during the interview.
+
+## Out of Scope
+
+[What is explicitly excluded — important to surface false expectations.]
+
+## Further Notes
+
+[Open ambiguities (with the branch they apply to), references to bound ticket / GitHub issue if any, decisions deferred to implementation.]
+```
+
+Do NOT include file paths, code snippets, module sketches, or implementation/testing decisions in the PRD. Those belong to `plan.md`. The PRD captures intent, not execution.
+
+## Self-Check (before returning)
+
+- The PRD file exists at the expected path.
+- Problem and Solution are written from the user's perspective (not technical).
+- User Stories cover the feature surface, including edge cases the interview surfaced.
+- No file paths, code snippets, module sketches, or testing details in the document.
+- Ambiguities the user could not resolve are listed in Further Notes (not silently dropped).
+- Did NOT submit external issues or call external services.
