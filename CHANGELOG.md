@@ -5,6 +5,13 @@ All notable changes to the DevRune Starter Catalog will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1](https://github.com/davidarce/devrune-starter-catalog/compare/v0.4.0...v0.4.1) (2026-05-03)
+
+
+### Code Refactoring
+
+* **sdd:** slim phase SKILL.md files (M3+M4+M6) ([#36](https://github.com/davidarce/devrune-starter-catalog/issues/36)) ([23ade84](https://github.com/davidarce/devrune-starter-catalog/commit/23ade844b131f12de18459b763d51d002421c7c6))
+
 ## [0.4.0](https://github.com/davidarce/devrune-starter-catalog/compare/v0.3.1...v0.4.0) (2026-05-01)
 
 
