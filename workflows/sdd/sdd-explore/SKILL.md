@@ -105,7 +105,7 @@ Do **not** invoke `sdd-plan` (or any other SDD skill) yourself — return the en
 
 ## References
 
-Related SDD workflow skills: [sdd-plan](../sdd-plan/SKILL.md), [sdd-implement](../sdd-implement/SKILL.md), [sdd-review](../sdd-review/SKILL.md). Shared contracts: [persistence-contract](../_shared/persistence-contract.md), [envelope-contract](../_shared/envelope-contract.md). Phase-specific reference material: [file_slicing.md](references/file_slicing.md).
+Shared contracts: [persistence-contract](../_shared/persistence-contract.md), [envelope-contract](../_shared/envelope-contract.md). Phase-specific reference material: [file_slicing.md](references/file_slicing.md).
 
 <user_instructions>
 

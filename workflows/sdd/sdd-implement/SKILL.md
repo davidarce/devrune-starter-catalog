@@ -120,7 +120,7 @@ Do NOT invoke commit/review/any other SDD skill — return the envelope; the orc
 
 ## References
 
-Related SDD workflow skills: [sdd-explore](../sdd-explore/SKILL.md), [sdd-plan](../sdd-plan/SKILL.md), [sdd-review](../sdd-review/SKILL.md). Specialist skills: any installed `*-advisor`. Shared contracts: [persistence-contract](../_shared/persistence-contract.md), [envelope-contract](../_shared/envelope-contract.md).
+Specialist skills: any installed `*-advisor`. Shared contracts: [persistence-contract](../_shared/persistence-contract.md), [envelope-contract](../_shared/envelope-contract.md).
 
 <user_instructions>
 

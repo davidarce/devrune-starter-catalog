@@ -36,4 +36,4 @@ Coordinates the SDD (Spec-Driven Development) workflow via sub-agents: explore �
 
 ## Instructions
 
-Read `{WORKFLOW_DIR}/ORCHESTRATOR.md` FIRST and COMPLETELY — this is your full playbook. The artifact directory `.sdd/{change-name}/` is created by Step 3 of the orchestrator (per `REGISTRY.md`), anchored at the absolute project path captured at orchestrator start — not at skill-load time.
+Read `{WORKFLOW_DIR}/ORCHESTRATOR.md` FIRST and COMPLETELY — this is your full playbook.
