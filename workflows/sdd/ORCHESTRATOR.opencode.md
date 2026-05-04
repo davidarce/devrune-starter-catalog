@@ -55,18 +55,19 @@ mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-
   content: "ACTIVE SDD workflow: {change}. Orchestrator: {WORKFLOW_DIR}/ORCHESTRATOR.opencode.md. Phase: starting explore.")
 ```
 
-## Step 0b — PRD gate (before explore phase)
+## Step 1 — PRD gate (before explore phase)
 
-After saving the active-workflow marker and before launching the explore sub-agent, give the user the option to draft a PRD when the brief looks thin. Catches poor context before burning tokens on exploration.
+After saving the active-workflow marker and before launching the explore sub-agent, assess whether context is sufficient to start exploring without inventing scope. Catches poor context before burning tokens on exploration.
 
-1. Compute a 2-line TL;DR of what you understood (from user prompt + bound ticket body if present).
-2. Ask once via `AskUserQuestion`:
-   - "Draft a PRD first to challenge the scope" — recommend if the user prompt is short or no ticket / ticket body is empty.
-   - "Skip — scope is clear, go to explore" — recommend if context is rich.
-3. If the user picks **Draft PRD**: invoke `Skill("write-a-prd")` with the change-name. The skill runs the interview in your context and persists `.sdd/{change-name}/prd.md`. Continue to explore phase when it returns.
-4. If the user picks **Skip**: continue directly to the explore phase.
+1. **Assess context** from the user prompt + bound ticket body (if any). Sufficient context = enough to formulate `## Objective` and `### Task:` for `exploration.md` without making scope-defining assumptions.
+2. **If context is sufficient**: continue directly to the explore phase. Do NOT prompt the user.
+3. **If context is thin** (short prompt, no ticket, empty ticket body, or ambiguity that would force scope assumptions during exploration): ask once via `AskUserQuestion`:
+   - "Draft a PRD first to clarify scope" (recommended)
+   - "Proceed anyway with what we have"
+4. **If "Draft PRD"**: invoke `Skill("write-a-prd")` with the change-name. The skill runs the interview in your context and persists `.sdd/{change-name}/prd.md`. Continue to explore when it returns.
+5. **If "Proceed anyway"**: continue directly to the explore phase.
 
-The PRD is opt-in — never force it. `sdd-explore` and `sdd-plan` consume `prd.md` only when present; behaviour is unchanged when it isn't.
+The PRD is opt-in for thin contexts only — never force it, never offer it when the user already gave you enough. `sdd-explore` and `sdd-plan` consume `prd.md` only when present; behaviour is unchanged when it isn't.
 
 ## Post-Phase Protocol (MANDATORY after EVERY sub-agent)
 

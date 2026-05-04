@@ -1,6 +1,6 @@
 ---
 name: write-a-prd
-description: 'Generate a Product Requirements Document via interactive interview. Writes a markdown PRD that captures intent, user stories, and out-of-scope. Use when the brief is vague, when no ticket is bound, or when SDD invokes it from Step 0b.'
+description: 'Generate a Product Requirements Document via interactive interview. Writes a markdown PRD that captures intent, user stories, and out-of-scope. Use when the brief is vague, when no ticket is bound, or when SDD invokes it from its PRD gate.'
 scope: [planning, intent]
 allowed-tools:
   - Read
@@ -24,7 +24,7 @@ Generate a PRD that captures the user's intent before any code or codebase explo
    - **For each question, propose your recommended answer.** The user confirms, rejects, or proposes a different one.
    - **If the answer lives in the codebase, explore instead of asking.**
 4. **Bound the interview** with three checkpoints:
-   - **Vague-answer pushback (once per branch).** When the user replies "no sé" / "decide tú" / "lo que tú digas", give one honest pushback: *"Si tú no lo tienes claro, yo tampoco — la feature va a quedar vagamente implementada. ¿Pensamos juntos una respuesta razonable, o lo marco como Ambiguity y arrancamos sabiendo que tendremos que volver?"* If still no answer, mark that branch as an Ambiguity in `Further Notes` and move to the next branch.
+   - **Vague-answer pushback (once per branch).** When the user's reply is non-committal — anything that doesn't actually clarify the question, regardless of phrasing — give one honest pushback: *"Si tú no lo tienes claro, yo tampoco — la feature va a quedar vagamente implementada. ¿Pensamos juntos una respuesta razonable, o lo marco como Ambiguity y arrancamos sabiendo que tendremos que volver?"* If still no real answer, mark that branch as an Ambiguity in `Further Notes` and move to the next branch.
    - **Periodic stop offer (every ~3 rounds).** *"Tengo todavía N preguntas pendientes, pero con lo resuelto ya se podría arrancar. ¿Sigo o vamos?"*
    - **Stop on signal.** When the user says "vamos" / "go" / "ya está" / "done", close the interview.
 5. **Write the PRD** to `{change-name}/prd.md` under the SDD artifact directory if invoked from SDD (i.e. `.sdd/{change-name}/prd.md`); otherwise to `prd.md` in the current directory. Create parent directories as needed. Use the template below.
