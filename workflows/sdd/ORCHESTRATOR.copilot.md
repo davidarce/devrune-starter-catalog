@@ -48,7 +48,7 @@ Before the first launch, save the active-workflow marker to engram (if available
 ```
 mcp__engram__mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-workflow",
   type: "architecture", project: "{project}",
-  content: "ACTIVE SDD workflow: {change}. Orchestrator: {WORKFLOW_DIR}/ORCHESTRATOR.copilot.md. Phase: starting explore.")
+  content: "ACTIVE SDD workflow: {change}. Workdir: .sdd/{change}/. Phase: starting explore.")
 ```
 
 ## Step 1 — PRD gate (before explore phase)
@@ -85,7 +85,7 @@ The PRD is opt-in for thin contexts only — never force it, never offer it when
      topic_key: "sdd/{change}/active-workflow",
      type: "architecture", project: "{project}",
      title: "sdd/{change}/active-workflow",
-     content: "ACTIVE SDD workflow: {change}. Orchestrator: {WORKFLOW_DIR}/ORCHESTRATOR.copilot.md. NEXT: {phase} phase -> {next step}."
+     content: "ACTIVE SDD workflow: {change}. Workdir: .sdd/{change}/. NEXT: {phase} phase -> {next step}."
    )
    ```
 

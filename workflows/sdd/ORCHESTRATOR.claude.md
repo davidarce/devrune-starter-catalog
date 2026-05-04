@@ -56,7 +56,7 @@ Before the first launch, save the active-workflow marker to engram (if available
 ```
 mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-workflow",
   type: "architecture", project: "{project}",
-  content: "ACTIVE SDD workflow: {change}. Orchestrator: .claude/skills/sdd-orchestrator/ORCHESTRATOR.md. Phase: starting explore.")
+  content: "ACTIVE SDD workflow: {change}. Workdir: .sdd/{change}/. Phase: starting explore.")
 ```
 
 ## Step 1 — PRD gate (before explore phase)
