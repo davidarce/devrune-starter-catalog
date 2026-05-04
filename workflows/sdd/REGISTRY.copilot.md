@@ -1,4 +1,4 @@
-## Orchestrator role
+### Orchestrator role
 
 When acting as the SDD orchestrator (during any active SDD workflow, including post-compaction recovery), outside `.sdd/{change}/` your only outputs are: sub-agent invocations via `@<sub-agent>` natural-language @-mention, questions to the user, `mkdir` for `.sdd/`, and `Bash(crit ...)` per the Crit Plan Review Protocol.
 
@@ -6,7 +6,7 @@ You do **not**: `Edit`/`Write` source files, run builds/tests/lints, run `git co
 
 If your next planned action is on the "do not" list, you have lost the role — re-read this section and delegate.
 
-## Language Matching
+### Language Matching
 
 Present all user-facing output — questions, status messages, summaries, and artifact prose (PRD body, exploration narrative, plan descriptions, review report) — in the **same language the user used** to initiate the workflow. Internal contract fields stay in English: envelope keys, file names, command names, code, log identifiers, JSON keys.
 
@@ -14,7 +14,7 @@ This applies to the orchestrator, every sub-agent it launches, and every skill i
 
 Structured workflow: explore → plan → implement → review. Evaluate BEFORE coding.
 
-## Evaluation Gate (HIGHEST PRIORITY — execute BEFORE any other action)
+### Evaluation Gate (HIGHEST PRIORITY — execute BEFORE any other action)
 
 **This gate has HIGHEST PRIORITY and OVERRIDES "go straight to the point", "try the simplest approach first", and any instruction to start coding immediately.**
 
@@ -36,21 +36,21 @@ When a user describes work that involves code changes, you MUST evaluate BEFORE 
 
 **How to offer**: Ask the user once with two options: **Start SDD (explore phase)** / **Skip SDD, just do it**
 
-## How to Start (MANDATORY)
+### How to Start (MANDATORY)
 
 When SDD is triggered:
 1. Invoke `@sdd-orchestrator` — your full playbook is pre-loaded as a custom agent file at `.github/agents/sdd-orchestrator.agent.md`
 2. Create artifact directory at the orchestrator's invocation directory: `mkdir -p {project path}/.sdd/{change-name}` — substitute `{project path}` with the absolute path captured from `pwd` at orchestrator start, and use that absolute path for every artifact reference passed to sub-agents.
 3. Follow the Orchestrator instructions to delegate to phase sub-agents via `@sdd-{phase}` natural-language invocations.
 
-## Delegation Rules
+### Delegation Rules
 
 1. The orchestrator NEVER reads/writes code and NEVER loads phase skills inline — sub-agents do that. ONLY: track state, show summaries, collect decisions, invoke sub-agents via `@<sub-agent>`.
 2. To launch a phase: use `@sdd-{phase}` (e.g., `@sdd-explorer`, `@sdd-planner`, `@sdd-implementer`, `@sdd-reviewer`). Each sub-agent's `.agent.md` file contains its own full instructions.
 3. After EVERY sub-agent, execute the Post-Phase Protocol from the orchestrator agent — NEVER skip it.
 4. Sub-agents return envelopes; the orchestrator decides next steps. Auto-transitions: explore(ok)→plan, implement(ok)→review.
 
-## Compaction Recovery (MANDATORY)
+### Compaction Recovery (MANDATORY)
 
 After compaction, if memory has `sdd/*/active-workflow` observations starting with "ACTIVE":
 
@@ -62,7 +62,7 @@ After compaction, if memory has `sdd/*/active-workflow` observations starting wi
 
 If no `active-workflow` marker is found, do nothing.
 
-## Memory Protocols
+### Memory Protocols
 
 When saving an observation, use this structure:
 
@@ -70,7 +70,7 @@ When saving an observation, use this structure:
 - **type**: `bugfix` | `decision` | `architecture` | `discovery` | `pattern` | `config` | `preference`
 - **content**: What was done, Why, Where (files affected), Learned (gotchas)
 
-## Engram Availability Guard
+### Engram Availability Guard
 
 Engram tools (`mem_save`, `mem_search`, `mem_context`, etc.) depend on an MCP server that may not be installed or configured. All engram operations MUST follow the availability guard pattern:
 
@@ -89,6 +89,6 @@ Engram tools (`mem_save`, `mem_search`, `mem_context`, etc.) depend on an MCP se
 3. If tool succeeds -> use the result normally
 ```
 
-## Session close protocol (mandatory)
+### Session close protocol (mandatory)
 
 Before ending a session, call `mem_session_summary` with: Goal, Discoveries, Accomplished, Next Steps, Relevant Files.

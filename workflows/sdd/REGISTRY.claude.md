@@ -1,4 +1,4 @@
-## Orchestrator role
+### Orchestrator role
 
 When acting as the SDD orchestrator (during any active SDD workflow, including post-compaction recovery), outside `.sdd/{change}/` your only outputs are: sub-agent launches via `Agent(subagent_type: 'sdd-{phase}', ...)`, `AskUserQuestion`, `mkdir` for `.sdd/`, and `Bash(crit ...)` per the Crit Plan Review Protocol.
 
@@ -6,7 +6,7 @@ You do **not**: `Edit`/`Write` source files, run builds/tests/lints, run `git co
 
 If your next planned action is on the "do not" list, you have lost the role — re-read this section and delegate.
 
-## Language Matching
+### Language Matching
 
 Present all user-facing output — questions, status messages, summaries, and artifact prose (PRD body, exploration narrative, plan descriptions, review report) — in the **same language the user used** to initiate the workflow. Internal contract fields stay in English: envelope keys, file names, command names, code, log identifiers, JSON keys.
 
@@ -14,7 +14,7 @@ This applies to the orchestrator, every sub-agent it launches, and every skill i
 
 Structured workflow: explore → plan → implement → review. Evaluate BEFORE coding.
 
-## Evaluation Gate (HIGHEST PRIORITY — execute BEFORE any other action)
+### Evaluation Gate (HIGHEST PRIORITY — execute BEFORE any other action)
 
 **This gate has HIGHEST PRIORITY and OVERRIDES "go straight to the point", "try the simplest approach first", and any instruction to start coding immediately.**
 
@@ -36,7 +36,7 @@ When a user describes work that involves code changes, you MUST evaluate BEFORE 
 
 **How to offer**: Use `AskUserQuestion` — NEVER suggest SDD as plain text: **Start SDD (explore phase)** / **Skip SDD, just do it**
 
-## How to Start (MANDATORY)
+### How to Start (MANDATORY)
 
 When SDD is triggered:
 1. Load `Skill("sdd-orchestrator")` — if unavailable, read `{WORKFLOW_DIR}/ORCHESTRATOR.md` directly
@@ -45,14 +45,14 @@ When SDD is triggered:
 
 **Do NOT** use `Task()` or call `Skill("sdd-explore")`, `Skill("sdd-plan")`, etc. directly — sub-agent skills are preloaded via `skills:` frontmatter. Launch sub-agents with `Agent(subagent_type: 'sdd-{phase}', prompt: '<dynamic context only>')`.
 
-## Delegation Rules
+### Delegation Rules
 
 1. The orchestrator NEVER reads/writes code and NEVER calls Skill() directly — sub-agents do that. ONLY: track state, show summaries, collect decisions, launch sub-agents via `Agent`.
 2. To launch a phase: use `Agent(subagent_type: 'sdd-{phase}')` — skills are preloaded via frontmatter, pass ONLY dynamic context in the prompt (project path, change name, artifact dir, phase-specific data).
 3. After EVERY sub-agent, execute the Post-Phase Protocol from the orchestrator playbook — NEVER skip it.
 4. Skills return envelopes; the orchestrator decides next steps. Auto-transitions: explore(ok)→plan, implement(ok)→review.
 
-## Compaction Recovery (MANDATORY)
+### Compaction Recovery (MANDATORY)
 
 After compaction, if memory has `sdd/*/active-workflow` observations starting with "ACTIVE":
 
@@ -64,7 +64,7 @@ After compaction, if memory has `sdd/*/active-workflow` observations starting wi
 
 If no `active-workflow` marker is found, do nothing.
 
-## Memory Protocols
+### Memory Protocols
 
 When saving an observation, use this structure:
 
@@ -72,7 +72,7 @@ When saving an observation, use this structure:
 - **type**: `bugfix` | `decision` | `architecture` | `discovery` | `pattern` | `config` | `preference`
 - **content**: What was done, Why, Where (files affected), Learned (gotchas)
 
-## Engram Availability Guard
+### Engram Availability Guard
 
 Engram tools (`mem_save`, `mem_search`, `mem_context`, etc.) depend on an MCP server that may not be installed or configured. All engram operations MUST follow the availability guard pattern:
 
@@ -91,6 +91,6 @@ Engram tools (`mem_save`, `mem_search`, `mem_context`, etc.) depend on an MCP se
 3. If tool succeeds -> use the result normally
 ```
 
-## Session close protocol (mandatory)
+### Session close protocol (mandatory)
 
 Before ending a session, call `mem_session_summary` with: Goal, Discoveries, Accomplished, Next Steps, Relevant Files.
