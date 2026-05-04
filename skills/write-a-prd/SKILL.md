@@ -24,9 +24,9 @@ Generate a PRD that captures the user's intent before any code or codebase explo
    - **For each question, propose your recommended answer.** The user confirms, rejects, or proposes a different one.
    - **If the answer lives in the codebase, explore instead of asking.**
 4. **Bound the interview** with three checkpoints:
-   - **Vague-answer pushback (once per branch).** When the user's reply is non-committal — anything that doesn't actually clarify the question, regardless of phrasing — give one honest pushback: *"Si tú no lo tienes claro, yo tampoco — la feature va a quedar vagamente implementada. ¿Pensamos juntos una respuesta razonable, o lo marco como Ambiguity y arrancamos sabiendo que tendremos que volver?"* If still no real answer, mark that branch as an Ambiguity in `Further Notes` and move to the next branch.
-   - **Periodic stop offer (every ~3 rounds).** *"Tengo todavía N preguntas pendientes, pero con lo resuelto ya se podría arrancar. ¿Sigo o vamos?"*
-   - **Stop on signal.** When the user says "vamos" / "go" / "ya está" / "done", close the interview.
+   - **Vague-answer pushback (once per branch).** When the user's reply is non-committal — anything that doesn't actually clarify the question, regardless of phrasing — give one honest pushback: *"If you don't have a clear answer here, I won't either — the feature will end up vaguely implemented. Should we think through a reasonable answer together, or should I mark this as an Ambiguity and start anyway, knowing we'll have to come back?"* If still no real answer, mark that branch as an Ambiguity in `Further Notes` and move to the next branch.
+   - **Periodic stop offer (every ~3 rounds).** *"There are still N open questions, but what's resolved is enough to start. Continue or go?"*
+   - **Stop on signal.** When the user gives a stop signal (any phrasing of "we're good" / "go" / "done"), close the interview.
 5. **Write the PRD** to `{change-name}/prd.md` under the SDD artifact directory if invoked from SDD (i.e. `.sdd/{change-name}/prd.md`); otherwise to `prd.md` in the current directory. Create parent directories as needed. Use the template below.
 
 ## PRD template

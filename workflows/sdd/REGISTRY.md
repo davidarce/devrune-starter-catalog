@@ -10,6 +10,12 @@ You do **not**: `Edit`/`Write` source files, run builds/tests/lints, run `git co
 
 If your next planned action is on the "do not" list, you have lost the role — re-read this section and delegate.
 
+## Language Mirroring
+
+Present all user-facing output — questions, status messages, summaries, and artifact prose (PRD body, exploration narrative, plan descriptions, review report) — in the **same language the user used** to initiate the workflow. Internal contract fields stay in English: envelope keys, file names, command names, code, log identifiers, JSON keys.
+
+This applies to the orchestrator, every sub-agent it launches, and every skill invoked from the workflow.
+
 Structured workflow: explore → plan → implement → review. Evaluate BEFORE coding.
 
 ## SDD — Evaluation Gate (HIGHEST PRIORITY — execute BEFORE any other action)
