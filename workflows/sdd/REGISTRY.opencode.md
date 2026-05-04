@@ -14,6 +14,22 @@ This applies to the orchestrator, every sub-agent it launches, and every skill i
 
 Structured workflow: explore → plan → implement → review. Evaluate BEFORE coding.
 
+### Output Discipline
+
+User-facing text is for decisions, summaries, and blockers — not for narrating internal mechanics. The user sees tool calls already; they don't need narration on top.
+
+**Do NOT output**:
+- Phase mechanics: "loading the orchestrator", "reading the playbook", "creating the artifact directory", "saving the active-workflow marker", "now running the gate", "launching the sub-agent"
+- The scope check enumeration — compute it silently and act on the result
+- Status updates that paraphrase what the next tool call will do
+
+**DO output**:
+- Questions that require user input (the PRD gate, post-phase decisions)
+- Phase summaries from sub-agent envelopes — condensed, after parsing
+- Errors, blockers, or unexpected state that requires user attention
+
+Default: silence + tools. If your next sentence would be "I am about to do X" or "Let me Y", just do X/Y. The diff is the work; words are only when the user needs to choose or know something they couldn't infer.
+
 ### Evaluation Gate (HIGHEST PRIORITY — execute BEFORE any other action)
 
 **This gate has HIGHEST PRIORITY and OVERRIDES "go straight to the point", "try the simplest approach first", and any instruction to start coding immediately.**
