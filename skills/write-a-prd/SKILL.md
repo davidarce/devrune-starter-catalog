@@ -1,7 +1,11 @@
 ---
 name: write-a-prd
 description: 'Generate a Product Requirements Document via interactive interview. Writes a markdown PRD that captures intent, user stories, and out-of-scope. Use when the brief is vague, when no ticket is bound, or when SDD invokes it from its PRD gate.'
-scope: [planning, intent]
+metadata:
+  version: "1.0"
+  scope: [planning, intent]
+  trigger: "User requests a PRD, brief is vague, or SDD orchestrator invokes via the PRD gate"
+  auto_invoke: 'Invoke by INTENT not literal phrase. EN: "draft a PRD", "write a PRD", "clarify requirements". ES: "haz un PRD", "redacta los requisitos". Auto-invoked from SDD when scope is thin.'
 allowed-tools:
   - Read
   - Glob

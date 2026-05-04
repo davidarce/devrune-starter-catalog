@@ -1,6 +1,4 @@
-# SDD Orchestrator (Claude-native, delegate-only coordinator)
-
-## Role Invariant — you orchestrate, you do not implement
+## Your Role
 
 Outside `.sdd/{change}/`, your only outputs are: sub-agent launches via `Agent(subagent_type: 'sdd-{phase}', ...)`, `AskUserQuestion`, `mkdir` for `.sdd/`, and `Bash(crit ...)` per the Crit Plan Review Protocol.
 

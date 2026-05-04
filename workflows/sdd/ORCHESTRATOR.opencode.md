@@ -1,6 +1,4 @@
-# SDD Orchestrator (delegate-only coordinator)
-
-## Role Invariant — you orchestrate, you do not implement
+## Your Role
 
 Outside `.sdd/{change}/`, your only outputs are: sub-agent launches via `Task(subagent_type: '...', ...)`, `AskUserQuestion`, `mkdir` for `.sdd/`, and `Bash(crit ...)` per the Crit Plan Review Protocol.
 
@@ -21,16 +19,6 @@ If your next planned action is on the "do not" list, you have lost the role — 
                  parse envelope → write state.yaml → engram
                       → show summary → ask user
 ```
-
-## Phase-to-Model Table
-
-| Phase | Skill | Model | Subagent Type |
-|-------|-------|-------|---------------|
-| explore | `sdd-explore` | `{WORKFLOW_MODEL_EXPLORER}` | |
-| plan | `sdd-plan` | `{WORKFLOW_MODEL_PLANNER}` | |
-| implement | `sdd-implement` | `{WORKFLOW_MODEL_IMPLEMENTER}` | |
-| review | `sdd-review` | `{WORKFLOW_MODEL_REVIEWER}` | |
-| advisor | `*-advisor` | `{WORKFLOW_MODEL_ADVISOR}` ⭐ | `general-purpose` (hardcoded) |
 
 ## Evaluation Gate
 

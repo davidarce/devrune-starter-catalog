@@ -1,8 +1,8 @@
 ## Orchestrator role
 
-When acting as the SDD orchestrator (during any active SDD workflow, including post-compaction recovery), outside `.sdd/{change}/` your only outputs are: sub-agent launches via `Agent(subagent_type: 'sdd-{phase}', ...)`, `AskUserQuestion`, `mkdir` for `.sdd/`, and `Bash(crit ...)` per the Crit Plan Review Protocol.
+When acting as the SDD orchestrator (during any active SDD workflow, including post-compaction recovery), outside `.sdd/{change}/` your only outputs are: sub-agent invocations via `@<sub-agent>` natural-language @-mention, questions to the user, `mkdir` for `.sdd/`, and `Bash(crit ...)` per the Crit Plan Review Protocol.
 
-You do **not**: `Edit`/`Write` source files, run builds/tests/lints, run `git commit`/`push`, create branches/commits/PRs, invoke `Skill("sdd-{phase}")` directly.
+You do **not**: `Edit`/`Write` source files, run builds/tests/lints, run `git commit`/`push`, create branches/commits/PRs, load `sdd-{phase}` skills inline.
 
 If your next planned action is on the "do not" list, you have lost the role — re-read this section and delegate.
 
@@ -34,29 +34,27 @@ When a user describes work that involves code changes, you MUST evaluate BEFORE 
 - The user explicitly says "just do it" / "skip SDD" / "quick fix"
 - Pure questions or research (no implementation)
 
-**How to offer**: Use `AskUserQuestion` — NEVER suggest SDD as plain text: **Start SDD (explore phase)** / **Skip SDD, just do it**
+**How to offer**: Ask the user once with two options: **Start SDD (explore phase)** / **Skip SDD, just do it**
 
 ## How to Start (MANDATORY)
 
 When SDD is triggered:
-1. Load `Skill("sdd-orchestrator")` — if unavailable, read `{WORKFLOW_DIR}/ORCHESTRATOR.md` directly
+1. Invoke `@sdd-orchestrator` — your full playbook is pre-loaded as a custom agent file at `.github/agents/sdd-orchestrator.agent.md`
 2. Create artifact directory at the orchestrator's invocation directory: `mkdir -p {project path}/.sdd/{change-name}` — substitute `{project path}` with the absolute path captured from `pwd` at orchestrator start, and use that absolute path for every artifact reference passed to sub-agents.
-3. Follow the Orchestrator instructions to launch sub-agents via the `Agent` tool
-
-**Do NOT** use `Task()` or call `Skill("sdd-explore")`, `Skill("sdd-plan")`, etc. directly — sub-agent skills are preloaded via `skills:` frontmatter. Launch sub-agents with `Agent(subagent_type: 'sdd-{phase}', prompt: '<dynamic context only>')`.
+3. Follow the Orchestrator instructions to delegate to phase sub-agents via `@sdd-{phase}` natural-language invocations.
 
 ## Delegation Rules
 
-1. The orchestrator NEVER reads/writes code and NEVER calls Skill() directly — sub-agents do that. ONLY: track state, show summaries, collect decisions, launch sub-agents via `Agent`.
-2. To launch a phase: use `Agent(subagent_type: 'sdd-{phase}')` — skills are preloaded via frontmatter, pass ONLY dynamic context in the prompt (project path, change name, artifact dir, phase-specific data).
-3. After EVERY sub-agent, execute the Post-Phase Protocol from the orchestrator playbook — NEVER skip it.
-4. Skills return envelopes; the orchestrator decides next steps. Auto-transitions: explore(ok)→plan, implement(ok)→review.
+1. The orchestrator NEVER reads/writes code and NEVER loads phase skills inline — sub-agents do that. ONLY: track state, show summaries, collect decisions, invoke sub-agents via `@<sub-agent>`.
+2. To launch a phase: use `@sdd-{phase}` (e.g., `@sdd-explorer`, `@sdd-planner`, `@sdd-implementer`, `@sdd-reviewer`). Each sub-agent's `.agent.md` file contains its own full instructions.
+3. After EVERY sub-agent, execute the Post-Phase Protocol from the orchestrator agent — NEVER skip it.
+4. Sub-agents return envelopes; the orchestrator decides next steps. Auto-transitions: explore(ok)→plan, implement(ok)→review.
 
 ## Compaction Recovery (MANDATORY)
 
 After compaction, if memory has `sdd/*/active-workflow` observations starting with "ACTIVE":
 
-1. Re-load `Skill("sdd-orchestrator")` and read its recovery reference `{WORKFLOW_DIR}/_shared/recovery.md`.
+1. Re-invoke `@sdd-orchestrator`. The agent file contains the full playbook including the recovery reference at `{WORKFLOW_DIR}/_shared/recovery.md`.
 2. Read `.sdd/{change}/state.yaml` for current phase and resume point.
 3. Parse the NEXT directive from the active-workflow marker (format: `NEXT: {phase} -> {specific next step}`) to determine the exact resume point.
 4. If NEXT mentions crit detection, re-run `which crit` to verify availability before proceeding.
