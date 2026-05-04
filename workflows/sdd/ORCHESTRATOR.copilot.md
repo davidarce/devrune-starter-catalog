@@ -55,9 +55,15 @@ mcp__engram__mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{ch
 
 After saving the active-workflow marker and before invoking `@sdd-explorer`, assess whether context is sufficient to start exploring without inventing scope. Catches poor context before burning tokens on exploration.
 
-1. **Assess context** from the user prompt + bound ticket body (if any). Sufficient context = enough to brief the explore phase on what needs to be built, without making scope-defining assumptions.
+1. **Scope check** — count how many of these signals are present in the prompt, the bound ticket body, or via reasonable inference when a mention maps to a real artifact in the repo.
+   - [ ] **Specific files or paths**: at least one concrete file path or filename — either explicit, or via clear mapping from a mention to a real file in the repo
+   - [ ] **Out-of-scope statement**: explicit phrase listing what is NOT included (e.g., "out of scope:", "do not change X", "skip the Y flow")
+   - [ ] **Bound ticket with non-empty body**: a ticket id was provided AND the ticket body was retrieved with substantive content
+   - [ ] **Concrete acceptance criteria**: enumerated assertions, dimensions, or "done when X" criteria — not just a goal statement
+
+   If 2 or more boxes are checked, context is sufficient. If fewer than 2, context is THIN.
 2. **If context is sufficient**: invoke `@sdd-explorer` directly. Do NOT prompt the user.
-3. **If context is thin** (short prompt, no ticket, empty ticket body, or ambiguity that would force scope assumptions during exploration): ask the user once:
+3. **If context is thin**: ask the user once:
    - "Draft a PRD first to clarify scope" (recommended)
    - "Proceed anyway with what we have"
 4. **If "Draft PRD"**: invoke the skill `write-a-prd` with the change-name. The skill runs the interview and persists `.sdd/{change-name}/prd.md`. Continue to the explore invocation when it returns.
