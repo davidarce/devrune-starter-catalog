@@ -14,7 +14,6 @@ allowed-tools:
   - Write
   - Edit
 argument-hint: "[change-name]"
-model: sonnet
 ---
 
 Generate a PRD that captures the user's intent before any code or codebase exploration commits to a direction. The PRD is the WHAT and WHY (user perspective). It explicitly avoids file paths, code snippets, module sketches, and implementation/testing details — those belong to the planning phase, not here.
