@@ -67,12 +67,12 @@ mcp__engram__mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{ch
 
 After saving the active-workflow marker and before invoking `@sdd-explorer`, assess whether context is sufficient to start exploring without inventing scope. Catches poor context before burning tokens on exploration.
 
-1. **Assess context** from the user prompt + bound ticket body (if any). Sufficient context = enough to formulate `## Objective` and `### Task:` for `exploration.md` without making scope-defining assumptions.
+1. **Assess context** from the user prompt + bound ticket body (if any). Sufficient context = enough to brief the explore phase on what needs to be built, without making scope-defining assumptions.
 2. **If context is sufficient**: invoke `@sdd-explorer` directly. Do NOT prompt the user.
 3. **If context is thin** (short prompt, no ticket, empty ticket body, or ambiguity that would force scope assumptions during exploration): ask the user once:
    - "Draft a PRD first to clarify scope" (recommended)
    - "Proceed anyway with what we have"
-4. **If "Draft PRD"**: invoke `@write-a-prd` with the change-name. The agent runs the interview and persists `.sdd/{change-name}/prd.md`. Continue to the explore invocation when it returns.
+4. **If "Draft PRD"**: invoke the skill `write-a-prd` with the change-name. The skill runs the interview and persists `.sdd/{change-name}/prd.md`. Continue to the explore invocation when it returns.
 5. **If "Proceed anyway"**: invoke `@sdd-explorer` directly.
 
 The PRD is opt-in for thin contexts only — never force it, never offer it when the user already gave you enough. `@sdd-explorer` and `@sdd-planner` consume `prd.md` only when present; behaviour is unchanged when it isn't.

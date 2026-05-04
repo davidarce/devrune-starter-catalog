@@ -60,7 +60,7 @@ mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-
 
 After saving the active-workflow marker and before launching the explore sub-agent, assess whether context is sufficient to start exploring without inventing scope. Catches poor context before burning tokens on exploration.
 
-1. **Assess context** from the user prompt + bound ticket body (if any). Sufficient context = enough to formulate `## Objective` and `### Task:` for `exploration.md` without making scope-defining assumptions.
+1. **Assess context** from the user prompt + bound ticket body (if any). Sufficient context = enough to brief the explore phase on what needs to be built, without making scope-defining assumptions.
 2. **If context is sufficient**: continue directly to the explore phase. Do NOT prompt the user.
 3. **If context is thin** (short prompt, no ticket, empty ticket body, or ambiguity that would force scope assumptions during exploration): ask once via `AskUserQuestion`:
    - "Draft a PRD first to clarify scope" (recommended)
