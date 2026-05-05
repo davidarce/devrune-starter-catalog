@@ -90,7 +90,9 @@ When a `Write` or `Edit` call **fails** (timeout, rejected, permission error):
 
 ## Persistence
 
-Save the implement-progress artifact and any general-knowledge discoveries (bug fixes, gotchas, conventions) per `_shared/persistence-contract.md` (Phase Artifact Save Convention + General Knowledge Persistence Mandate). For this phase, `title`/`topic_key` is `sdd/{change}/implement-progress`.
+The `[X]` markers updated in `plan.md` ARE the implement artifact for this batch. Do NOT write a separate `implement-batch-{id}.md` (or any other per-batch markdown file) under `.sdd/{change}/` — `plan.md` plus the envelope are the contract.
+
+If engram is available, save the implement-progress summary and any general-knowledge discoveries (bug fixes, gotchas, conventions) per `_shared/persistence-contract.md` (Phase Artifact Save Convention + General Knowledge Persistence Mandate). For this phase, `title`/`topic_key` is `sdd/{change}/implement-progress` — one upserted observation across all waves, not one per batch.
 
 ## Return Envelope
 
@@ -117,6 +119,7 @@ Do NOT invoke commit/review/any other SDD skill — return the envelope; the orc
 - For NEW files >150 lines: scaffolding via `Write` first, sections appended via `Edit`. No `Write` payload exceeded ~200 lines.
 - Failed `Write`/`Edit` calls were split in half, not retried identically.
 - Did not edit files outside `plan.md`'s scope.
+- Did NOT write a per-batch markdown file under `.sdd/{change}/` (e.g. `implement-batch-A.md`) — `plan.md` `[X]` markers + envelope are the artifact.
 
 ## References
 
