@@ -81,6 +81,8 @@ The PRD is opt-in for thin contexts only — never force it, never offer it when
 
 ## Post-Phase Protocol (MANDATORY after EVERY sub-agent)
 
+**Trust the envelope.** A sub-agent that returns `status: ok` with a `Gates:` line listing build / test / lint / vet results has already run those gates and passed. The orchestrator MUST NOT re-run `go build`, `go test`, `go vet`, lint, or any other verification command after an `ok` envelope — that's the implementer's contract, and re-running burns tokens, time, and Output Discipline. Only when an envelope returns `status: warning` or `status: failed` does manual validation belong here, and even then only on the specific signals the envelope flagged.
+
 1. **Parse** the SDD Envelope from sub-agent output (format: `_shared/envelope-contract.md`). For parallel implement waves: run steps 1–3 for EACH sub-agent envelope. Aggregate status: all `ok` → `ok`; any `failed` → `failed`; any `warning` (none failed) → `warning`.
 2. **Write state.yaml**: `.sdd/{change}/state.yaml` per schema in `_shared/persistence-contract.md`. For parallel waves: highest-severity status wins.
 3. **Engram** (if available): save `{phase}-summary`, `state`, and update `active-workflow` marker with NEXT directive.
@@ -191,7 +193,26 @@ After review completes, options depend on status:
 - `warning` → **Commit anyway** / **Fix issues first** / **Done**
 - `failed` → **Fix issues** / **Done** (NO commit option)
 
-When user chooses "Commit": invoke `Skill("git-commit")`. When "Fix issues": delegate fixes via `Agent(subagent_type: 'sdd-implementer', ...)`, then auto-launch review again.
+When user chooses "Commit": run the **Pre-Commit Gate** below, then invoke `Skill("git-commit")`. When "Fix issues": delegate fixes via `Agent(subagent_type: 'sdd-implementer', ...)`, then auto-launch review again.
+
+### Pre-Commit Gate (run BEFORE delegating to `git-commit`)
+
+`git-commit` is agent-agnostic and is used outside SDD too — it does not know the `{change-name}` and cannot validate branch fitness on its own. The orchestrator owns that check:
+
+1. Read current branch: `git rev-parse --abbrev-ref HEAD`.
+2. Read base reference: `git rev-parse --abbrev-ref origin/HEAD` (fallback `main` / `master`).
+3. Decide if branch is **fit** for this change:
+   - The branch slug contains `{change-name}` (case-insensitive substring match), OR
+   - The branch has **zero** commits ahead of base (`git rev-list --count {base}..HEAD` returns `0`).
+4. If branch is **unfit** (e.g. `main`, `master`, or a feature branch carrying commits unrelated to `.sdd/{change}/`):
+   - Surface to the user via `AskUserQuestion`:
+     - **Create new feature branch** (recommended) — `git checkout -b feature/{change-name}` from the base, then commit.
+     - **Commit on current branch anyway** — proceed without changing branches.
+     - **Abort** — leave changes uncommitted.
+5. If "Create new feature branch": run `git checkout -b feature/{change-name}` (or the slugified equivalent if the name has invalid chars). Then continue to `Skill("git-commit")`.
+6. If branch is fit, skip the prompt and go straight to `Skill("git-commit")`.
+
+This gate runs ONLY in the SDD flow — standalone uses of `git-commit` are unaffected.
 
 On workflow completion with commit: offer `Skill("git-pull-request")`.
 
