@@ -5,6 +5,13 @@ All notable changes to the DevRune Starter Catalog will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0](https://github.com/davidarce/devrune-starter-catalog/compare/v0.5.0...v0.6.0) (2026-05-05)
+
+
+### Features
+
+* **sdd:** include write-a-prd as workflow dependency ([#47](https://github.com/davidarce/devrune-starter-catalog/issues/47)) ([b57cf03](https://github.com/davidarce/devrune-starter-catalog/commit/b57cf03961854584c1596fd5437269e75b28dd9c))
+
 ## [0.5.0](https://github.com/davidarce/devrune-starter-catalog/compare/v0.4.3...v0.5.0) (2026-05-05)
 
 
