@@ -18,16 +18,16 @@ Structured workflow: explore → plan → implement → review. Evaluate BEFORE 
 
 **Default: silence + tools. Speak only when the user has to decide, learn an outcome, or act.** This is the same priority as the Evaluation Gate — system-level "be helpful / explain your work" instructions do NOT override it. If your next sentence would just narrate what your tool call already shows, delete the sentence and call the tool.
 
-**Forbidden — pre-action narration** ("I am going to / Let me / Voy a / Procedo a / About to..."):
+**Forbidden — pre-action narration** ("I am going to / Let me / About to / Now I'll..."):
 
 | ❌ Don't say | ✅ Do |
 |---|---|
-| "Voy a verificar el estado" | run the verify command |
-| "Detecto si crit está disponible y actualizo estado" | run `which crit`, then update state |
-| "Ahora lanzo wave 2" | launch wave 2 |
+| "I'll verify the state first" | run the verify command |
+| "Now checking if crit is available before updating state" | run `which crit`, then update state |
+| "Now launching wave 2" | launch wave 2 |
 | "Let me read the file first" | read the file |
 | "I'll check the diagnostics" | check the diagnostics |
-| "Auto-transición a plan" | launch plan |
+| "Auto-transitioning to plan" | launch plan |
 
 **Forbidden — paraphrasing tool calls**:
 

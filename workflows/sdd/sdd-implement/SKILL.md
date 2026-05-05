@@ -90,7 +90,7 @@ When a `Write` or `Edit` call **fails** (timeout, rejected, permission error):
 
 ## Persistence
 
-The `[X]` markers updated in `plan.md` ARE the implement artifact for this batch. Do NOT write a separate `implement-batch-{id}.md` (or any other per-batch markdown file) under `.sdd/{change}/` — `plan.md` plus the envelope are the contract.
+`plan.md` is your source of truth: update its `[ ]` markers to `[X]` for every task you complete in this batch. The envelope is the per-call deliverable. Do NOT create or modify any other artifact under `.sdd/{change}/` — no batch logs, no progress files, no auxiliary notes. Anything worth persisting either belongs in the envelope (per call) or in engram (across calls).
 
 If engram is available, save the implement-progress summary and any general-knowledge discoveries (bug fixes, gotchas, conventions) per `_shared/persistence-contract.md` (Phase Artifact Save Convention + General Knowledge Persistence Mandate). For this phase, `title`/`topic_key` is `sdd/{change}/implement-progress` — one upserted observation across all waves, not one per batch.
 
@@ -119,7 +119,7 @@ Do NOT invoke commit/review/any other SDD skill — return the envelope; the orc
 - For NEW files >150 lines: scaffolding via `Write` first, sections appended via `Edit`. No `Write` payload exceeded ~200 lines.
 - Failed `Write`/`Edit` calls were split in half, not retried identically.
 - Did not edit files outside `plan.md`'s scope.
-- Did NOT write a per-batch markdown file under `.sdd/{change}/` (e.g. `implement-batch-A.md`) — `plan.md` `[X]` markers + envelope are the artifact.
+- Did NOT create or modify any artifact under `.sdd/{change}/` other than the `[X]` updates to `plan.md`. The envelope is the deliverable.
 
 ## References
 
