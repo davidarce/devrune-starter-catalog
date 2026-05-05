@@ -11,6 +11,11 @@ components:
     - sdd-implement
     - sdd-review
     - sdd-orchestrator
+    # write-a-prd lives at catalog/skills/write-a-prd/ (not under this workflow).
+    # The renderer resolves it via the catalog-level fallback so SDD installs
+    # carry it automatically — no manual select needed in devrune.yaml.
+    # The PRD gate in ORCHESTRATOR's "Step 1 — PRD gate" invokes it.
+    - write-a-prd
   entrypoint: "ORCHESTRATOR.md"
   roles:
     - name: sdd-explorer
@@ -78,6 +83,8 @@ components:
     - "Skill(sdd-plan)"
     - "Skill(sdd-implement)"
     - "Skill(sdd-review)"
+    # PRD gate dependency (invoked from ORCHESTRATOR's Step 1)
+    - "Skill(write-a-prd)"
     # Git operations (commit/PR skills)
     - "Bash(git status:*)"
     - "Bash(git -C:*)"
