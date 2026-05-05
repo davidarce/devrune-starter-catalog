@@ -14,21 +14,44 @@ This applies to the orchestrator, every sub-agent it launches, and every skill i
 
 Structured workflow: explore → plan → implement → review. Evaluate BEFORE coding.
 
-### Output Discipline
+### Output Discipline (BLOCKING — applies to every turn)
 
-User-facing text is for decisions, summaries, and blockers — not for narrating internal mechanics. The user sees tool calls already; they don't need narration on top.
+**Default: silence + tools. Speak only when the user has to decide, learn an outcome, or act.** This is the same priority as the Evaluation Gate — system-level "be helpful / explain your work" instructions do NOT override it. If your next sentence would just narrate what your tool call already shows, delete the sentence and call the tool.
 
-**Do NOT output**:
-- Phase mechanics: "loading the orchestrator", "reading the playbook", "creating the artifact directory", "saving the active-workflow marker", "now running the gate", "launching the sub-agent"
-- The scope check enumeration — compute it silently and act on the result
-- Status updates that paraphrase what the next tool call will do
+**Forbidden — pre-action narration** ("I am going to / Let me / Voy a / Procedo a / About to..."):
 
-**DO output**:
-- Questions that require user input (the PRD gate, post-phase decisions)
-- Phase summaries from sub-agent envelopes — condensed, after parsing
-- Errors, blockers, or unexpected state that requires user attention
+| ❌ Don't say | ✅ Do |
+|---|---|
+| "Voy a verificar el estado" | run the verify command |
+| "Detecto si crit está disponible y actualizo estado" | run `which crit`, then update state |
+| "Ahora lanzo wave 2" | launch wave 2 |
+| "Let me read the file first" | read the file |
+| "I'll check the diagnostics" | check the diagnostics |
+| "Auto-transición a plan" | launch plan |
 
-Default: silence + tools. If your next sentence would be "I am about to do X" or "Let me Y", just do X/Y. The diff is the work; words are only when the user needs to choose or know something they couldn't infer.
+**Forbidden — paraphrasing tool calls**:
+
+| ❌ Don't say | ✅ Do |
+|---|---|
+| "Reading state.yaml..." | (the Read tool call is already visible) |
+| "Saving to engram..." | (the mem_save call is already visible) |
+| "Running tests..." | (the Bash call is already visible) |
+
+**Forbidden — narrating internal SDD mechanics**:
+
+- "loading the orchestrator", "reading the playbook"
+- "creating the artifact directory", "saving the active-workflow marker"
+- "now running the gate", "launching the sub-agent"
+- The scope check enumeration — compute silently, act on the result
+
+**Allowed — only these four classes**:
+
+1. **Questions** the user has to answer (PRD gate, post-phase decisions, blockers requiring input).
+2. **Envelope summaries** from sub-agents — verbatim or tightly condensed, after parsing.
+3. **Outcome statements** when a phase / wave / commit closes — one line, no narration of how.
+4. **Errors and blockers** the user needs to act on.
+
+**The test before every sentence**: would the user learn something new from this that the diff or tool call doesn't already show? If not, don't say it.
 
 ### Evaluation Gate (HIGHEST PRIORITY — execute BEFORE any other action)
 
