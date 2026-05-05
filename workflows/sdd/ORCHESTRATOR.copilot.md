@@ -86,7 +86,7 @@ After saving the active-workflow marker and before invoking `@sdd-explorer`, ass
 3. **If context is thin**: ask the user once:
    - "Draft a PRD first to clarify scope" (recommended)
    - "Proceed anyway with what we have"
-4. **If "Draft PRD"**: invoke the skill `write-a-prd` with the change-name. The skill runs the interview and persists `.sdd/{change-name}/prd.md`. Continue to the explore invocation when it returns.
+4. **If "Draft PRD"**: invoke the skill `write-a-prd` with the change-name. The skill runs the interview in your context and persists `.sdd/{change-name}/prd.md`. **When the skill returns, auto-launch the explore sub-agent immediately** — no ask, no narration, no wait. The user's choice in step 3 covers the whole PRD→explore arc.
 5. **If "Proceed anyway"**: invoke `@sdd-explorer` directly.
 
 The PRD is opt-in for thin contexts only — never force it, never offer it when the user already gave you enough. `@sdd-explorer` and `@sdd-planner` consume `prd.md` only when present; behaviour is unchanged when it isn't.
@@ -198,15 +198,22 @@ A large plan exhausts a single sub-agent's context. The orchestrator drives wave
 
 ## Post-Review Fix Cycle
 
-After review completes, options depend on status:
-- `ok` -> **Commit** (via `@git-commit` agent) / **Done (no commit)**
-- `warning` -> **Commit anyway** (via `@git-commit` agent) / **Fix issues first** / **Done**
-- `failed` -> **Fix issues** / **Done** (NO commit option)
+After review completes, actions depend on status:
 
-When user chooses "Commit": invoke the `@git-commit` agent — do NOT run git commands directly. The branch was set up at workflow start (see "First Sub-Agent of a New Workflow"), so no branch validation is needed here.
+- `ok` → **Auto-commit** (invoke `@git-commit` agent immediately, no ask) → **Auto-PR** (invoke
+  `@git-pull-request` agent immediately, no ask) → write marker COMPLETED. No user prompts.
+  - If commit fails: set `awaiting_user_decision=post-review-commit-retry` in state.yaml;
+    ask **Retry commit** / **Abort** — marker stays ACTIVE.
+  - If PR fails: set `awaiting_user_decision=post-review-pr-retry` in state.yaml;
+    ask **Retry PR** / **Abort** — marker stays ACTIVE.
+- `warning` → ask: **Commit anyway** (via `@git-commit` agent) / **Fix issues first** / **Done**
+- `failed` → ask: **Fix issues** / **Done** (NO commit option)
+
+When user chooses "Commit" (warning path): invoke the `@git-commit` agent — do NOT run git commands directly. The branch was set up at workflow start (see "First Sub-Agent of a New Workflow"), so no branch validation is needed here.
 When user chooses "Fix issues": delegate fixes to a sub-agent (orchestrator NEVER fixes code), then auto-launch review again.
 
-On workflow completion with commit: offer PR creation via the `@git-pull-request` agent.
+On Abort at any status: clear `awaiting_user_decision`; write marker ABORTED.
+Terminal states: COMPLETED (success) and ABORTED (gave up) — no partial-success terminal.
 
 On workflow completion or abort, clear the marker:
 ```

@@ -52,6 +52,8 @@ Create the implementation plan for the next phase. The plan file is your entire 
 
    <!-- ADVISOR_TABLE_PLACEHOLDER -->
 
+   **Adviser coverage rule**: for each adviser in the registry (identified by its SKILL.md `description` frontmatter), evaluate whether the plan's contracts, tasks, or affected layers fall under that adviser's described domain. If the domain overlap is clear, that adviser MUST appear in Team Selection. Skip is allowed only with an explicit rationale that quotes or references the adviser's `description` frontmatter text — boilerplate like "not relevant" is rejected by the Detail Quality Gate. Err toward inclusion when the overlap is borderline.
+
    If no advisor skills are listed above, skip steps 5 and 7 and proceed to step 6.
 
    Process:
@@ -100,6 +102,7 @@ Create the implementation plan for the next phase. The plan file is your entire 
    3. **Before/After Analysis** — modification tasks show current → proposed state in Section 2's "Before/After Analysis".
    4. **Testable Checkpoints** — every phase Checkpoint lists specific verifiable criteria.
    5. **PRD coverage** (only when `prd.md` exists for this change) — for **every** User Story / requirement listed in `prd.md`, at least one task in `plan.md` must demonstrably implement it. Walk the PRD top-to-bottom: for each US/requirement, name the TXXX task(s) that cover it. If any US has zero matching tasks, it's a gap — add the missing task(s) BEFORE continuing. Document the mapping in `## 4. Clarifications` as `- **PRD coverage**: US1 → T003,T007 / US2 → T011 / US3 → T012-T014`. The reviewer will catch the gap if you don't, but late-stage rework is more expensive than fixing it here.
+   6. **Adviser coverage** — every installed adviser whose described domain overlaps this plan's contracts or tasks appears in Team Selection, or has an explicit skip rationale that quotes or references the adviser's `description` frontmatter text. Boilerplate ("not relevant", "out of scope") without a domain reference fails this check.
 
    If any check fails, fill the missing detail before continuing.
 

@@ -70,3 +70,4 @@ Do NOT include file paths, code snippets, module sketches, or implementation/tes
 - No file paths, code snippets, module sketches, or testing details in the document.
 - Ambiguities the user could not resolve are listed in Further Notes (not silently dropped).
 - Did NOT submit external issues or call external services.
+- Did NOT emit handoff narration after persisting the PRD; the host's main loop resumes immediately when this skill returns.
