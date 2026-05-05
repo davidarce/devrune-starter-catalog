@@ -108,7 +108,7 @@ mem_save(
   topic_key: "sdd/{change}/active-workflow",
   type: "architecture", project: "{project}",
   title: "sdd/{change}/active-workflow",
-  content: "ACTIVE SDD workflow: {change}. Phase: starting explore."
+  content: "ACTIVE SDD workflow: {change}. Workdir: .sdd/{change}/. Phase: starting explore."
 )
 ```
 

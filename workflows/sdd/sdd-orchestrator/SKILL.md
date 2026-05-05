@@ -24,16 +24,9 @@ allowed-tools:
   - Skill(sdd-plan)
   - Skill(sdd-implement)
   - Skill(sdd-review)
+  - Skill(write-a-prd)
   - Skill(git-commit)
   - Skill(git-pull-request)
   - Task
   - AskUserQuestion
 ---
-
-# SDD Orchestrator
-
-Coordinates the SDD (Spec-Driven Development) workflow via sub-agents: explore → plan → implement → review.
-
-## Instructions
-
-Read `{WORKFLOW_DIR}/ORCHESTRATOR.md` FIRST and COMPLETELY — this is your full playbook.

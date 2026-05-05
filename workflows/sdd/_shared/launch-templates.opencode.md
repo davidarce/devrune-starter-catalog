@@ -103,7 +103,7 @@ mem_save(
   topic_key: "sdd/{change}/active-workflow",
   type: "architecture", project: "{project}",
   title: "sdd/{change}/active-workflow",
-  content: "ACTIVE SDD workflow: {change}. Orchestrator: {WORKFLOW_DIR}/ORCHESTRATOR.opencode.md. Phase: starting explore. NEXT: explore -> launch explore sub-agent"
+  content: "ACTIVE SDD workflow: {change}. Workdir: .sdd/{change}/. Phase: starting explore. NEXT: explore -> launch explore sub-agent"
 )
 ```
 

@@ -1,6 +1,4 @@
-# SDD Orchestrator (delegate-only coordinator)
-
-## Role Invariant — you orchestrate, you do not implement
+## Your Role
 
 Outside `.sdd/{change}/`, your only outputs are: sub-agent launches via `Task(subagent_type: '...', ...)`, `AskUserQuestion`, `mkdir` for `.sdd/`, and `Bash(crit ...)` per the Crit Plan Review Protocol.
 
@@ -22,16 +20,6 @@ If your next planned action is on the "do not" list, you have lost the role — 
                       → show summary → ask user
 ```
 
-## Phase-to-Model Table
-
-| Phase | Skill | Model | Subagent Type |
-|-------|-------|-------|---------------|
-| explore | `sdd-explore` | `{WORKFLOW_MODEL_EXPLORER}` | |
-| plan | `sdd-plan` | `{WORKFLOW_MODEL_PLANNER}` | |
-| implement | `sdd-implement` | `{WORKFLOW_MODEL_IMPLEMENTER}` | |
-| review | `sdd-review` | `{WORKFLOW_MODEL_REVIEWER}` | |
-| advisor | `*-advisor` | `{WORKFLOW_MODEL_ADVISOR}` ⭐ | `general-purpose` (hardcoded) |
-
 ## Evaluation Gate
 
 **MUST offer SDD** when ANY: multi-file (3+), cross-layer, new feature, behavioral change, unclear scope.
@@ -52,8 +40,28 @@ Before the first launch, save the active-workflow marker to engram (if available
 ```
 mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-workflow",
   type: "architecture", project: "{project}",
-  content: "ACTIVE SDD workflow: {change}. Orchestrator: {WORKFLOW_DIR}/ORCHESTRATOR.opencode.md. Phase: starting explore.")
+  content: "ACTIVE SDD workflow: {change}. Workdir: .sdd/{change}/. Phase: starting explore.")
 ```
+
+## Step 1 — PRD gate (before explore phase)
+
+After saving the active-workflow marker and before launching the explore sub-agent, assess whether context is sufficient to start exploring without inventing scope. Catches poor context before burning tokens on exploration.
+
+1. **Scope check** — count how many of these signals are present in the prompt, the bound ticket body, or via reasonable inference when a mention maps to a real artifact in the repo.
+   - [ ] **Specific files or paths**: at least one concrete file path or filename — either explicit, or via clear mapping from a mention to a real file in the repo
+   - [ ] **Out-of-scope statement**: explicit phrase listing what is NOT included (e.g., "out of scope:", "do not change X", "skip the Y flow")
+   - [ ] **Bound ticket with non-empty body**: a ticket id was provided AND the ticket body was retrieved with substantive content
+   - [ ] **Concrete acceptance criteria**: enumerated assertions, dimensions, or "done when X" criteria — not just a goal statement
+
+   If 2 or more boxes are checked, context is sufficient. If fewer than 2, context is THIN.
+2. **If context is sufficient**: continue directly to the explore phase. Do NOT prompt the user.
+3. **If context is thin**: ask once via `AskUserQuestion`:
+   - "Draft a PRD first to clarify scope" (recommended)
+   - "Proceed anyway with what we have"
+4. **If "Draft PRD"**: invoke `Skill("write-a-prd")` with the change-name. The skill runs the interview in your context and persists `.sdd/{change-name}/prd.md`. Continue to explore when it returns.
+5. **If "Proceed anyway"**: continue directly to the explore phase.
+
+The PRD is opt-in for thin contexts only — never force it, never offer it when the user already gave you enough. `sdd-explore` and `sdd-plan` consume `prd.md` only when present; behaviour is unchanged when it isn't.
 
 ## Post-Phase Protocol (MANDATORY after EVERY sub-agent)
 
@@ -75,7 +83,7 @@ mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-
      topic_key: "sdd/{change}/active-workflow",
      type: "architecture", project: "{project}",
      title: "sdd/{change}/active-workflow",
-     content: "ACTIVE SDD workflow: {change}. Orchestrator: {WORKFLOW_DIR}/ORCHESTRATOR.opencode.md. NEXT: {phase} phase -> {next step}."
+     content: "ACTIVE SDD workflow: {change}. Workdir: .sdd/{change}/. NEXT: {phase} phase -> {next step}."
    )
    ```
 

@@ -28,7 +28,7 @@ Create the implementation plan for the next phase. The plan file is your entire 
 
 ## Main Flow
 
-1. **Read exploration context** from `.sdd/{change-name}/exploration.md`.
+1. **Read context** from `.sdd/{change-name}/exploration.md`. If `.sdd/{change-name}/prd.md` exists, read it too — PRD is the WHAT/WHY (user perspective), exploration.md is the WHERE (codebase context); the plan combines both into the HOW.
 
    If `exploration.md` is missing or incomplete, recover via the two-step pattern in `_shared/persistence-contract.md`. If neither file nor engram has it, return envelope with `status: blocked`.
 
