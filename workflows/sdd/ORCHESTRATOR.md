@@ -124,12 +124,17 @@ The PRD is opt-in for thin contexts only — never force it, never offer it when
 
 Triggered automatically by Post-Phase Protocol step 6 when `which crit` succeeds after a plan phase.
 
-1. **Launch**: Run `crit plan --name {change} .sdd/{change}/plan.md` in background (Bash, `run_in_background: true`). Tell user: "Crit is open in your browser. Leave inline comments on the plan, then click Finish Review."
-2. **Wait**: Do NOT proceed until the background task completes.
-   - **If the Bash call times out or fails**: Do NOT treat this as approval. The absence of `.crit.json` means the review was NEVER completed — NOT that it was approved with no comments. Tell the user: "Crit review was interrupted (timeout/error). Would you like to: **Retry Crit review** / **Skip Crit, review plan manually** / **Approve plan as-is**". Do NOT proceed to implement until the user explicitly approves.
-3. **Read feedback**: Read `~/.crit/plans/{change}/.crit.json` using the Read tool. Note: plan mode stores `.crit.json` in `~/.crit/plans/{change}/`, NOT in the project root.
-4. **Parse**: Extract all comments where `resolved` is `false` or missing.
-5. **Branch**:
+1. **Pre-flight**: before opening the browser, scan for stale daemons that could swallow this review:
+   - `pgrep -f "crit plan.*{change}"` — if a leftover daemon from an earlier run is still alive, kill it (`pkill -f "crit plan.*{change}"`) so this round writes to a clean state. Skip this if no match.
+   - This avoids the EOF / "could not reach crit daemon" failure mode where a half-dead daemon from a previous round eats the new request.
+2. **Launch**: Run `crit plan --name {change} .sdd/{change}/plan.md` in background (Bash, `run_in_background: true`). Tell user: "Crit is open in your browser. Leave inline comments on the plan, then click Finish Review."
+3. **Wait**: Do NOT proceed until the background task completes.
+   - **If the Bash call fails with a daemon error** (`could not reach crit daemon`, `EOF`, connection refused) AND no `~/.crit/plans/{change}/.crit.json` exists yet: do **one** auto-retry transparently — kill any stale process matching `crit plan.*{change}` and re-launch step 2. Tell the user once: "Crit daemon dropped — retrying once." If the retry also fails, surface to the user: **Retry Crit review** / **Skip Crit, review plan manually** / **Approve plan as-is**. Do NOT loop the auto-retry beyond one attempt.
+   - **If the Bash call times out** (user took too long): Do NOT treat this as approval. The absence of `.crit.json` means the review was NEVER completed. Surface to the user with the same three options.
+   - **If `~/.crit/plans/{change}/.crit.json` exists despite a Bash error**: the daemon wrote feedback before dying — proceed to step 4 with the file as truth.
+4. **Read feedback**: Read `~/.crit/plans/{change}/.crit.json` using the Read tool. Note: plan mode stores `.crit.json` in `~/.crit/plans/{change}/`, NOT in the project root.
+5. **Parse**: Extract all comments where `resolved` is `false` or missing.
+6. **Branch**:
    - **Has unresolved comments**: Format as CRIT_FEEDBACK markdown (see format below). Re-launch `sdd-plan` sub-agent using the Plan Re-entry template from `{WORKFLOW_DIR}/_shared/launch-templates.md`. After sub-agent returns envelope, increment `plan_review_round` in `state.yaml` and loop back to step 1 (run crit again for next round).
    - **No unresolved comments**: Plan approved. Set `crit_completed: true` in `.sdd/{change}/state.yaml`. Show "Plan approved via Crit review. Auto-launching implement phase." Proceed to Post-Phase step 7.
 
