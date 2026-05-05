@@ -99,6 +99,7 @@ Create the implementation plan for the next phase. The plan file is your entire 
    2. **Contract Specifications** — if the plan introduces new types/interfaces/schemas, Section 2 has a populated "Contract Specifications" with exact signatures.
    3. **Before/After Analysis** — modification tasks show current → proposed state in Section 2's "Before/After Analysis".
    4. **Testable Checkpoints** — every phase Checkpoint lists specific verifiable criteria.
+   5. **PRD coverage** (only when `prd.md` exists for this change) — for **every** User Story / requirement listed in `prd.md`, at least one task in `plan.md` must demonstrably implement it. Walk the PRD top-to-bottom: for each US/requirement, name the TXXX task(s) that cover it. If any US has zero matching tasks, it's a gap — add the missing task(s) BEFORE continuing. Document the mapping in `## 4. Clarifications` as `- **PRD coverage**: US1 → T003,T007 / US2 → T011 / US3 → T012-T014`. The reviewer will catch the gap if you don't, but late-stage rework is more expensive than fixing it here.
 
    If any check fails, fill the missing detail before continuing.
 
@@ -177,6 +178,7 @@ Do NOT invoke `sdd-implement` or any other SDD skill — return the envelope; th
 ## Self-Check (before returning the envelope)
 
 - `exploration.md` was read; the plan extends/refines it instead of duplicating.
+- If `prd.md` exists, every User Story / requirement maps to ≥ 1 task (PRD coverage check from step 6's Detail Quality Gate). Mapping is recorded in `## 4. Clarifications`.
 - All template sections are filled — no `[PENDING]` placeholders remain. Status is `✅ Complete`.
 - Deep Interview ran (or was explicitly skipped with the `≤3 files` rationale recorded in `## 4. Clarifications`); responses use the `[Dimension]` format.
 - Every task uses the strict `- [ ] TXXX Description — file_path` format with uppercase `[X]` semantics.

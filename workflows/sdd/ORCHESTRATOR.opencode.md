@@ -36,12 +36,32 @@ For every phase, use the `Task` tool to spawn a sub-agent. The sub-agent's promp
 
 ### First Sub-Agent of a New Workflow
 
-Before the first launch, save the active-workflow marker to engram (if available):
-```
-mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-workflow",
-  type: "architecture", project: "{project}",
-  content: "ACTIVE SDD workflow: {change}. Workdir: .sdd/{change}/. Phase: starting explore.")
-```
+When `.sdd/{change}/state.yaml` does NOT yet exist (genuine new workflow, not a resume):
+
+1. **Workdir**: `mkdir -p .sdd/{change}/` (absolute path resolved from the orchestrator invocation directory).
+2. **Branch setup** (run once, here — not at commit time):
+   - Read current branch: `git rev-parse --abbrev-ref HEAD`.
+   - Read base reference: `git rev-parse --abbrev-ref origin/HEAD` (fallback `main` / `master`).
+   - Decide if the current branch is **fit** for this change:
+     - The branch slug already contains `{change-name}` (case-insensitive substring match), OR
+     - The branch has **zero** commits ahead of base (`git rev-list --count {base}..HEAD` returns `0`).
+   - If the branch is unfit (e.g. `main`, `master`, or a feature branch carrying commits unrelated to this change):
+     - Pick a branch type from intent. Look at the user prompt + bound ticket (Jira issue type, GitHub issue label) for signal:
+       - "fix", "bug", "regression", "broken" → `fix`
+       - "feat", "add", "implement", "new feature" → `feat`
+       - "refactor", "cleanup", "tidy", "rename", "extract" → `refactor`
+       - "docs", "documentation" → `docs`
+       - "chore", "deps", "release" → `chore`
+     - When unclear, ask once via `AskUserQuestion`: **feat** / **fix** / **refactor** / **chore** / **Stay on current branch**.
+     - Run `git checkout -b {type}/{change-name}` from the base branch.
+3. **Active-workflow marker** (engram, if available):
+   ```
+   mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-workflow",
+     type: "architecture", project: "{project}",
+     content: "ACTIVE SDD workflow: {change}. Workdir: .sdd/{change}/. Phase: starting explore.")
+   ```
+
+When `.sdd/{change}/state.yaml` DOES exist (resume case): skip steps 1 and 2. The branch was already chosen at the original workflow start; mid-workflow branch changes are deliberate user choices and do NOT need re-validation. Recovery jumps straight to the next pending phase.
 
 ## Step 1 — PRD gate (before explore phase)
 
@@ -64,6 +84,8 @@ After saving the active-workflow marker and before launching the explore sub-age
 The PRD is opt-in for thin contexts only — never force it, never offer it when the user already gave you enough. `sdd-explore` and `sdd-plan` consume `prd.md` only when present; behaviour is unchanged when it isn't.
 
 ## Post-Phase Protocol (MANDATORY after EVERY sub-agent)
+
+**Trust the envelope.** A sub-agent that returns `status: ok` with a `Gates:` line listing project gate results (build / test / lint / format / type-check — whatever the project uses) has already run those gates and passed. The orchestrator MUST NOT re-run any verification command after an `ok` envelope — that's the implementer's contract, and re-running burns tokens, time, and Output Discipline. Only when an envelope returns `status: warning` or `status: failed` does manual validation belong here, and even then only on the specific signals the envelope flagged.
 
 1. **Parse** the SDD Envelope from sub-agent output (format: `{WORKFLOW_DIR}/_shared/envelope-contract.md`). For parallel implement waves: run steps 1–3 for EACH sub-agent envelope in the wave. Aggregate status: if all `ok` → wave is `ok`; if any `failed` → wave is `failed`; if any `warning` but none `failed` → wave is `warning`.
 2. **Write state.yaml**: `.sdd/{change}/state.yaml` per schema in `{WORKFLOW_DIR}/_shared/persistence-contract.md`. For parallel waves: write the highest-severity status from all sub-agents in the wave.
@@ -117,11 +139,14 @@ The PRD is opt-in for thin contexts only — never force it, never offer it when
 
 Triggered automatically by Post-Phase Protocol step 6 when `which crit` succeeds after a plan phase.
 
-1. **Launch**: Run `crit plan --name {change} .sdd/{change}/plan.md` as a **foreground Bash call** (blocking — do NOT use `run_in_background`). Use a timeout of at least 30 minutes (1800000ms) — Crit is interactive and the user needs time to read and comment on the plan. Tell user: "Crit is open in your browser. Leave inline comments on the plan, then click Finish Review." Do NOT proceed until the Bash call returns — it blocks until the user clicks Finish Review.
-   - **If the Bash call times out or fails**: Do NOT treat this as approval. The absence of `.crit.json` means the review was NEVER completed — NOT that it was approved with no comments. Tell the user: "Crit review was interrupted (timeout/error). Would you like to: **Retry Crit review** / **Skip Crit, review plan manually** / **Approve plan as-is**". Do NOT proceed to implement until the user explicitly approves.
-2. **Read feedback**: Read `~/.crit/plans/{change}/.crit.json` using the Read tool. Note: plan mode stores `.crit.json` in `~/.crit/plans/{change}/`, NOT in the project root.
-3. **Parse**: Extract all comments where `resolved` is `false` or missing.
-4. **Branch**:
+1. **Pre-flight**: scan for stale daemons (`pgrep -f "crit plan.*{change}"`); if a leftover from an earlier round is still alive, `pkill -f "crit plan.*{change}"`. Avoids the EOF / "could not reach crit daemon" failure where a half-dead daemon eats the new request.
+2. **Launch**: Run `crit plan --name {change} .sdd/{change}/plan.md` as a **foreground Bash call** (blocking — do NOT use `run_in_background`). Use a timeout of at least 30 minutes (1800000ms) — Crit is interactive and the user needs time to read and comment on the plan. Tell user: "Crit is open in your browser. Leave inline comments on the plan, then click Finish Review." Do NOT proceed until the Bash call returns — it blocks until the user clicks Finish Review.
+   - **If the Bash call fails with a daemon error** (`could not reach crit daemon`, `EOF`, connection refused) AND no `~/.crit/plans/{change}/.crit.json` yet: do **one** auto-retry silently — `pkill -f "crit plan.*{change}"` and re-launch step 2. Do NOT narrate the retry to the user. If the retry also fails, ask: **Retry Crit review** / **Skip Crit, review plan manually** / **Approve plan as-is**. Do NOT loop the auto-retry beyond one attempt.
+   - **If the Bash call times out** (user took too long): Do NOT treat this as approval. Ask the user with the same three options.
+   - **If `.crit.json` exists despite a Bash error**: the daemon wrote feedback before dying — proceed to step 3 with the file as truth.
+3. **Read feedback**: Read `~/.crit/plans/{change}/.crit.json` using the Read tool. Note: plan mode stores `.crit.json` in `~/.crit/plans/{change}/`, NOT in the project root.
+4. **Parse**: Extract all comments where `resolved` is `false` or missing.
+5. **Branch**:
    - **Has unresolved comments**: Format as CRIT_FEEDBACK markdown (see format below). Re-launch `sdd-plan` sub-agent using the Plan Re-entry template from `{WORKFLOW_DIR}/_shared/launch-templates.md`. After sub-agent returns envelope, increment `plan_review_round` in `state.yaml` and loop back to step 1 (run crit again for next round — always foreground).
    - **No unresolved comments**: Plan approved. Set `crit_completed: true` in `.sdd/{change}/state.yaml`. Show "Plan approved via Crit review. Auto-launching implement phase." Proceed to Post-Phase step 7.
 
@@ -166,7 +191,7 @@ After review completes, options depend on status:
 - `warning` -> **Commit anyway** (via `git-commit` skill) / **Fix issues first** / **Done**
 - `failed` -> **Fix issues** / **Done** (NO commit option)
 
-When user chooses "Commit": invoke `Skill("git-commit")` — do NOT run git commands directly.
+When user chooses "Commit": invoke `Skill("git-commit")` — do NOT run git commands directly. The branch was set up at workflow start (see "First Sub-Agent of a New Workflow"), so no branch validation is needed here.
 When user chooses "Fix issues": delegate fixes to a sub-agent (orchestrator NEVER fixes code), then auto-launch review again.
 
 On workflow completion with commit: offer PR creation via `Skill("git-pull-request")`.

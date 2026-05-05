@@ -45,43 +45,43 @@ Sub-agents launch with a fresh context and NO access to the orchestrator's memor
 
 The orchestrator writes `.sdd/{change}/state.yaml` after each phase transition. This enables recovery after context compaction even without engram.
 
+**Keep state.yaml minimal.** It exists to answer two questions during recovery: "which phase resumes next?" and "did Crit approve the plan?". Anything that can be derived from the workdir at recovery time (artifact list, batch progress) does NOT belong in state.yaml — that's noise that fights the file's purpose.
+
 ```yaml
 change: {change-name}
 current_phase: {phase that just completed}   # explore | plan | implement | review
-phases:
-  explore: done | pending | in_progress
-  plan: done | pending | in_progress
-  implement: done | pending | in_progress
-  review: done | pending | in_progress
-artifacts:
-  - .sdd/{change}/exploration.md
-  - .sdd/{change}/plan.md
-  # ... list all artifact files that exist at this point
+status: {ok | warning | failed | blocked}    # status of last_envelope
 last_updated: {ISO 8601 datetime}
-plan_review_round: 1  # Optional. Tracks the number of Crit review rounds completed for the plan phase.
-                      # Omitted if no Crit review was performed. Incremented by the orchestrator
-                      # each time the plan is re-entered with Crit feedback.
-crit_completed: true  # Optional. Set to `true` by the orchestrator when Crit review finishes with no
-                      # unresolved comments (plan approved). Used by the Crit confirmation guard in
-                      # Post-Phase step 7 to (a) skip the redundant "Continue to implement" prompt and
-                      # auto-launch implement, and (b) avoid re-launching Crit on compaction recovery.
-                      # Omitted while a Crit review is still in progress or was never run.
+
+# Optional — only when relevant
+last_envelope:
+  next_recommended: {explore | plan | implement | review | commit}
+guidance_round: {N}        # Optional. Increments per advisor consultation cycle in plan phase.
+plan_review_round: {N}     # Optional. Increments per Crit review round.
+crit_completed: true       # Optional. Set when Crit approves the plan (no unresolved comments).
+review_round: {N}          # Optional. Increments per post-review fix cycle.
 ```
+
+**Explicitly NOT in state.yaml**:
+
+- `artifacts:` list — derived from `ls .sdd/{change}/` at recovery time. Listing files in state.yaml duplicates what the filesystem already shows and forces every transition to mutate state on disk.
+- `batches_completed:` array — the `[X]` markers in `plan.md` are the source of truth for batch progress. Counting them at recovery is cheap.
+- `phases:` map — `current_phase` plus the natural pipeline order (explore → plan → implement → review) is enough to determine what's `done` vs `pending`. The map is redundant.
 
 ### Write Rules
 
 - **Always written** after each phase completes (file-based, never fails)
 - **Orchestrator is the sole writer** -- sub-agents never modify state.yaml
-- The `artifacts` map reflects which `.sdd/{change}/` files exist at that point
+- **Append-only optional fields**: when a field becomes relevant (first Crit round, first review fix, etc.), add it. Do NOT pre-create empty fields.
 
 ### Recovery via state.yaml
 
 When the orchestrator resumes after compaction:
 
-1. Read `.sdd/{change}/state.yaml` to determine `current_phase` (last completed)
-2. Check `phases` map to see which phases are `done`, `pending`, or `in_progress`
-3. Parse `artifacts` list to know which `.sdd/` files are available
-4. Resume from the next `pending` phase in the pipeline
+1. Read `.sdd/{change}/state.yaml` → `current_phase` and `status`.
+2. Compute available artifacts: `ls .sdd/{change}/*.md`.
+3. If `current_phase: implement` and `plan.md` exists, count `[X]` vs `[ ]` markers to determine batch progress.
+4. Resume from the next pipeline phase (or the next pending batch within `implement`).
 
 ### Optional Engram State Save
 
