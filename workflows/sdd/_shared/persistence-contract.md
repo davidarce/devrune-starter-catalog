@@ -60,6 +60,15 @@ guidance_round: {N}        # Optional. Increments per advisor consultation cycle
 plan_review_round: {N}     # Optional. Increments per Crit review round.
 crit_completed: true       # Optional. Set when Crit approves the plan (no unresolved comments).
 review_round: {N}          # Optional. Increments per post-review fix cycle.
+
+# Optional — set by orchestrator during review→completion auto-flow
+commit_completed: true          # boolean; set after git-commit skill returns ok
+commit_sha: "<git-sha>"         # string; set alongside commit_completed for audit + idempotence
+awaiting_user_decision: "<enum>" # string; set when auto-flow stops at a failure ask
+                                  # valid values:
+                                  #   post-review-commit-retry  (commit failed)
+                                  #   post-review-pr-retry      (PR failed, commit ok)
+                                  # cleared when the user answers (Retry or Abort)
 ```
 
 **Explicitly NOT in state.yaml**:
@@ -82,6 +91,19 @@ When the orchestrator resumes after compaction:
 2. Compute available artifacts: `ls .sdd/{change}/*.md`.
 3. If `current_phase: implement` and `plan.md` exists, count `[X]` vs `[ ]` markers to determine batch progress.
 4. Resume from the next pipeline phase (or the next pending batch within `implement`).
+
+### Recovery Semantics — Review→Completion Auto-Flow
+
+When `current_phase: review` and `status: ok`, the orchestrator applies these rules in order:
+
+1. **`awaiting_user_decision == post-review-commit-retry`**: the auto-flow stopped at a commit failure. Resume by surfacing the commit failure ask (**Retry commit / Abort**). Do NOT re-run the commit automatically.
+2. **`awaiting_user_decision == post-review-pr-retry`**: `commit_completed` is `true`; the commit already succeeded. Skip the commit step entirely and surface the PR failure ask (**Retry PR / Abort**).
+3. **`commit_completed == true` and `awaiting_user_decision` is absent**: commit already done; the auto-flow was interrupted after commit but before PR. Proceed directly to auto-PR (no re-commit).
+4. **Neither `commit_completed` nor `awaiting_user_decision` is present**: normal entry — follow the standard auto-commit → auto-PR → COMPLETED path.
+
+**Clearing rules**:
+- On Abort at any point: clear `awaiting_user_decision` from state.yaml; write marker `ABORTED`.
+- On successful PR: clear `awaiting_user_decision`, `commit_completed`, and `commit_sha`; write marker `COMPLETED`.
 
 ### Optional Engram State Save
 
