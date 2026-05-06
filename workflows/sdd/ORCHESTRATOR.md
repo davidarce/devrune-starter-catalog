@@ -213,7 +213,7 @@ After review completes, behavior depends on status:
 - `warning` → ask: **Commit anyway** (via `git-commit` skill) / **Fix issues first** / **Done**
 - `failed` → ask: **Fix issues** / **Done** (NO commit option)
 
-When user chooses "Commit anyway" or "Fix issues": invoke `Skill("git-commit")` — do NOT run git commands directly. The branch was set up at workflow start (see "First Sub-Agent of a New Workflow"), so no branch validation is needed here.
+When user chooses "Commit anyway": invoke `Skill("git-commit")` — do NOT run git commands directly.
 When user chooses "Fix issues": delegate fixes to a sub-agent (orchestrator NEVER fixes code), then auto-launch review again.
 
 On Abort at any status: clear `awaiting_user_decision`; write marker `ABORTED`.

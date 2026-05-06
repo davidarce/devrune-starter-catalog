@@ -219,7 +219,7 @@ After review completes, behavior depends on status:
 - `warning` → ask: **Commit anyway** / **Fix issues first** / **Done**
 - `failed` → ask: **Fix issues** / **Done** (NO commit option)
 
-The branch was set up at workflow start (see "First Sub-Agent of a New Workflow"), so no branch validation is needed here. When "Fix issues": delegate fixes via `Agent(subagent_type: 'sdd-implementer', ...)`, then auto-launch review again.
+When "Fix issues": delegate fixes via `Agent(subagent_type: 'sdd-implementer', ...)`, then auto-launch review again.
 
 On Abort at any status: clear `awaiting_user_decision`; write marker ABORTED.
 
