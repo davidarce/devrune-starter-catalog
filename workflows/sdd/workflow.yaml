@@ -1,68 +1,119 @@
 apiVersion: devrune/workflow/v1
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Metadata
+# Identifies the workflow in the catalog and selects the working directory
+# (relative to this workflow folder) that hosts the orchestrator entrypoint.
+# ─────────────────────────────────────────────────────────────────────────────
 metadata:
   name: sdd
   displayName: "SDD (Spec-Driven Development)"
-  version: "1.0.0"
+  version: "1.1.0"
   workingDir: sdd-orchestrator
+
 components:
+  # ───────────────────────────────────────────────────────────────────────────
+  # Skills installed with this workflow.
+  #
+  # Each name is resolved in two passes:
+  #   1. Workflow-internal: a subdirectory of this workflow folder
+  #      (e.g. ./sdd-explore/SKILL.md). Used for the phase skills owned by SDD.
+  #   2. Catalog-level fallback: <catalog-root>/skills/<name>/SKILL.md when
+  #      the name is not a workflow-internal subdir (e.g. write-a-prd,
+  #      git-commit, git-pull-request). Adding a name here is the ONLY way to
+  #      trigger installation; referencing a skill in permissions or hooks
+  #      does not pull it in.
+  # ───────────────────────────────────────────────────────────────────────────
   skills:
     - sdd-explore
     - sdd-plan
     - sdd-implement
     - sdd-review
     - sdd-orchestrator
-    # write-a-prd lives at catalog/skills/write-a-prd/ (not under this workflow).
-    # The renderer resolves it via the catalog-level fallback so SDD installs
-    # carry it automatically — no manual select needed in devrune.yaml.
-    # The PRD gate in ORCHESTRATOR's "Step 1 — PRD gate" invokes it.
     - write-a-prd
+    - git-commit
+    - git-pull-request
+
   entrypoint: "ORCHESTRATOR.md"
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Roles wired into agent files at install time.
+  #
+  # `kind: subagent` rows produce per-agent subagent definitions. Each subagent
+  # role MUST declare a `models` map keyed by agent name (claude, opencode,
+  # copilot). Values are the model alias understood by that agent's renderer:
+  #
+  #   • claude   — short tier names: haiku, sonnet, opus
+  #   • opencode — fully-qualified provider/model strings (e.g.
+  #                "github-copilot/claude-sonnet-4.6"). Bare names resolve via
+  #                the resolver but explicit form is preferred for clarity.
+  #   • copilot  — VS Code display names verbatim (e.g. "Claude Sonnet 4.6")
+  #
+  # DevRune uses these as defaults in the model selection step of the TUI;
+  # users can override them and the choices are persisted to devrune.yaml under
+  # workflows.<name>.roles.<agent>.<role>.
+  #
+  # `kind: orchestrator` rows describe the top-level role. Orchestrator model
+  # selection is agent-specific (Copilot only today) and does not use `models`.
+  # The `skill: "*-advisor"` glob matches any catalog skill ending in -advisor
+  # (architect-advisor, api-first-advisor, component-advisor, …).
+  # ───────────────────────────────────────────────────────────────────────────
   roles:
     - name: sdd-explorer
       kind: subagent
       skill: sdd-explore
-      model: haiku
+      models:
+        claude: haiku
+        opencode: github-copilot/claude-haiku-4.5
+        copilot: Claude Haiku 4.5
     - name: sdd-planner
       kind: subagent
       skill: sdd-plan
-      model: opus
+      models:
+        claude: opus
+        opencode: github-copilot/claude-opus-4.6
+        copilot: Claude Opus 4.6
     - name: sdd-implementer
       kind: subagent
       skill: sdd-implement
-      model: sonnet
+      models:
+        claude: sonnet
+        opencode: github-copilot/claude-sonnet-4.6
+        copilot: Claude Sonnet 4.6
     - name: sdd-reviewer
       kind: subagent
       skill: sdd-review
-      model: opus
+      models:
+        claude: opus
+        opencode: github-copilot/claude-opus-4.6
+        copilot: Claude Opus 4.6
     - name: sdd-orchestrator
       kind: orchestrator
     - name: sdd-advisor
       kind: subagent
       skill: "*-advisor"
-      model: opus
-  decisionRules:
-    - scenario: '"commit", "commit my changes", "create commit"'
-      resolution: "Use `git-commit`"
-    - scenario: '"create PR", "pull request", "create pull request"'
-      resolution: "Use `git-pull-request`"
-    - scenario: '"Review my tests" + integration test files'
-      resolution: "Use `integration-test-advisor`"
-    - scenario: '"Review my tests" + domain unit test files'
-      resolution: "Use `unit-test-advisor`"
-    - scenario: '"Design an API" + mentions OpenAPI/REST'
-      resolution: "Use `api-first-advisor`"
-    - scenario: '"Design a service" + mentions architecture/DDD'
-      resolution: "Use `architect-advisor`"
-    - scenario: '"Review my component" + React/TypeScript'
-      resolution: "Use `component-advisor`"
-    - scenario: '"Review my tests" + frontend test files'
-      resolution: "Use `frontend-test-advisor`"
-  invocationControls:
-    - skills: "git-commit, git-pull-request"
-      description: "When user requests commit/PR operations (see Decision Rules)"
-    - skills: "sdd-explore, sdd-plan, sdd-implement, sdd-review"
-      description: "When user requests SDD phase execution (see SDD Evaluation Gate)"
+      models:
+        claude: opus
+        opencode: github-copilot/claude-opus-4.6
+        copilot: Claude Opus 4.6
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Registry — catalog block injected into the agent root file
+  # (CLAUDE.md / AGENTS.md / copilot-instructions.md / …).
+  #
+  # The base file is REGISTRY.md; per-agent variants are auto-detected by name
+  # convention: REGISTRY.<agent>.md (e.g. REGISTRY.claude.md, REGISTRY.copilot.md,
+  # REGISTRY.opencode.md). When a variant exists, the matching renderer prefers
+  # it over the generic file. Variants are protected from being copied as loose
+  # files into the workspace.
+  # ───────────────────────────────────────────────────────────────────────────
   registry: "REGISTRY.md"
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Permissions granted to the agent for SDD operations.
+  # Grouped by purpose: artifact management, plan-review integration, workspace
+  # navigation, phase skills, and git/PR operations.
+  # ───────────────────────────────────────────────────────────────────────────
   permissions:
     # SDD artifact management
     - "Bash(mkdir -p .sdd*)"
@@ -83,7 +134,7 @@ components:
     - "Skill(sdd-plan)"
     - "Skill(sdd-implement)"
     - "Skill(sdd-review)"
-    # PRD gate dependency (invoked from ORCHESTRATOR's Step 1)
+    # PRD gate dependency (invoked from ORCHESTRATOR Step 1)
     - "Skill(write-a-prd)"
     # Git operations (commit/PR skills)
     - "Bash(git status:*)"
@@ -93,6 +144,11 @@ components:
     - "Bash(find:*)"
     - "Skill(git-commit)"
     - "Skill(git-pull-request)"
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Hooks — agent-specific runtime hooks (compaction, lifecycle, etc.).
+  # Only the renderer for the listed agent installs its definition; others ignore.
+  # ───────────────────────────────────────────────────────────────────────────
   hooks:
     agents:
       claude:
@@ -101,5 +157,9 @@ components:
         - definition: hooks/sdd-hooks-factory.json
       opencode:
         - definition: plugins/sdd-compaction.ts
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Gitignore entries appended to the workspace .gitignore at install time.
+  # ───────────────────────────────────────────────────────────────────────────
   gitignore:
     - ".sdd/"
