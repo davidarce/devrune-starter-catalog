@@ -25,16 +25,14 @@ components:
   #      does not pull it in.
   # ───────────────────────────────────────────────────────────────────────────
   skills:
-    # SDD phase skills (workflow-internal)
     - sdd-explore
     - sdd-plan
     - sdd-implement
     - sdd-review
     - sdd-orchestrator
-    # Catalog-level skills consumed by SDD
-    - write-a-prd          # PRD gate (ORCHESTRATOR Step 1)
-    - git-commit           # commit closure after implement/review
-    - git-pull-request     # PR closure after commit
+    - write-a-prd
+    - git-commit
+    - git-pull-request
 
   entrypoint: "ORCHESTRATOR.md"
 
@@ -46,8 +44,9 @@ components:
   # copilot). Values are the model alias understood by that agent's renderer:
   #
   #   • claude   — short tier names: haiku, sonnet, opus
-  #   • opencode — short tier names (resolved to github-copilot/<full-id>)
-  #                or fully-qualified provider/model strings
+  #   • opencode — fully-qualified provider/model strings (e.g.
+  #                "github-copilot/claude-sonnet-4.6"). Bare names resolve via
+  #                the resolver but explicit form is preferred for clarity.
   #   • copilot  — VS Code display names verbatim (e.g. "Claude Sonnet 4.6")
   #
   # DevRune uses these as defaults in the model selection step of the TUI;
@@ -65,28 +64,28 @@ components:
       skill: sdd-explore
       models:
         claude: haiku
-        opencode: haiku
+        opencode: github-copilot/claude-haiku-4.5
         copilot: Claude Haiku 4.5
     - name: sdd-planner
       kind: subagent
       skill: sdd-plan
       models:
         claude: opus
-        opencode: opus
+        opencode: github-copilot/claude-opus-4.6
         copilot: Claude Opus 4.6
     - name: sdd-implementer
       kind: subagent
       skill: sdd-implement
       models:
         claude: sonnet
-        opencode: sonnet
+        opencode: github-copilot/claude-sonnet-4.6
         copilot: Claude Sonnet 4.6
     - name: sdd-reviewer
       kind: subagent
       skill: sdd-review
       models:
         claude: opus
-        opencode: opus
+        opencode: github-copilot/claude-opus-4.6
         copilot: Claude Opus 4.6
     - name: sdd-orchestrator
       kind: orchestrator
@@ -95,7 +94,7 @@ components:
       skill: "*-advisor"
       models:
         claude: opus
-        opencode: opus
+        opencode: github-copilot/claude-opus-4.6
         copilot: Claude Opus 4.6
 
   # ───────────────────────────────────────────────────────────────────────────
