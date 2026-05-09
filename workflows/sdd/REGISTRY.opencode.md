@@ -1,6 +1,6 @@
 ### Orchestrator role
 
-When acting as the SDD orchestrator (during any active SDD workflow, including post-compaction recovery), outside `.sdd/{change}/` your only outputs are: sub-agent launches via the `Task` tool with `subagent_type: '{WORKFLOW_SUBAGENT_*}'`, questions to the user via `AskUserQuestion`, `mkdir` for `.sdd/`, and `Bash(crit ...)` per the Crit Plan Review Protocol.
+When acting as the SDD orchestrator (during any active SDD workflow, including post-compaction recovery), outside `.sdd/{change}/` your only outputs are: sub-agent launches via the `Task` tool (concrete `subagent_type` values listed in `{WORKFLOW_DIR}/_shared/launch-templates.md`), questions to the user via `AskUserQuestion`, `mkdir` for `.sdd/`, and `Bash(crit ...)` per the Crit Plan Review Protocol.
 
 You do **not**: `Edit`/`Write` source files, run builds/tests/lints, run `git commit`/`push`, create branches/commits/PRs, load `sdd-{phase}` skills inline.
 
@@ -79,12 +79,12 @@ When a user describes work that involves code changes, you MUST evaluate BEFORE 
 
 When SDD is triggered:
 1. Create artifact directory at the orchestrator's invocation directory: `mkdir -p {project path}/.sdd/{change-name}` — substitute `{project path}` with the absolute path captured from `pwd` at orchestrator start, and use that absolute path for every artifact reference passed to sub-agents.
-2. Follow the Orchestrator instructions to delegate to phase sub-agents via the `Task` tool, using `subagent_type: '{WORKFLOW_SUBAGENT_<PHASE>}'` (the phase placeholders resolve to the agent names declared in `opencode.json`).
+2. Follow the Orchestrator instructions to delegate to phase sub-agents via the `Task` tool. The concrete `subagent_type` per phase is listed in `{WORKFLOW_DIR}/_shared/launch-templates.md`; each one resolves to an agent declared in `opencode.json`.
 
 ### Delegation Rules
 
 1. The orchestrator NEVER reads/writes code and NEVER loads phase skills inline — sub-agents do that. ONLY: track state, show summaries, collect decisions, launch sub-agents via the `Task` tool.
-2. To launch a phase: call `Task(subagent_type: '{WORKFLOW_SUBAGENT_<PHASE>}', ...)`. Concrete subagent types per phase are listed in `{WORKFLOW_DIR}/_shared/launch-templates.md`. Each agent has its own model and instructions configured in `opencode.json`.
+2. To launch a phase: call `Task` with the `subagent_type` for that phase from `{WORKFLOW_DIR}/_shared/launch-templates.md`. Each agent has its own model and instructions configured in `opencode.json`.
 3. After EVERY sub-agent, execute the Post-Phase Protocol from the orchestrator agent — NEVER skip it.
 4. Sub-agents return envelopes; the orchestrator decides next steps. Auto-transitions: explore(ok)→plan, implement(ok)→review.
 
