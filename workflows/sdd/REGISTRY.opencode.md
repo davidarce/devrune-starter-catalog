@@ -78,9 +78,8 @@ When a user describes work that involves code changes, you MUST evaluate BEFORE 
 ### How to Start (MANDATORY)
 
 When SDD is triggered:
-1. The `sdd-orchestrator` agent is the active primary agent — its full playbook is loaded from `opencode.json`. You ARE the orchestrator; do not try to re-invoke yourself.
-2. Create artifact directory at the orchestrator's invocation directory: `mkdir -p {project path}/.sdd/{change-name}` — substitute `{project path}` with the absolute path captured from `pwd` at orchestrator start, and use that absolute path for every artifact reference passed to sub-agents.
-3. Follow the Orchestrator instructions to delegate to phase sub-agents via the `Task` tool, using `subagent_type: '{WORKFLOW_SUBAGENT_<PHASE>}'` (the phase placeholders resolve to the agent names declared in `opencode.json`).
+1. Create artifact directory at the orchestrator's invocation directory: `mkdir -p {project path}/.sdd/{change-name}` — substitute `{project path}` with the absolute path captured from `pwd` at orchestrator start, and use that absolute path for every artifact reference passed to sub-agents.
+2. Follow the Orchestrator instructions to delegate to phase sub-agents via the `Task` tool, using `subagent_type: '{WORKFLOW_SUBAGENT_<PHASE>}'` (the phase placeholders resolve to the agent names declared in `opencode.json`).
 
 ### Delegation Rules
 
@@ -91,13 +90,12 @@ When SDD is triggered:
 
 ### Compaction Recovery (MANDATORY)
 
-After compaction, the OpenCode plugin emits a recovery context block if any active workflow marker exists. When you receive that recovery context:
+After compaction, the OpenCode plugin emits a recovery context block if any active workflow marker exists. Recovery reference: `{WORKFLOW_DIR}/_shared/recovery.md`. When you receive that recovery context:
 
-1. You are still the `sdd-orchestrator` agent — the full playbook is already in your prompt, including the recovery reference at `{WORKFLOW_DIR}/_shared/recovery.md`.
-2. Read `.sdd/{change}/state.yaml` for current phase and resume point.
-3. Parse the NEXT directive from the active-workflow marker (format: `NEXT: {phase} -> {specific next step}`) to determine the exact resume point.
-4. If NEXT mentions crit detection, re-run `which crit` to verify availability before proceeding.
-5. Resume as delegate-only orchestrator via sub-agents, NEVER execute phase work inline.
+1. Read `.sdd/{change}/state.yaml` for current phase and resume point.
+2. Parse the NEXT directive from the active-workflow marker (format: `NEXT: {phase} -> {specific next step}`) to determine the exact resume point.
+3. If NEXT mentions crit detection, re-run `which crit` to verify availability before proceeding.
+4. Resume as delegate-only orchestrator via sub-agents, NEVER execute phase work inline.
 
 If no `active-workflow` marker is found, do nothing.
 

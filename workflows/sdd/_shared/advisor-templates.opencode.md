@@ -6,16 +6,10 @@
 These templates are used by the orchestrator when handling `guidance_requested` envelopes.
 See `launch-templates.md` for phase launch templates (explore, plan, implement, review).
 
-> **OpenCode constraint**: `run_in_background` is NOT supported. Advisors run sequentially as
-> foreground `Task()` calls — one at a time. There is no parallel template here.
-
 ## Sequential Advisor Consultation Template
 
-For each advisor in `requested_advisors[]`, launch a foreground `Task()` and wait for it to return
-before launching the next.
-
-> The advisor sub-agent's model is configured in `opencode.json` under
-> `agent.{WORKFLOW_SUBAGENT_ADVISOR}.model` — do not pass `model:` in the `Task()` call.
+For each advisor in `requested_advisors[]`, launch a `Task()` and wait for it to return before
+launching the next.
 
 ```
 Task(
