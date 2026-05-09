@@ -15,7 +15,7 @@ Launch all requested advisors in parallel (run_in_background: true).
 
 Task(
   description: 'advisor consultation ({advisor-skill}) for {change-name}',
-  subagent_type: 'general-purpose',    // hardcoded — advisors are always general-purpose Task() calls
+  subagent_type: '{WORKFLOW_SUBAGENT_ADVISOR}',
   model: '{WORKFLOW_MODEL_ADVISOR}',
   run_in_background: true,
   prompt: 'You are a specialist advisor sub-agent. Load your skill:
@@ -81,7 +81,7 @@ Task(
 
 Task(
   description: 'advisor consultation ({advisor-skill}) for {change-name}',
-  subagent_type: 'general-purpose',
+  subagent_type: '{WORKFLOW_SUBAGENT_ADVISOR}',
   model: '{WORKFLOW_MODEL_ADVISOR}',
   run_in_background: false,   // OpenCode/Codex: foreground only
   prompt: '...same prompt body as parallel template above...'
