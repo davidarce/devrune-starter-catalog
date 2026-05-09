@@ -1,7 +1,4 @@
-# SDD Advisor Templates (OpenCode)
-
-<!-- SYNC WITH: advisor-templates.md (generic), advisor-templates.claude.md, advisor-templates.copilot.md -->
-<!-- OpenCode-only file. Installed name strips the .opencode.md suffix to advisor-templates.md. -->
+# SDD Advisor Templates
 
 These templates are used by the orchestrator when handling `guidance_requested` envelopes.
 See `launch-templates.md` for phase launch templates (explore, plan, implement, review).
