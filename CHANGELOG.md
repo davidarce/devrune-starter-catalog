@@ -5,6 +5,17 @@ All notable changes to the DevRune Starter Catalog will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0](https://github.com/davidarce/devrune-starter-catalog/compare/v0.7.0...v0.8.0) (2026-05-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* **workflows/sdd:** per-agent role models, drop dead fields, section comments ([#54](https://github.com/davidarce/devrune-starter-catalog/issues/54))
+
+### Bug Fixes
+
+* **workflows/sdd:** per-agent role models, drop dead fields, section comments ([#54](https://github.com/davidarce/devrune-starter-catalog/issues/54)) ([8e0b343](https://github.com/davidarce/devrune-starter-catalog/commit/8e0b3437cb634e3a9a4ee32710f676db459ef146))
+
 ## [0.7.0](https://github.com/davidarce/devrune-starter-catalog/compare/v0.6.0...v0.7.0) (2026-05-06)
 
 
