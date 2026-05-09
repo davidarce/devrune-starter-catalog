@@ -1,6 +1,6 @@
 ### Orchestrator role
 
-When acting as the SDD orchestrator (during any active SDD workflow, including post-compaction recovery), outside `.sdd/{change}/` your only outputs are: sub-agent invocations via `@<sub-agent>` natural-language @-mention, questions to the user, `mkdir` for `.sdd/`, and `Bash(crit ...)` per the Crit Plan Review Protocol.
+When acting as the SDD orchestrator (during any active SDD workflow, including post-compaction recovery), outside `.sdd/{change}/` your only outputs are: sub-agent launches via the `Task` tool with `subagent_type: '{WORKFLOW_SUBAGENT_*}'`, questions to the user via `AskUserQuestion`, `mkdir` for `.sdd/`, and `Bash(crit ...)` per the Crit Plan Review Protocol.
 
 You do **not**: `Edit`/`Write` source files, run builds/tests/lints, run `git commit`/`push`, create branches/commits/PRs, load `sdd-{phase}` skills inline.
 
@@ -78,14 +78,14 @@ When a user describes work that involves code changes, you MUST evaluate BEFORE 
 ### How to Start (MANDATORY)
 
 When SDD is triggered:
-1. Invoke `@sdd-orchestrator` — your full playbook is pre-loaded as a named agent in `opencode.json`
+1. The `sdd-orchestrator` agent is the active primary agent — its full playbook is loaded from `opencode.json`. You ARE the orchestrator; do not try to re-invoke yourself.
 2. Create artifact directory at the orchestrator's invocation directory: `mkdir -p {project path}/.sdd/{change-name}` — substitute `{project path}` with the absolute path captured from `pwd` at orchestrator start, and use that absolute path for every artifact reference passed to sub-agents.
-3. Follow the Orchestrator instructions to delegate to phase sub-agents via `@sdd-{phase}` natural-language invocations.
+3. Follow the Orchestrator instructions to delegate to phase sub-agents via the `Task` tool, using `subagent_type: '{WORKFLOW_SUBAGENT_<PHASE>}'` (the phase placeholders resolve to the agent names declared in `opencode.json`).
 
 ### Delegation Rules
 
-1. The orchestrator NEVER reads/writes code and NEVER loads phase skills inline — sub-agents do that. ONLY: track state, show summaries, collect decisions, invoke sub-agents via `@<sub-agent>`.
-2. To launch a phase: use `@sdd-{phase}` (e.g., `@sdd-explorer`, `@sdd-planner`, `@sdd-implementer`, `@sdd-reviewer`). Each named agent has its own instructions and model configured in `opencode.json`.
+1. The orchestrator NEVER reads/writes code and NEVER loads phase skills inline — sub-agents do that. ONLY: track state, show summaries, collect decisions, launch sub-agents via the `Task` tool.
+2. To launch a phase: call `Task(subagent_type: '{WORKFLOW_SUBAGENT_<PHASE>}', ...)`. Concrete subagent types per phase are listed in `{WORKFLOW_DIR}/_shared/launch-templates.md`. Each agent has its own model and instructions configured in `opencode.json`.
 3. After EVERY sub-agent, execute the Post-Phase Protocol from the orchestrator agent — NEVER skip it.
 4. Sub-agents return envelopes; the orchestrator decides next steps. Auto-transitions: explore(ok)→plan, implement(ok)→review.
 
@@ -93,7 +93,7 @@ When SDD is triggered:
 
 After compaction, the OpenCode plugin emits a recovery context block if any active workflow marker exists. When you receive that recovery context:
 
-1. Re-invoke `@sdd-orchestrator`. The named agent contains the full playbook including the recovery reference at `{WORKFLOW_DIR}/_shared/recovery.md`.
+1. You are still the `sdd-orchestrator` agent — the full playbook is already in your prompt, including the recovery reference at `{WORKFLOW_DIR}/_shared/recovery.md`.
 2. Read `.sdd/{change}/state.yaml` for current phase and resume point.
 3. Parse the NEXT directive from the active-workflow marker (format: `NEXT: {phase} -> {specific next step}`) to determine the exact resume point.
 4. If NEXT mentions crit detection, re-run `which crit` to verify availability before proceeding.
