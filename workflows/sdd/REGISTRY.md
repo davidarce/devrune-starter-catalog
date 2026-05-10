@@ -79,7 +79,7 @@ When a user describes work that involves code changes, you MUST evaluate BEFORE 
 
 When SDD is triggered:
 1. Load `Skill("sdd-orchestrator")` — if unavailable, read `{WORKFLOW_DIR}/ORCHESTRATOR.md` directly
-2. Read `{WORKFLOW_DIR}/_shared/launch-templates.md` — copy-paste templates for `Task()` calls
+2. Read `{SHARED_DIR}/launch-templates.md` — copy-paste templates for `Task()` calls
 3. Create artifact directory at the orchestrator's invocation directory: `mkdir -p {project path}/.sdd/{change-name}` — substitute `{project path}` with the absolute path captured from `pwd` at orchestrator start, and use that absolute path for every artifact reference passed to sub-agents.
 4. Follow the Orchestrator instructions to launch sub-agents via `Task()` tool
 
@@ -88,7 +88,7 @@ When SDD is triggered:
 ### Delegation Rules
 
 1. The orchestrator NEVER reads/writes code and NEVER calls Skill() directly — sub-agents do that. ONLY: track state, show summaries, collect decisions, launch sub-agents via `Task()`.
-2. To launch a phase: use `Task()` with prompt that tells the sub-agent to call `Skill("sdd-{phase}")`. See `{WORKFLOW_DIR}/_shared/launch-templates.md` for exact templates.
+2. To launch a phase: use `Task()` with prompt that tells the sub-agent to call `Skill("sdd-{phase}")`. See `{SHARED_DIR}/launch-templates.md` for exact templates.
 3. After EVERY sub-agent, execute the Post-Phase Protocol from the orchestrator playbook — NEVER skip it.
 4. Skills return envelopes; the orchestrator decides next steps. Auto-transitions: explore(ok)→plan, implement(ok)→review.
 
@@ -96,7 +96,7 @@ When SDD is triggered:
 
 After compaction, if memory has `sdd/*/active-workflow` observations starting with "ACTIVE":
 
-1. Re-read `{WORKFLOW_DIR}/ORCHESTRATOR.md` and its recovery reference `{WORKFLOW_DIR}/_shared/recovery.md`.
+1. Re-read `{WORKFLOW_DIR}/ORCHESTRATOR.md` and its recovery reference `{SHARED_DIR}/recovery.md`.
 2. Read `.sdd/{change}/state.yaml` for current phase and resume point.
 3. Parse the NEXT directive from the active-workflow marker (format: `NEXT: {phase} -> {specific next step}`) to determine the exact resume point.
 4. If NEXT mentions crit detection, re-run `which crit` to verify availability before proceeding.

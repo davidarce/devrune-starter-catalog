@@ -142,7 +142,7 @@ user choices and do NOT need re-validation. Recovery jumps straight to the next 
 
 ### Step 4 — Auto-launch explore
 
-Use the Generic Sub-Agent Template from `{WORKFLOW_DIR}/_shared/launch-templates.md`. No user
+Use the Generic Sub-Agent Template from `{SHARED_DIR}/launch-templates.md`. No user
 prompt — the user already chose to start SDD by selecting this agent.
 
 ## Launching Sub-Agents
@@ -151,10 +151,10 @@ Phase work runs inside sub-agents you launch via the `Task` tool. You pass dynam
 (project path, change name, artifact directory, previous artifacts); the sub-agent reads its
 own SKILL.md from disk and follows it.
 
-**Read `{WORKFLOW_DIR}/_shared/launch-templates.md` before your first launch** — it contains
+**Read `{SHARED_DIR}/launch-templates.md` before your first launch** — it contains
 the exact copy-paste `Task()` calls for every phase (correct `subagent_type`, prompt skeleton).
 For advisor consultations during the plan guidance loop, see
-`{WORKFLOW_DIR}/_shared/advisor-templates.md`.
+`{SHARED_DIR}/advisor-templates.md`.
 
 After every sub-agent returns, run the Post-Phase Protocol below. Sub-agents return envelopes;
 you decide what runs next. Auto-transitions: `explore(ok) → plan`, `implement(ok) → review`.
@@ -169,9 +169,9 @@ returns `status: warning` or `status: failed` does manual validation belong here
 then only on the specific signals the envelope flagged.
 
 1. **Parse** the SDD Envelope from sub-agent output (format:
-   `{WORKFLOW_DIR}/_shared/envelope-contract.md`).
+   `{SHARED_DIR}/envelope-contract.md`).
 2. **Write state.yaml**: `.sdd/{change}/state.yaml` per schema in
-   `{WORKFLOW_DIR}/_shared/persistence-contract.md`.
+   `{SHARED_DIR}/persistence-contract.md`.
 3. **Engram** (if available): save `{phase}-summary`, `state`, and update `active-workflow`
    marker with NEXT directive.
 
@@ -199,10 +199,10 @@ then only on the specific signals the envelope flagged.
    b. Increment `guidance_round` in state.yaml.
    c. **Launch advisors sequentially** (OpenCode does not support `run_in_background`) using
       the Sequential Advisor Consultation Template from
-      `{WORKFLOW_DIR}/_shared/advisor-templates.md`. Run one advisor at a time; collect each
+      `{SHARED_DIR}/advisor-templates.md`. Run one advisor at a time; collect each
       summary + engram ID before launching the next.
    d. After all advisors complete: re-launch sdd-plan using the Plan Re-entry with Guidance
-      Template from `{WORKFLOW_DIR}/_shared/advisor-templates.md`.
+      Template from `{SHARED_DIR}/advisor-templates.md`.
    e. After sdd-plan re-entry returns envelope: loop back to step 1 (Post-Phase Protocol from
       start).
    - After non-plan phases or after `status: ok/warning/blocked/failed`: skip this step.
@@ -262,7 +262,7 @@ phase.
 5. **Branch**:
    - **Has unresolved comments**: Format as CRIT_FEEDBACK markdown (see format below).
      Re-launch `sdd-plan` sub-agent using the Plan Re-entry template from
-     `{WORKFLOW_DIR}/_shared/launch-templates.md`. After sub-agent returns envelope, increment
+     `{SHARED_DIR}/launch-templates.md`. After sub-agent returns envelope, increment
      `plan_review_round` in `state.yaml` and loop back to step 1 (run crit again for next round
      — always foreground).
    - **No unresolved comments**: Plan approved. Set `crit_completed: true` in
@@ -298,7 +298,7 @@ A large plan exhausts a single sub-agent's context. Drive waves:
 3. For each wave:
    a. Identify all batches in the wave (ignore `Parallel=Yes` — all run sequentially).
    b. Launch each batch as foreground `Task()` one at a time (use Sequential Batch Template
-      from `{WORKFLOW_DIR}/_shared/launch-templates.md`).
+      from `{SHARED_DIR}/launch-templates.md`).
    c. After each batch: run Post-Phase Protocol.
    d. Verify `[X]` markers in plan.md for the batch.
    e. All `status: ok` → proceed to next batch / wave.
@@ -337,7 +337,7 @@ mem_save(topic_key: "sdd/{change}/active-workflow", ...,
 ## Compaction Recovery
 
 After compaction, the OpenCode plugin emits a recovery context block if any active workflow
-marker exists. Recovery reference: `{WORKFLOW_DIR}/_shared/recovery.md`. When you receive that
+marker exists. Recovery reference: `{SHARED_DIR}/recovery.md`. When you receive that
 recovery context:
 
 1. Read `.sdd/{change}/state.yaml` for current phase and resume point.
@@ -397,8 +397,8 @@ Next Steps, Relevant Files.
 
 ## References
 
-- Envelope format: `{WORKFLOW_DIR}/_shared/envelope-contract.md`
-- Persistence rules: `{WORKFLOW_DIR}/_shared/persistence-contract.md`
-- Launch templates: `{WORKFLOW_DIR}/_shared/launch-templates.md`
-- Advisor templates: `{WORKFLOW_DIR}/_shared/advisor-templates.md`
-- Recovery flows: `{WORKFLOW_DIR}/_shared/recovery.md`
+- Envelope format: `{SHARED_DIR}/envelope-contract.md`
+- Persistence rules: `{SHARED_DIR}/persistence-contract.md`
+- Launch templates: `{SHARED_DIR}/launch-templates.md`
+- Advisor templates: `{SHARED_DIR}/advisor-templates.md`
+- Recovery flows: `{SHARED_DIR}/recovery.md`
