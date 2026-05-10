@@ -2,30 +2,37 @@
 
 ## Compaction Recovery Protocol
 
-You arrived here because the catalog's Compaction Recovery directive detected an active SDD workflow.
+You arrived here because the catalog's Compaction Recovery directive detected an active SDD workflow. The state schema (`{SHARED_DIR}/persistence-contract.md`) defines what state.yaml carries; this section defines how to read it after a compaction and resume.
 
-### Role Invariant (re-assert NOW, before recovery steps)
+### Recovery via state.yaml
 
-You are the SDD orchestrator. **You orchestrate, you do not implement.** Outside `.sdd/{change}/`, your only outputs are: sub-agent launches (`Task` / `Agent` / `@<sub-agent>` per your variant), `AskUserQuestion`, `mkdir` for `.sdd/`, and `Bash(crit ...)` per the Crit Plan Review Protocol.
+1. **Primary — read `.sdd/{change}/state.yaml`** (always works, file-based):
+   - Parse YAML; the canonical fields are `phase`, `phase_status`, `next` (per `{SHARED_DIR}/persistence-contract.md`).
+   - Compute available artifacts from disk: `ls .sdd/{change}/*.md`.
+   - If `phase: implement` and `plan.md` exists, count `[X]` vs `[ ]` markers in plan.md to determine batch progress.
+   - Resume from the action named in `next` (or the next pending batch within `implement`).
 
-You do **not**: `Edit`/`Write` source files, run builds/tests/lints, run `git commit`/`push`, create branches/commits/PRs, invoke `Skill("sdd-{phase}")` directly.
-
-If your next planned action is on the "do not" list, you have lost the role — re-read ORCHESTRATOR.md and delegate.
-
-### Recovery Steps
-
-1. **Primary -- Read `.sdd/{change}/state.yaml`** (always works, file-based):
-   - Parse YAML to get `current_phase`, `phases` map, and `artifacts` list
-   - Schema defined in `{SHARED_DIR}/persistence-contract.md`
-
-2. **Fallback -- Engram** (only if state.yaml is missing AND engram is available):
+2. **Fallback — engram** (only if state.yaml is missing AND engram is available):
    ```
    Step 1: mem_search(query: "sdd/{change}/state", project: "{project}")
    Step 2: mem_get_observation(id: {id from step 1})
    ```
-   NEVER use `mem_search` previews directly -- they are truncated.
+   NEVER use `mem_search` previews directly — they are truncated.
 
-3. **Resume**: Continue from the next pending phase. Delegate via sub-agents using launch templates in `{SHARED_DIR}/launch-templates.md`. If no state is recoverable, inform the user: **Restart** / **Abort**.
+3. **Last resort**: if no state is recoverable, inform the user: **Restart** / **Abort**.
+
+### Recovery Semantics — Review→Completion Auto-Flow
+
+When `phase: review` and `phase_status: ok`, apply these rules in order:
+
+1. **`awaiting_user_decision == post-review-commit-retry`**: the auto-flow stopped at a commit failure. Resume by surfacing the commit failure ask (**Retry commit / Abort**). Do NOT re-run the commit automatically.
+2. **`awaiting_user_decision == post-review-pr-retry`**: `commit_completed` is `true`; the commit already succeeded. Skip the commit step entirely and surface the PR failure ask (**Retry PR / Abort**).
+3. **`commit_completed == true` and `awaiting_user_decision` is absent**: commit already done; the auto-flow was interrupted after commit but before PR. Proceed directly to auto-PR (no re-commit).
+4. **Neither `commit_completed` nor `awaiting_user_decision` is present**: normal entry — follow the standard auto-commit → auto-PR → COMPLETED path.
+
+**Clearing rules**:
+- On Abort at any point: clear `awaiting_user_decision` from state.yaml; write marker `ABORTED`.
+- On successful PR: clear `awaiting_user_decision`, `commit_completed`, and `commit_sha`; write marker `COMPLETED`.
 
 ## Fail-Fast Error Handling
 

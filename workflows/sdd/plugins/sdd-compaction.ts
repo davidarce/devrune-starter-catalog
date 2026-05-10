@@ -59,11 +59,7 @@ State file: \`${stateFile}\` (phase=${phase}, next=${next}).
 
 Resume from \`next\` directly. Do NOT re-explore, re-plan, or re-do any
 completed phase. Read \`${stateFile}\` only if you need more context
-than phase + next.
-
-Do NOT produce an orientation sentence ("I'll continue with...", "Voy a
-seguir con...", etc.) before resuming — the next tool call IS the
-resume. Just call it.`
+than phase + next.`
         );
       }
     },

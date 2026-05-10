@@ -43,13 +43,7 @@ Sub-agents launch with a fresh context and NO access to the orchestrator's memor
 
 ## state.yaml Schema
 
-The orchestrator writes `.sdd/{change}/state.yaml` after each phase transition. This file is parsed by the OpenCode compaction hook (`workflows/sdd/plugins/sdd-compaction.ts`) and by the recovery flows in ORCHESTRATOR.{agent}.md, so its shape is a **strict contract**, not a free-form journal.
-
-### Schema Enforcement (MUST READ)
-
-> **state.yaml MUST match this schema exactly.** Use only the field names listed below. Adding undocumented fields breaks parsing for the compaction hook (which reads specific field names), bloats the recovery context (every extra field is re-injected on every compaction), and undermines the principle that anything derivable from the workdir at recovery time does NOT belong here.
->
-> When in doubt: less is more. If you think you need a field that is not listed, the answer is **no** — propose a contract update first. Do not invent fields ad-hoc.
+`.sdd/{change}/state.yaml` is the orchestrator's persistent state file. The sections below define the schema and the write rules. **For recovery semantics — how to read state.yaml after a compaction, the review→completion auto-flow rules — see `{SHARED_DIR}/recovery.md`.**
 
 ### Canonical schema
 
@@ -97,36 +91,12 @@ awaiting_user_decision: post-review-commit-retry | post-review-pr-retry
 | `risks:` list | Already in `plan.md` Risks section and in the sub-agent envelope. |
 | `notes:` list | Use comments in plan.md or `awaiting_user_decision` for actionable state. |
 | `implement:` map (`waves_completed`, `tasks_completed`, `tasks_total`) | All derivable from `[X]` markers in plan.md. |
-| Any other field not listed in REQUIRED + OPTIONAL above | The contract is the single source of truth. Propose a contract change first. |
 
-### Write Rules
+### Hard Rules
 
-- **Always written** after each phase completes (file-based, never fails)
-- **Orchestrator is the sole writer** -- sub-agents never modify state.yaml
+- **Always written** after each phase completes (file-based, never fails).
+- **Orchestrator is the sole writer** — sub-agents never modify state.yaml.
 - **Append-only optional fields**: when a field becomes relevant (first Crit round, first review fix, etc.), add it. Do NOT pre-create empty fields.
-- **Strict schema**: only use the field names listed above. The compaction hook parses specific names; deviations break recovery.
-
-### Recovery via state.yaml
-
-When the orchestrator resumes after compaction:
-
-1. Read `.sdd/{change}/state.yaml` → `phase`, `phase_status`, and `next`.
-2. Compute available artifacts: `ls .sdd/{change}/*.md`.
-3. If `phase: implement` and `plan.md` exists, count `[X]` vs `[ ]` markers to determine batch progress.
-4. Resume from the action named in `next` (or the next pending batch within `implement`).
-
-### Recovery Semantics — Review→Completion Auto-Flow
-
-When `phase: review` and `phase_status: ok`, the orchestrator applies these rules in order:
-
-1. **`awaiting_user_decision == post-review-commit-retry`**: the auto-flow stopped at a commit failure. Resume by surfacing the commit failure ask (**Retry commit / Abort**). Do NOT re-run the commit automatically.
-2. **`awaiting_user_decision == post-review-pr-retry`**: `commit_completed` is `true`; the commit already succeeded. Skip the commit step entirely and surface the PR failure ask (**Retry PR / Abort**).
-3. **`commit_completed == true` and `awaiting_user_decision` is absent**: commit already done; the auto-flow was interrupted after commit but before PR. Proceed directly to auto-PR (no re-commit).
-4. **Neither `commit_completed` nor `awaiting_user_decision` is present**: normal entry — follow the standard auto-commit → auto-PR → COMPLETED path.
-
-**Clearing rules**:
-- On Abort at any point: clear `awaiting_user_decision` from state.yaml; write marker `ABORTED`.
-- On successful PR: clear `awaiting_user_decision`, `commit_completed`, and `commit_sha`; write marker `COMPLETED`.
 
 ### Optional Engram State Save
 
