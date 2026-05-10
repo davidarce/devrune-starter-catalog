@@ -5,6 +5,19 @@ All notable changes to the DevRune Starter Catalog will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.4](https://github.com/davidarce/devrune-starter-catalog/compare/v0.8.3...v0.8.4) (2026-05-10)
+
+
+### Bug Fixes
+
+* **workflows/sdd:** git pre-flight guard + allow workflow-init branch creation ([#63](https://github.com/davidarce/devrune-starter-catalog/issues/63)) ([10245c5](https://github.com/davidarce/devrune-starter-catalog/commit/10245c54b35cbfb9a1836c24fc9e9461006fda62))
+* **workflows/sdd:** smarter engram guard — recover from "ambiguous project" ([#64](https://github.com/davidarce/devrune-starter-catalog/issues/64)) ([d4037fa](https://github.com/davidarce/devrune-starter-catalog/commit/d4037fa099f4e9b6091df86763250f1be74f5cde))
+
+
+### Code Refactoring
+
+* **workflows/sdd:** use {SHARED_DIR} placeholder instead of {WORKFLOW_DIR}/_shared/ ([#62](https://github.com/davidarce/devrune-starter-catalog/issues/62)) ([eadc246](https://github.com/davidarce/devrune-starter-catalog/commit/eadc2464a5a303d28d2c7c2c7df778de3f7016bc))
+
 ## [0.8.3](https://github.com/davidarce/devrune-starter-catalog/compare/v0.8.2...v0.8.3) (2026-05-10)
 
 
