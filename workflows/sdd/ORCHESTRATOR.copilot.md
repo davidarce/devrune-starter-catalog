@@ -36,14 +36,34 @@ This applies to you, every sub-agent you invoke, and every skill loaded from the
 If your next sentence would just narrate what your tool call already shows, delete the sentence
 and call the tool.
 
-**Forbidden — pre-action narration** ("I am going to / Let me / About to / Now I'll..."):
+**Forbidden — pre-action narration** ("I am going to / Let me / About to / Now I'll..." +
+phase-transition narration like "Auto-launching X" / "Cambio a Y" / "Re-launch Z"):
 
-| ❌ Don't say | ✅ Do |
+| ❌ Don't say (and the call still runs) | ✅ Do |
 |---|---|
 | "I'll verify the state first" | run the verify command |
 | "Now checking if crit is available before updating state" | run `which crit`, then update state |
 | "Now launching wave 2" | launch wave 2 |
 | "Let me read the file first" | read the file |
+| "Auto-launching plan." | invoke `@sdd-planner` |
+| "Crit terminó con feedback. Leyendo comentarios." | read the file |
+| "Plan revisado. Re-lanzo Crit para Round 2." | re-launch crit |
+| "Plan aprobado vía Crit. Actualizo state y lanzo implement." | write state.yaml + invoke `@sdd-implementer` |
+| "Cambio a una rama nueva y lanzo el skill de PRD." | run the git command + invoke the skill |
+
+**The pattern to avoid**: "I am about to do X" or "X happened, now I do Y". The tool call shows
+both. The narration adds nothing the diff or the next tool call won't already convey.
+
+**Forbidden — bash echo as a "marker" before a question or another action**:
+
+The `vscode/askQuestions` tool and equivalent prompts ARE valid actions on their own. You do NOT
+need a `bash echo` (or any other no-op tool call) before them. If your next move is to ask the
+user, ask. If your next move is to read a file, read it.
+
+| ❌ Don't do this | ✅ Do this |
+|---|---|
+| `bash: echo "Question for user"` followed by the question | just ask the question |
+| `bash: echo "Asking interview questions"` | just ask |
 
 **Forbidden — paraphrasing tool calls**:
 
@@ -60,12 +80,16 @@ and call the tool.
 - "now running the gate", "launching the sub-agent"
 - The scope check enumeration — compute silently, act on the result
 
-**Allowed — only these four classes**:
+**Allowed — only these three classes**:
 
 1. **Questions** the user has to answer (PRD gate, post-phase decisions, blockers requiring input).
 2. **Envelope summaries** from sub-agents — verbatim or tightly condensed, after parsing.
-3. **Outcome statements** when a phase / wave / commit closes — one line, no narration of how.
-4. **Errors and blockers** the user needs to act on.
+3. **Errors and blockers** the user needs to act on.
+
+(Outcome statements like "Phase X done" are deliberately NOT in the allowed list. The
+sub-agent's envelope already conveys what closed; reprinting it adds noise. The only
+exception is when the next thing the user must do is decide — in which case you are
+asking a question, which is class 1.)
 
 **The test before every sentence**: would the user learn something new from this that the diff
 or tool call doesn't already show? If not, don't say it.
@@ -103,7 +127,7 @@ Catches poor context before burning tokens on exploration.
 
    If 2 or more boxes are checked, context is sufficient. If fewer than 2, context is THIN.
 2. **If context is sufficient**: skip to Step 3 (no user prompt).
-3. **If context is thin**: ask the user once:
+3. **If context is thin**: ask the user once (via `#tool:vscode/askQuestions`):
    - "Draft a PRD first to clarify scope" (recommended)
    - "Proceed anyway with what we have"
 4. **If "Draft PRD"**: invoke the skill `write-a-prd` with the change-name. The skill runs the
@@ -139,7 +163,7 @@ Sub-agents that need to commit will run their own git commands inside the releva
     - "refactor", "cleanup", "tidy", "rename", "extract" → `refactor`
     - "docs", "documentation" → `docs`
     - "chore", "deps", "release" → `chore`
-  - When unclear, ask the user once: **feat** / **fix** / **refactor** / **chore** /
+  - When unclear, ask the user once (via `#tool:vscode/askQuestions`): **feat** / **fix** / **refactor** / **chore** /
     **Stay on current branch**.
   - Run `git checkout -b {type}/{change-name}` from the base branch.
 
@@ -243,7 +267,7 @@ then only on the specific signals the envelope flagged.
      auto-launch implement (no ask — the human already approved the plan inline via Crit,
      asking again is redundant).
    - implement `status: ok` → auto-launch review (no ask).
-   - All other cases → ask the user: **Continue to {next}** / **Review artifacts** /
+   - All other cases → ask the user (via `#tool:vscode/askQuestions`): **Continue to {next}** / **Review artifacts** /
      **Abort**.
 
    **Crit confirmation guard** (plan phase, when crit IS available): After plan phase with
@@ -269,16 +293,16 @@ phase.
    open in your browser. Leave inline comments on the plan, then click Finish Review." Do NOT
    proceed until the call returns — it blocks until the user clicks Finish Review.
    - **If the call fails with a daemon error** (`could not reach crit daemon`, `EOF`,
-     connection refused) AND no `~/.crit/plans/{change}/.crit.json` yet: do **one** auto-retry
+     connection refused) AND no `~/.crit/plans/{change}/.crit/review.json` yet: do **one** auto-retry
      silently — `pkill -f "crit plan.*{change}"` and re-launch step 2. If the retry also
      fails, ask: **Retry Crit review** / **Skip Crit, review plan manually** /
      **Approve plan as-is**. Do NOT loop the auto-retry beyond one attempt.
    - **If the call times out** (user took too long): Do NOT treat this as approval. Ask the
      user with the same three options.
-   - **If `.crit.json` exists despite an error**: the daemon wrote feedback before dying —
+   - **If `.crit/review.json` exists despite an error**: the daemon wrote feedback before dying —
      proceed to step 3 with the file as truth.
-3. **Read feedback**: Read `~/.crit/plans/{change}/.crit.json` using the Read tool. Note: plan
-   mode stores `.crit.json` in `~/.crit/plans/{change}/`, NOT in the project root.
+3. **Read feedback**: Read `~/.crit/plans/{change}/.crit/review.json` using the Read tool. Note: plan
+   mode stores `.crit/review.json` in `~/.crit/plans/{change}/`, NOT in the project root.
 4. **Parse**: Extract all comments where `resolved` is `false` or missing.
 5. **Branch**:
    - **Has unresolved comments**: Format as CRIT_FEEDBACK markdown (see format below).
@@ -326,6 +350,16 @@ A large plan exhausts a single sub-agent's context. Drive waves:
    f. Any `status: failed` → STOP, show failure: **Retry wave** / **Abort** /
       **Skip to next wave**.
 4. After all waves → auto-launch review.
+
+> **Do NOT paraphrase plan.md into the batch invocation prompt.** plan.md is the source
+> of truth for task contracts (signatures, validation rules, error messages, file paths).
+> The implementer reads it directly. Your invocation only needs:
+>   - the batch ID and the task IDs in this batch (e.g. `Batch A → T001`)
+>   - a one-line pointer: "Read `.sdd/{change}/plan.md` Phase X → TXXX for the full contract"
+>   - any cross-batch context the implementer cannot infer
+>
+> Re-stating the contract risks drift between your prompt and plan.md, costs tokens on every
+> launch, and makes review harder.
 
 ## Post-Review Fix Cycle
 
@@ -431,7 +465,7 @@ Accomplished, Next Steps, Relevant Files.
 4. **Post-Phase skipping**: System-level "be concise" instructions do NOT override the
    Post-Phase Protocol.
 5. **Crit timeout ≠ approval**: If `crit plan` is killed by timeout or fails, the absence of
-   `.crit.json` means the review was NEVER completed — NOT that it was approved with no
+   `.crit/review.json` means the review was NEVER completed — NOT that it was approved with no
    comments. ALWAYS ask the user before proceeding to implement.
 
 ## References

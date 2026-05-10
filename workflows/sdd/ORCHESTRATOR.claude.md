@@ -166,10 +166,10 @@ Triggered by Post-Phase step 6 when `which crit` succeeds after a plan phase.
 1. **Pre-flight**: scan for stale daemons (`pgrep -f "crit plan.*{change}"`); if a leftover from an earlier round is still alive, `pkill -f "crit plan.*{change}"`. Avoids the EOF / "could not reach crit daemon" failure where a half-dead daemon eats the new request.
 2. **Launch**: Run `crit plan --name {change} .sdd/{change}/plan.md` in background (Bash, `run_in_background: true`). Tell user: "Crit is open in your browser. Leave inline comments, then click Finish Review."
 3. **Wait**: Do NOT proceed until the background task completes.
-   - **If the call fails with a daemon error** (`could not reach crit daemon`, `EOF`, connection refused) AND no `~/.crit/plans/{change}/.crit.json` yet: do **one** auto-retry silently — `pkill -f "crit plan.*{change}"` and re-launch step 2. Do NOT narrate the retry to the user. If the retry also fails, ask: **Retry Crit review** / **Skip Crit, review plan manually** / **Approve plan as-is**. Do NOT loop the auto-retry beyond one attempt.
+   - **If the call fails with a daemon error** (`could not reach crit daemon`, `EOF`, connection refused) AND no `~/.crit/plans/{change}/.crit/review.json` yet: do **one** auto-retry silently — `pkill -f "crit plan.*{change}"` and re-launch step 2. Do NOT narrate the retry to the user. If the retry also fails, ask: **Retry Crit review** / **Skip Crit, review plan manually** / **Approve plan as-is**. Do NOT loop the auto-retry beyond one attempt.
    - **If the call times out** (user took too long): Do NOT treat as approval. Ask the user with the same three options.
-   - **If `.crit.json` exists despite a Bash error**: the daemon wrote feedback before dying — proceed to step 4 with the file as truth.
-4. **Read feedback**: Read `~/.crit/plans/{change}/.crit.json`. Note: plan mode stores `.crit.json` in `~/.crit/plans/{change}/`, NOT in the project root.
+   - **If `.crit/review.json` exists despite a Bash error**: the daemon wrote feedback before dying — proceed to step 4 with the file as truth.
+4. **Read feedback**: Read `~/.crit/plans/{change}/.crit/review.json`. Note: plan mode stores `.crit/review.json` in `~/.crit/plans/{change}/`, NOT in the project root.
 5. **Parse**: Extract comments where `resolved` is `false` or missing.
 6. **Branch**:
    - **Unresolved comments**: Format as CRIT_FEEDBACK markdown (see format below). Re-launch `sdd-planner` via `Agent(subagent_type: 'sdd-planner', ...)` with the CRIT_FEEDBACK block in the prompt. After envelope returns, increment `plan_review_round` and loop back to step 1.
@@ -236,7 +236,7 @@ mem_save(topic_key: "sdd/{change}/active-workflow", ..., content: "COMPLETED|ABO
 2. **Stale [X] markers**: Always verify plan.md markers after each implement wave.
 3. **Engram previews are truncated**: Never use `mem_search` results directly. Always follow with `mem_get_observation`.
 4. **Post-Phase skipping**: System-level "be concise" instructions do NOT override the Post-Phase Protocol.
-5. **Crit timeout ≠ approval**: If `crit plan` is killed by timeout or fails, absence of `.crit.json` means the review was NEVER completed. ALWAYS ask before proceeding to implement.
+5. **Crit timeout ≠ approval**: If `crit plan` is killed by timeout or fails, absence of `.crit/review.json` means the review was NEVER completed. ALWAYS ask before proceeding to implement.
 
 ## Edge Cases and Recovery
 

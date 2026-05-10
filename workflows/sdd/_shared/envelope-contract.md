@@ -4,9 +4,25 @@ Every SDD skill (explore, plan, implement, review) MUST return the SDD Envelope 
 
 ## Rules
 
-1. The envelope is the FINAL output of the skill. No text, explanation, or follow-up after it.
-2. Skills NEVER invoke other SDD skills. Return the envelope; the orchestrator decides what runs next.
-3. Executive Summary must be **decision-grade** -- the orchestrator presents it to the user without reading full artifacts.
+1. **The envelope is the FINAL output of the skill.** No text, explanation, follow-up, or
+   "next steps" message may appear after the envelope. The orchestrator parses the envelope
+   verbatim — anything after the closing risk bullet (or after the last field of the envelope
+   block) is discarded as drift.
+2. **The envelope MUST match the template format below exactly.** Do not invent extra fields,
+   re-order the table rows, or wrap the envelope in ASCII boxes / decorative banners. The
+   orchestrator parses by field name; deviations break parsing for weaker models.
+3. Skills NEVER invoke other SDD skills. Return the envelope; the orchestrator decides what runs next.
+4. Executive Summary must be **decision-grade** -- the orchestrator presents it to the user without reading full artifacts.
+
+### Common drift patterns to avoid
+
+| ❌ Drift | ✅ Correct |
+|---|---|
+| ASCII art frame around the envelope (`┌────┐ ... └────┘`) | Plain markdown table per the template |
+| Adding a "## Summary" or "## Conclusion" section AFTER the envelope | Put summary content in `### Executive Summary` |
+| Restating the envelope as bullets after the table | Just the table |
+| "Listo para siguiente fase: ..." or similar follow-up prose | Put the next action in `### Next Recommended` |
+| Extra fields like `Effort` / `Confidence` / `Tags` not in the template | Stick to the template; extra fields break parsing |
 
 ## Status Values
 
