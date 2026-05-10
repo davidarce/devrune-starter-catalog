@@ -5,6 +5,13 @@ All notable changes to the DevRune Starter Catalog will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.3](https://github.com/davidarce/devrune-starter-catalog/compare/v0.8.2...v0.8.3) (2026-05-10)
+
+
+### Bug Fixes
+
+* **workflows/sdd:** drop REGISTRY for OpenCode/Copilot, slim ORCHESTRATOR, reorder PRD gate ([#60](https://github.com/davidarce/devrune-starter-catalog/issues/60)) ([aa87c06](https://github.com/davidarce/devrune-starter-catalog/commit/aa87c06aaf2637b8f32d2848fdafeb53fb1468fc))
+
 ## [0.8.2](https://github.com/davidarce/devrune-starter-catalog/compare/v0.8.1...v0.8.2) (2026-05-09)
 
 
