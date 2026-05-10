@@ -107,4 +107,4 @@ mem_save(
 )
 ```
 
-This enables compaction recovery (see `{WORKFLOW_DIR}/_shared/recovery.md`).
+This enables compaction recovery (see `{SHARED_DIR}/recovery.md`).

@@ -32,7 +32,7 @@ If your next planned action is on the "do not" list, you have lost the role — 
 
 For every phase, use the `Task` tool to spawn a sub-agent. The sub-agent's prompt instructs IT to call `Skill("sdd-{phase}")` — the orchestrator never calls Skill itself.
 
-**Read `{WORKFLOW_DIR}/_shared/launch-templates.md` before your first launch** — it contains the exact copy-paste Task() calls for every phase (correct `subagent_type`, model, and prompt per phase).
+**Read `{SHARED_DIR}/launch-templates.md` before your first launch** — it contains the exact copy-paste Task() calls for every phase (correct `subagent_type`, model, and prompt per phase).
 
 ### First Sub-Agent of a New Workflow
 
@@ -87,8 +87,8 @@ The PRD is opt-in for thin contexts only — never force it, never offer it when
 
 **Trust the envelope.** A sub-agent that returns `status: ok` with a `Gates:` line listing project gate results (build / test / lint / format / type-check — whatever the project uses) has already run those gates and passed. The orchestrator MUST NOT re-run any verification command after an `ok` envelope — that's the implementer's contract, and re-running burns tokens, time, and Output Discipline. Only when an envelope returns `status: warning` or `status: failed` does manual validation belong here, and even then only on the specific signals the envelope flagged.
 
-1. **Parse** the SDD Envelope from sub-agent output (format: `{WORKFLOW_DIR}/_shared/envelope-contract.md`). For parallel implement waves: run steps 1–3 for EACH sub-agent envelope in the wave. Aggregate status: if all `ok` → wave is `ok`; if any `failed` → wave is `failed`; if any `warning` but none `failed` → wave is `warning`.
-2. **Write state.yaml**: `.sdd/{change}/state.yaml` per schema in `{WORKFLOW_DIR}/_shared/persistence-contract.md`. For parallel waves: write the highest-severity status from all sub-agents in the wave.
+1. **Parse** the SDD Envelope from sub-agent output (format: `{SHARED_DIR}/envelope-contract.md`). For parallel implement waves: run steps 1–3 for EACH sub-agent envelope in the wave. Aggregate status: if all `ok` → wave is `ok`; if any `failed` → wave is `failed`; if any `warning` but none `failed` → wave is `warning`.
+2. **Write state.yaml**: `.sdd/{change}/state.yaml` per schema in `{SHARED_DIR}/persistence-contract.md`. For parallel waves: write the highest-severity status from all sub-agents in the wave.
 3. **Engram** (if available): save `{phase}-summary`, `state`, and update `active-workflow` marker with NEXT directive.
 
    **NEXT Step Resolution** — set the NEXT directive based on what just completed:
@@ -113,12 +113,12 @@ The PRD is opt-in for thin contexts only — never force it, never offer it when
 5. **Guidance loop** (plan phase only): After `plan` phase returns `status: guidance_requested`:
    a. Extract `requested_advisors[]` and `guidance_context` from envelope.
    b. Increment `guidance_round` in state.yaml (for tracking only — no maximum).
-   c. Launch all advisors in parallel using the Advisor Consultation Template from `{WORKFLOW_DIR}/_shared/advisor-templates.md`. Use `run_in_background: true` for each.
+   c. Launch all advisors in parallel using the Advisor Consultation Template from `{SHARED_DIR}/advisor-templates.md`. Use `run_in_background: true` for each.
    d. Wait for all advisor background tasks to complete.
    e. Collect the summary and engram observation ID returned by each advisor.
       (Each advisor persists its own output to engram and returns the observation ID.)
       If an advisor reports engram unavailable: keep its returned inline summary text for step f.
-   f. Re-launch sdd-plan using the Plan Re-entry with Guidance Template from `{WORKFLOW_DIR}/_shared/advisor-templates.md`.
+   f. Re-launch sdd-plan using the Plan Re-entry with Guidance Template from `{SHARED_DIR}/advisor-templates.md`.
       - For each advisor: include its observation ID in the GUIDANCE block (planner fetches full content via mem_get_observation).
       - If engram unavailable for an advisor: include its inline summary text in the GUIDANCE block instead.
    g. After sdd-plan re-entry returns envelope: loop back to step 1 (Post-Phase Protocol from start).
@@ -155,7 +155,7 @@ Triggered automatically by Post-Phase Protocol step 6 when `which crit` succeeds
 4. **Read feedback**: Read `~/.crit/plans/{change}/.crit.json` using the Read tool. Note: plan mode stores `.crit.json` in `~/.crit/plans/{change}/`, NOT in the project root.
 5. **Parse**: Extract all comments where `resolved` is `false` or missing.
 6. **Branch**:
-   - **Has unresolved comments**: Format as CRIT_FEEDBACK markdown (see format below). Re-launch `sdd-plan` sub-agent using the Plan Re-entry template from `{WORKFLOW_DIR}/_shared/launch-templates.md`. After sub-agent returns envelope, increment `plan_review_round` in `state.yaml` and loop back to step 1 (run crit again for next round).
+   - **Has unresolved comments**: Format as CRIT_FEEDBACK markdown (see format below). Re-launch `sdd-plan` sub-agent using the Plan Re-entry template from `{SHARED_DIR}/launch-templates.md`. After sub-agent returns envelope, increment `plan_review_round` in `state.yaml` and loop back to step 1 (run crit again for next round).
    - **No unresolved comments**: Plan approved. Set `crit_completed: true` in `.sdd/{change}/state.yaml`. Show "Plan approved via Crit review. Auto-launching implement phase." Proceed to Post-Phase step 7.
 
 **CRIT_FEEDBACK format** (injected into sdd-plan re-entry prompt):
@@ -185,7 +185,7 @@ A large plan exhausts a single sub-agent's context. The orchestrator drives wave
 2. Group batches into waves by dependency satisfaction
 3. For each wave:
    a. Identify batches: separate `Parallel=Yes` (no unmet deps) from sequential
-   b. Launch all `Parallel=Yes` batches as background Task() (use Parallel Batch Template from `{WORKFLOW_DIR}/_shared/launch-templates.md`)
+   b. Launch all `Parallel=Yes` batches as background Task() (use Parallel Batch Template from `{SHARED_DIR}/launch-templates.md`)
    c. Launch sequential batches as foreground Task() one at a time (use Sequential Batch Template)
    d. Wait for all background tasks to complete (Claude Code sends notification on completion)
    e. For each completed sub-agent (foreground and background): run Post-Phase Protocol
@@ -234,11 +234,11 @@ mem_save(topic_key: "sdd/{change}/active-workflow", ..., content: "COMPLETED|ABO
 
 ## Edge Cases and Recovery
 
-Compaction recovery, fail-fast error handling, abort/complete cleanup, and non-SDD context injection are in `{WORKFLOW_DIR}/_shared/recovery.md`.
+Compaction recovery, fail-fast error handling, abort/complete cleanup, and non-SDD context injection are in `{SHARED_DIR}/recovery.md`.
 
 ## References
 
-- Envelope format: `{WORKFLOW_DIR}/_shared/envelope-contract.md`
-- Persistence rules: `{WORKFLOW_DIR}/_shared/persistence-contract.md`
-- Launch templates: `{WORKFLOW_DIR}/_shared/launch-templates.md`
-- Recovery flows: `{WORKFLOW_DIR}/_shared/recovery.md`
+- Envelope format: `{SHARED_DIR}/envelope-contract.md`
+- Persistence rules: `{SHARED_DIR}/persistence-contract.md`
+- Launch templates: `{SHARED_DIR}/launch-templates.md`
+- Recovery flows: `{SHARED_DIR}/recovery.md`

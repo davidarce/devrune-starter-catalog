@@ -95,7 +95,7 @@ When SDD is triggered:
 
 After compaction, if memory has `sdd/*/active-workflow` observations starting with "ACTIVE":
 
-1. Re-load `Skill("sdd-orchestrator")` and read its recovery reference `{WORKFLOW_DIR}/_shared/recovery.md`.
+1. Re-load `Skill("sdd-orchestrator")` and read its recovery reference `{SHARED_DIR}/recovery.md`.
 2. Read `.sdd/{change}/state.yaml` for current phase and resume point.
 3. Parse the NEXT directive from the active-workflow marker (format: `NEXT: {phase} -> {specific next step}`) to determine the exact resume point.
 4. If NEXT mentions crit detection, re-run `which crit` to verify availability before proceeding.

@@ -144,7 +144,7 @@ user choices and do NOT need re-validation. Recovery jumps straight to the next 
 ### Step 4 — Auto-launch explore
 
 Invoke `@sdd-explorer` directly. Use the per-phase invocation prompt from
-`{WORKFLOW_DIR}/_shared/launch-templates.md`. No user prompt — the user already chose to
+`{SHARED_DIR}/launch-templates.md`. No user prompt — the user already chose to
 start SDD by selecting this agent.
 
 ## Launching Sub-Agents
@@ -152,10 +152,10 @@ start SDD by selecting this agent.
 Phase work runs inside sub-agents you invoke by `@agent-name` natural-language mention.
 Each sub-agent is a native `.agent.md` file that loads its own SKILL.md.
 
-See `{WORKFLOW_DIR}/_shared/launch-templates.md` for the exact invocation prompts per phase
+See `{SHARED_DIR}/launch-templates.md` for the exact invocation prompts per phase
 (operational contract, envelope format, persistence, wave-scope discipline, quality gate
 directive, CRIT_FEEDBACK pattern). For advisor consultations during the plan guidance loop,
-see `{WORKFLOW_DIR}/_shared/advisor-templates.md`.
+see `{SHARED_DIR}/advisor-templates.md`.
 
 For each phase, invoke the corresponding agent:
 - **explore**: `@sdd-explorer` — "Explore the codebase for {change-name}. Write
@@ -180,9 +180,9 @@ returns `status: warning` or `status: failed` does manual validation belong here
 then only on the specific signals the envelope flagged.
 
 1. **Parse** the SDD Envelope from sub-agent output (format:
-   `{WORKFLOW_DIR}/_shared/envelope-contract.md`).
+   `{SHARED_DIR}/envelope-contract.md`).
 2. **Write state.yaml**: `.sdd/{change}/state.yaml` per schema in
-   `{WORKFLOW_DIR}/_shared/persistence-contract.md`.
+   `{SHARED_DIR}/persistence-contract.md`.
 3. **Engram** (if available): save `{phase}-summary`, `state`, and update `active-workflow`
    marker with NEXT directive.
 
@@ -210,12 +210,12 @@ then only on the specific signals the envelope flagged.
    b. Increment `guidance_round` in state.yaml.
    c. For each requested advisor: invoke `@{advisor-skill}` by name (e.g.
       `@architect-advisor`, `@api-first-advisor`) using the Copilot Advisor Invocation template
-      from `{WORKFLOW_DIR}/_shared/advisor-templates.md`. Each advisor is a `.agent.md` file
+      from `{SHARED_DIR}/advisor-templates.md`. Each advisor is a `.agent.md` file
       in `.github/agents/` and loads its SKILL.md directly.
    d. Run advisors sequentially (Copilot has no background execution). Collect each summary
       + engram ID before invoking the next advisor.
    e. Invoke `@sdd-planner` with the Plan Re-entry with Guidance format from
-      `{WORKFLOW_DIR}/_shared/advisor-templates.md`.
+      `{SHARED_DIR}/advisor-templates.md`.
    f. After `@sdd-planner` returns: loop back to step 1.
    - After non-plan phases or after `status: ok/warning/blocked/failed`: skip this step.
 6. **Crit detection** (plan phase only): After `plan` phase with `status: ok`, run `which crit`
@@ -274,7 +274,7 @@ phase.
    - **Has unresolved comments**: Format as CRIT_FEEDBACK markdown (see format below).
      Re-launch `@sdd-planner` with the plan re-entry prompt (include the CRIT_FEEDBACK block
      and ask it to revise plan.md). The full re-entry prompt template is in
-     `{WORKFLOW_DIR}/_shared/launch-templates.md`. After sub-agent returns envelope, increment
+     `{SHARED_DIR}/launch-templates.md`. After sub-agent returns envelope, increment
      `plan_review_round` in `state.yaml` and loop back to step 1 (run crit again for next
      round — always foreground).
    - **No unresolved comments**: Plan approved. Set `crit_completed: true` in
@@ -348,7 +348,7 @@ mcp__engram__mem_save(topic_key: "sdd/{change}/active-workflow", ...,
 ## Compaction Recovery
 
 After compaction, if you receive a recovery context block referencing an active workflow
-marker, the recovery reference is `{WORKFLOW_DIR}/_shared/recovery.md`. When you receive that
+marker, the recovery reference is `{SHARED_DIR}/recovery.md`. When you receive that
 context:
 
 1. Read `.sdd/{change}/state.yaml` for current phase and resume point.
@@ -408,8 +408,8 @@ Accomplished, Next Steps, Relevant Files.
 
 ## References
 
-- Envelope format: `{WORKFLOW_DIR}/_shared/envelope-contract.md`
-- Persistence rules: `{WORKFLOW_DIR}/_shared/persistence-contract.md`
-- Launch templates: `{WORKFLOW_DIR}/_shared/launch-templates.md`
-- Advisor templates: `{WORKFLOW_DIR}/_shared/advisor-templates.md`
-- Recovery flows: `{WORKFLOW_DIR}/_shared/recovery.md`
+- Envelope format: `{SHARED_DIR}/envelope-contract.md`
+- Persistence rules: `{SHARED_DIR}/persistence-contract.md`
+- Launch templates: `{SHARED_DIR}/launch-templates.md`
+- Advisor templates: `{SHARED_DIR}/advisor-templates.md`
+- Recovery flows: `{SHARED_DIR}/recovery.md`
