@@ -43,67 +43,60 @@ Sub-agents launch with a fresh context and NO access to the orchestrator's memor
 
 ## state.yaml Schema
 
-The orchestrator writes `.sdd/{change}/state.yaml` after each phase transition. This enables recovery after context compaction even without engram.
+`.sdd/{change}/state.yaml` is the orchestrator's persistent state file. The sections below define the schema and the write rules. **For recovery semantics — how to read state.yaml after a compaction, the review→completion auto-flow rules — see `{SHARED_DIR}/recovery.md`.**
 
-**Keep state.yaml minimal.** It exists to answer two questions during recovery: "which phase resumes next?" and "did Crit approve the plan?". Anything that can be derived from the workdir at recovery time (artifact list, batch progress) does NOT belong in state.yaml — that's noise that fights the file's purpose.
+### Canonical schema
 
 ```yaml
-change: {change-name}
-current_phase: {phase that just completed}   # explore | plan | implement | review
-status: {ok | warning | failed | blocked}    # status of last_envelope
-last_updated: {ISO 8601 datetime}
+# ─── REQUIRED ──────────────────────────────────────────────────────
+change: {change-name}                          # workflow id (matches dir name)
+phase: explore | plan | implement | review | done
+phase_status: ok | warning | failed | blocked
+last_updated: 2026-05-10T17:42:11Z              # ISO 8601 with timezone (UTC preferred)
+next: explore | plan | implement | review | commit | pr | done
 
-# Optional — only when relevant
-last_envelope:
-  next_recommended: {explore | plan | implement | review | commit}
-guidance_round: {N}        # Optional. Increments per advisor consultation cycle in plan phase.
-plan_review_round: {N}     # Optional. Increments per Crit review round.
-crit_completed: true       # Optional. Set when Crit approves the plan (no unresolved comments).
-review_round: {N}          # Optional. Increments per post-review fix cycle.
+# ─── OPTIONAL — workspace context ───────────────────────────────────
+project: {engram-project-name}                  # used to scope engram saves
+branch: {git-branch}                            # only when inside a git repo
 
-# Optional — set by orchestrator during review→completion auto-flow
-commit_completed: true          # boolean; set after git-commit skill returns ok
-commit_sha: "<git-sha>"         # string; set alongside commit_completed for audit + idempotence
-awaiting_user_decision: "<enum>" # string; set when auto-flow stops at a failure ask
-                                  # valid values:
-                                  #   post-review-commit-retry  (commit failed)
-                                  #   post-review-pr-retry      (PR failed, commit ok)
-                                  # cleared when the user answers (Retry or Abort)
+# ─── OPTIONAL — engram cross-references (append per phase) ──────────
+engram:
+  explore_summary: obs-...
+  plan_summary: obs-...
+  implement_summary: obs-...
+  review_summary: obs-...
+
+# ─── OPTIONAL — workflow control flags (append-only as relevant) ───
+guidance_round: N                               # plan-phase advisor cycles
+plan_review_round: N                            # crit review rounds
+crit_completed: true                            # set when crit approves
+review_round: N                                 # post-review fix cycles
+
+# ─── OPTIONAL — review→completion auto-flow ────────────────────────
+commit_completed: true                          # set after git-commit skill returns ok
+commit_sha: "<git-sha>"                         # alongside commit_completed for audit + idempotence
+awaiting_user_decision: post-review-commit-retry | post-review-pr-retry
+                                                # cleared when the user answers (Retry or Abort)
 ```
 
-**Explicitly NOT in state.yaml**:
+### Explicitly forbidden — do NOT add these fields
 
-- `artifacts:` list — derived from `ls .sdd/{change}/` at recovery time. Listing files in state.yaml duplicates what the filesystem already shows and forces every transition to mutate state on disk.
-- `batches_completed:` array — the `[X]` markers in `plan.md` are the source of truth for batch progress. Counting them at recovery is cheap.
-- `phases:` map — `current_phase` plus the natural pipeline order (explore → plan → implement → review) is enough to determine what's `done` vs `pending`. The map is redundant.
+| Field | Why forbidden |
+|---|---|
+| `artifacts:` map | Derivable from `ls .sdd/{change}/*.md` at recovery time. Listing them duplicates the filesystem and forces every transition to mutate state. |
+| `batches_completed:` array | The `[X]` markers in `plan.md` are the source of truth for batch progress. Counting them at recovery is cheap. |
+| `phases:` map | `phase` plus the natural pipeline order (explore → plan → implement → review) is enough. The map is redundant. |
+| `created` / `updated` (date strings) | `last_updated` (ISO 8601) already covers time. Two date fields is noise. |
+| `gates:` map (`go_build: pass`, ...) | The sub-agent envelope already conveys gate results; recovery does not need them. |
+| `risks:` list | Already in `plan.md` Risks section and in the sub-agent envelope. |
+| `notes:` list | Use comments in plan.md or `awaiting_user_decision` for actionable state. |
+| `implement:` map (`waves_completed`, `tasks_completed`, `tasks_total`) | All derivable from `[X]` markers in plan.md. |
 
-### Write Rules
+### Hard Rules
 
-- **Always written** after each phase completes (file-based, never fails)
-- **Orchestrator is the sole writer** -- sub-agents never modify state.yaml
+- **Always written** after each phase completes (file-based, never fails).
+- **Orchestrator is the sole writer** — sub-agents never modify state.yaml.
 - **Append-only optional fields**: when a field becomes relevant (first Crit round, first review fix, etc.), add it. Do NOT pre-create empty fields.
-
-### Recovery via state.yaml
-
-When the orchestrator resumes after compaction:
-
-1. Read `.sdd/{change}/state.yaml` → `current_phase` and `status`.
-2. Compute available artifacts: `ls .sdd/{change}/*.md`.
-3. If `current_phase: implement` and `plan.md` exists, count `[X]` vs `[ ]` markers to determine batch progress.
-4. Resume from the next pipeline phase (or the next pending batch within `implement`).
-
-### Recovery Semantics — Review→Completion Auto-Flow
-
-When `current_phase: review` and `status: ok`, the orchestrator applies these rules in order:
-
-1. **`awaiting_user_decision == post-review-commit-retry`**: the auto-flow stopped at a commit failure. Resume by surfacing the commit failure ask (**Retry commit / Abort**). Do NOT re-run the commit automatically.
-2. **`awaiting_user_decision == post-review-pr-retry`**: `commit_completed` is `true`; the commit already succeeded. Skip the commit step entirely and surface the PR failure ask (**Retry PR / Abort**).
-3. **`commit_completed == true` and `awaiting_user_decision` is absent**: commit already done; the auto-flow was interrupted after commit but before PR. Proceed directly to auto-PR (no re-commit).
-4. **Neither `commit_completed` nor `awaiting_user_decision` is present**: normal entry — follow the standard auto-commit → auto-PR → COMPLETED path.
-
-**Clearing rules**:
-- On Abort at any point: clear `awaiting_user_decision` from state.yaml; write marker `ABORTED`.
-- On successful PR: clear `awaiting_user_decision`, `commit_completed`, and `commit_sha`; write marker `COMPLETED`.
 
 ### Optional Engram State Save
 
