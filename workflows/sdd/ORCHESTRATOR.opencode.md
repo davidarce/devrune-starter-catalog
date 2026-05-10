@@ -180,8 +180,12 @@ then only on the specific signals the envelope flagged.
 
 1. **Parse** the SDD Envelope from sub-agent output (format:
    `{SHARED_DIR}/envelope-contract.md`).
-2. **Write state.yaml**: `.sdd/{change}/state.yaml` per schema in
-   `{SHARED_DIR}/persistence-contract.md`.
+2. **Write state.yaml STRICTLY** per the schema in
+   `{SHARED_DIR}/persistence-contract.md`. Use ONLY the field names
+   listed in the schema (REQUIRED + OPTIONAL sections). Do NOT invent
+   any other fields — the contract enumerates what is forbidden and
+   why. If you think a new field is needed, the answer is no — propose
+   a contract change first.
 3. **Engram** (if available): save `{phase}-summary`, `state`, and update `active-workflow`
    marker with NEXT directive.
 
