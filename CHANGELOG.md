@@ -5,6 +5,14 @@ All notable changes to the DevRune Starter Catalog will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.5](https://github.com/davidarce/devrune-starter-catalog/compare/v0.8.4...v0.8.5) (2026-05-10)
+
+
+### Bug Fixes
+
+* **workflows/sdd:** compaction hook + persistence-contract enforcement ([#67](https://github.com/davidarce/devrune-starter-catalog/issues/67)) ([a63883b](https://github.com/davidarce/devrune-starter-catalog/commit/a63883bad44136e9407d45c6f74f704e2149224d))
+* **workflows/sdd:** orchestrator audit — Crit path, tool names, narration tightening, envelope contract ([#66](https://github.com/davidarce/devrune-starter-catalog/issues/66)) ([d047e5c](https://github.com/davidarce/devrune-starter-catalog/commit/d047e5c6b989cc9e4e6625d41dc6d506a0351016))
+
 ## [0.8.4](https://github.com/davidarce/devrune-starter-catalog/compare/v0.8.3...v0.8.4) (2026-05-10)
 
 
