@@ -365,17 +365,35 @@ Engram tools (`mem_save`, `mem_search`, `mem_context`, etc.) depend on an MCP se
 not be installed or configured. All engram operations MUST follow the availability guard
 pattern.
 
-**Detection**: At the start of a session or workflow, attempt a lightweight engram call (e.g.,
-`mem_context`). If it succeeds, engram is available. If it fails or the tool is not
-recognized, engram is unavailable.
+**Detection** (run once per session, cache the result):
+
+1. Attempt `mem_context()` with no arguments.
+2. **If it succeeds** → engram is available; cache `engram_available = true` and proceed.
+3. **If it fails**, classify the error:
+   - **Tool not recognised / MCP server missing** (errors mentioning "no such tool",
+     "unknown tool", "MCP server not running") → engram is genuinely unavailable; cache
+     `engram_available = false`.
+   - **Ambiguous project** (error mentions "ambiguous project", "multiple git repos found",
+     or a similar disambiguation message) → engram IS available, the cwd just contains
+     multiple sub-repos and engram needs an explicit `project`. Recover:
+       a. Call `mem_current_project()` to ask engram for its best project guess.
+       b. If it returns a project name → cache `engram_project = <name>` and
+          `engram_available = true`. Pass `project: engram_project` on every subsequent
+          engram call.
+       c. If it also fails → cache `engram_available = false`.
+       d. Tell the user once: "Engram resolved to project `<name>` for this workflow. Set a
+          `.engram/config.json` at the workflow root to make this explicit."
+   - **Any other error** → cache `engram_available = false`.
 
 **Guard rules**:
 - **If available**: Use engram normally — save, search, recover as documented above.
+  Always pass `project: engram_project` when the disambiguation step set it.
 - **If unavailable**: Skip ALL engram operations silently. Do not emit errors, warnings, or
   user-facing messages about engram absence.
 - **Never block workflow**: No task, phase, or operation should fail because engram is not
   available. Engram is always complementary, never required.
-- **Do not retry**: If an engram call fails, skip it and continue. Do not retry or enter a loop.
+- **No retry loops**: At most one disambiguation retry via `mem_current_project()`. If that
+  fails, treat engram as unavailable and continue.
 
 ## Session close protocol (mandatory)
 

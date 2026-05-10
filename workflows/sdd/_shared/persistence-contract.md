@@ -152,20 +152,40 @@ mem_save(
 
 ## Engram Availability Guard Pattern
 
-All engram operations MUST use the try/skip pattern. Engram may not be installed or configured.
+All engram operations MUST use the try/skip pattern. Engram may not be installed or
+configured, and even when it is, the cwd may contain multiple sub-repos that confuse
+project resolution.
 
 ### Detection (once per session)
 
-At session start, the orchestrator attempts:
+At session start, the orchestrator attempts `mem_context()` and classifies the outcome:
 
 ```
-try:  mem_context(project: "{project}")
-      -> engram_available = true
-catch (tool not found / error):
-      -> engram_available = false
+try:  mem_context()
+      -> engram_available = true; engram_project = (whatever engram resolved)
+
+catch error:
+  if error is "tool not found" / "unknown tool" / "MCP server not running":
+      -> engram_available = false   # genuinely missing
+
+  elif error mentions "ambiguous project" or "multiple git repos":
+      -> engram IS installed; cwd just needs disambiguation.
+         Recover by calling mem_current_project():
+           if it returns a project name:
+             -> engram_available = true; engram_project = <name>
+                Pass project: engram_project on every later engram call.
+                Tell user once: "Engram resolved to project <name>; set
+                .engram/config.json at the workflow root to make this explicit."
+           else:
+             -> engram_available = false
+
+  else:
+      -> engram_available = false   # unknown error, fail-safe
 ```
 
-Cache the result. Do NOT re-check per operation.
+Cache `engram_available` and `engram_project`. Do NOT re-check per operation.
+
+At most ONE disambiguation retry via `mem_current_project()`. No retry loops.
 
 ### Guard Pattern for Sub-Agents
 
