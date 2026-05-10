@@ -55,9 +55,9 @@ both. The narration adds nothing the diff or the next tool call won't already co
 
 **Forbidden — bash echo as a "marker" before a question or another action**:
 
-The `question` tool and `AskUserQuestion`-equivalent prompts ARE valid actions on their own.
-You do NOT need a `bash echo` (or any other no-op tool call) before them. If your next move
-is to ask the user, ask. If your next move is to read a file, read it.
+The `question` tool IS a valid action on its own. You do NOT need a `bash echo` (or any
+other no-op tool call) before it. If your next move is to ask the user, ask. If your next
+move is to read a file, read it.
 
 | ❌ Don't do this | ✅ Do this |
 |---|---|

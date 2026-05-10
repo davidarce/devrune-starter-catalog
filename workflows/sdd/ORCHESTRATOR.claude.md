@@ -104,7 +104,7 @@ The PRD is opt-in for thin contexts only — never force it, never offer it when
 **Trust the envelope.** A sub-agent that returns `status: ok` with a `Gates:` line listing project gate results (build / test / lint / format / type-check — whatever the project uses) has already run those gates and passed. The orchestrator MUST NOT re-run any verification command after an `ok` envelope — that's the implementer's contract, and re-running burns tokens, time, and Output Discipline. Only when an envelope returns `status: warning` or `status: failed` does manual validation belong here, and even then only on the specific signals the envelope flagged.
 
 1. **Parse** the SDD Envelope from sub-agent output (format: `_shared/envelope-contract.md`). For parallel implement waves: run steps 1–3 for EACH sub-agent envelope. Aggregate status: all `ok` → `ok`; any `failed` → `failed`; any `warning` (none failed) → `warning`.
-2. **Write state.yaml**: `.sdd/{change}/state.yaml` per schema in `_shared/persistence-contract.md`. For parallel waves: highest-severity status wins.
+2. **Write state.yaml STRICTLY** per the schema in `_shared/persistence-contract.md`. Use ONLY the field names listed in the schema (REQUIRED + OPTIONAL sections). Do NOT invent any other fields — the contract enumerates what is forbidden and why. If you think a new field is needed, the answer is no — propose a contract change first. For parallel waves: highest-severity status wins.
 3. **Engram** (if available): save `{phase}-summary`, `state`, and update `active-workflow` marker with NEXT directive.
 
    **NEXT Step Resolution**:
