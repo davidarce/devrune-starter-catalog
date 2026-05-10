@@ -119,6 +119,12 @@ when it isn't.
 Run once, here — not at commit time. PRD content (when present) informs branch type more
 reliably than the raw user prompt.
 
+**Pre-flight — git availability**: Run `git rev-parse --is-inside-work-tree` first. If it
+returns a non-zero exit (the cwd is not inside a git repository — common for monorepo-style
+workspaces that aggregate multiple sub-repos at the root), **skip Step 3 entirely**. Tell
+the user once: "No git repository detected at the workflow root; branch setup skipped."
+Sub-agents that need to commit will run their own git commands inside the relevant sub-repo.
+
 - Read current branch: `git rev-parse --abbrev-ref HEAD`.
 - Read base reference: `git rev-parse --abbrev-ref origin/HEAD` (fallback `main` / `master`).
 - Decide if the current branch is **fit** for this change:
@@ -136,6 +142,10 @@ reliably than the raw user prompt.
   - When unclear, ask the user once: **feat** / **fix** / **refactor** / **chore** /
     **Stay on current branch**.
   - Run `git checkout -b {type}/{change-name}` from the base branch.
+
+> Branch creation here is part of workflow initialization, not a commit-mutating action.
+> The "no `git commit` / `push`" rule still holds — those belong to the `git-commit` and
+> `git-pull-request` skills invoked at the end of the workflow.
 
 When `.sdd/{change}/state.yaml` already exists (resume case): skip Steps 1–3 entirely. The
 branch was chosen at the original workflow start; mid-workflow branch changes are deliberate

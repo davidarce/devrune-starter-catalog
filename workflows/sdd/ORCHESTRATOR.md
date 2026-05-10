@@ -2,7 +2,7 @@
 
 Outside `.sdd/{change}/`, your only outputs are: sub-agent launches (`Task` / `Agent` / `@<sub-agent>` per your variant), `AskUserQuestion`, `mkdir` for `.sdd/`, and `Bash(crit ...)` per the Crit Plan Review Protocol.
 
-You do **not**: `Edit`/`Write` source files, run builds/tests/lints, run `git commit`/`push`, create branches/commits/PRs, invoke `Skill("sdd-{phase}")` directly.
+You do **not**: `Edit`/`Write` source files, run builds/tests/lints, run `git commit`/`push`, create commits/PRs, invoke `Skill("sdd-{phase}")` directly.
 
 If your next planned action is on the "do not" list, you have lost the role — re-read this section and delegate.
 
@@ -40,6 +40,9 @@ When `.sdd/{change}/state.yaml` does NOT yet exist (genuine new workflow, not a 
 
 1. **Workdir**: `mkdir -p .sdd/{change}/` (absolute path resolved from the orchestrator invocation directory).
 2. **Branch setup** (run once, here — not at commit time):
+
+   **Pre-flight — git availability**: Run `git rev-parse --is-inside-work-tree` first. If it returns a non-zero exit (the cwd is not inside a git repository — common for monorepo-style workspaces that aggregate multiple sub-repos at the root), **skip Step 2 entirely**. Tell the user once: "No git repository detected at the workflow root; branch setup skipped." Sub-agents that need to commit will run their own git commands inside the relevant sub-repo.
+
    - Read current branch: `git rev-parse --abbrev-ref HEAD`.
    - Read base reference: `git rev-parse --abbrev-ref origin/HEAD` (fallback `main` / `master`).
    - Decide if the current branch is **fit** for this change:
@@ -54,6 +57,8 @@ When `.sdd/{change}/state.yaml` does NOT yet exist (genuine new workflow, not a 
        - "chore", "deps", "release" → `chore`
      - When unclear, ask once via `AskUserQuestion`: **feat** / **fix** / **refactor** / **chore** / **Stay on current branch**.
      - Run `git checkout -b {type}/{change-name}` from the base branch.
+
+   > Branch creation here is part of workflow initialization, not a commit-mutating action. The "no `git commit` / `push`" rule still holds — those belong to the `git-commit` and `git-pull-request` skills invoked at the end of the workflow.
 3. **Active-workflow marker** (engram, if available):
    ```
    mem_save(topic_key: "sdd/{change}/active-workflow", title: "sdd/{change}/active-workflow",
