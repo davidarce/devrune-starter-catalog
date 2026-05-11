@@ -5,6 +5,13 @@ All notable changes to the DevRune Starter Catalog will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.8](https://github.com/davidarce/devrune-starter-catalog/compare/v0.8.7...v0.8.8) (2026-05-11)
+
+
+### Bug Fixes
+
+* **workflows/sdd:** migrate sdd-session-compact.sh to canonical state.yaml schema ([#73](https://github.com/davidarce/devrune-starter-catalog/issues/73)) ([e3fee78](https://github.com/davidarce/devrune-starter-catalog/commit/e3fee7814bfbbeb19e82d8342043c898c786c17c))
+
 ## [0.8.7](https://github.com/davidarce/devrune-starter-catalog/compare/v0.8.6...v0.8.7) (2026-05-11)
 
 
