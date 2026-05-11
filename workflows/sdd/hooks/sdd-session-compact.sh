@@ -1,29 +1,28 @@
 #!/bin/sh
 # SDD SessionStart(compact) Hook (Tier 1a — Claude only)
 # Fires when Claude resumes after compaction. Stdout becomes visible context.
+# Reads the canonical state.yaml schema (phase + next, per persistence-contract.md).
+# Skips terminal workflows (phase=done or next=done) — no recovery needed.
 # Searches root and one level of subdirectories for .sdd/*/state.yaml.
 find . -maxdepth 3 -path '*/.sdd/*/state.yaml' -type f 2>/dev/null | while read -r state_file; do
   change_name="$(basename "$(dirname "$state_file")")"
-  current_phase="$(grep '^current_phase:' "$state_file" | sed 's/current_phase: *//')"
-  next_step="$(grep '^next_step:' "$state_file" | sed 's/next_step: *//')"
-  [ -z "$current_phase" ] && current_phase="unknown"
-  [ -z "$next_step" ] && next_step="check state.yaml for details"
+  phase="$(grep '^phase:' "$state_file" | sed 's/phase: *//' | tr -d ' ')"
+  next="$(grep '^next:' "$state_file" | sed 's/next: *//' | tr -d ' ')"
+  [ -z "$phase" ] && phase="unknown"
+  [ -z "$next" ] && next="unknown"
+
+  case "$phase" in done) continue ;; esac
+  case "$next"  in done) continue ;; esac
 
   cat <<EOF
-CRITICAL: SDD workflow "${change_name}" was active during compaction. You MUST run compaction recovery NOW.
+## SDD recovery — workflow ${change_name}
 
-## Role Invariant — you orchestrate, you do not implement
+State file: ${state_file} (phase=${phase}, next=${next}).
 
-Outside .sdd/{change}/, your only outputs are: sub-agent launches (Task / Agent / @<sub-agent>), AskUserQuestion, mkdir for .sdd/, and Bash(crit ...) per the Crit Plan Review Protocol.
+Resume from \`next\` directly. Do NOT re-explore, re-plan or re-do
+completed phases. Read ${state_file} if you need more context.
 
-You do NOT: Edit/Write source files, run builds/tests/lints, run git commit/push, create branches/commits/PRs, invoke Skill("sdd-{phase}") directly.
-
-If your next planned action is on the "do not" list, you have lost the role — re-read ORCHESTRATOR.md and delegate.
-
-## Recovery
-
-State: ${state_file} (current_phase: ${current_phase}, NEXT: ${next_step}).
-Check engram for the active-workflow marker (mem_context).
-Load Skill(sdd-orchestrator) and resume from the NEXT directive.
+Do NOT produce any orientation or "I'll continue with..." sentence
+before resuming — the next tool call IS the resume. Just call it.
 EOF
 done
