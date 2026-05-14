@@ -47,7 +47,17 @@ When an envelope returns `status: failed` or `status: blocked`:
 
 ## Abort / Complete Cleanup
 
-When a workflow ends (user aborts or completes), clear the active-workflow marker (if engram available):
+When a workflow ends (user aborts or completes), the orchestrator MUST do BOTH:
+
+### 1. Remove the on-disk marker (mandatory)
+
+```
+rm -f .sdd/.active
+```
+
+This silences the SDD compaction hooks for this workflow (the active path short-circuits when the file is absent and falls back to canonical-schema scan, which already skips `phase=done|next=done`).
+
+### 2. Update the engram marker (best-effort, if engram available)
 
 ```
 mem_save(

@@ -139,7 +139,28 @@ The orchestrator populates `{formatted markdown list}` using the CRIT_FEEDBACK f
 
 ## Initial Workflow Marker
 
-Before the FIRST sub-agent launch in a new SDD workflow, the orchestrator saves (if engram available):
+Before the FIRST sub-agent launch in a new SDD workflow, the orchestrator MUST do BOTH:
+
+### 1. On-disk marker (mandatory, no dependencies)
+
+Write the active workflow name to `.sdd/.active` (single-line, just the change-name):
+
+```
+echo "{change}" > .sdd/.active
+```
+
+This is the source of truth read by the SDD compaction hooks (`sdd-pre-compact.sh`, `sdd-session-compact.sh`, `sdd-compaction.ts`). Without this file, hooks fall back to scanning every `.sdd/*` directory and emit noise for dormant or archived workflows.
+
+**Lifecycle**:
+- **Written** when the workflow starts (before first sub-agent launch).
+- **Left in place** through every phase transition — the active workflow name does not change mid-workflow.
+- **Deleted** when the workflow ends (completed, aborted, or user explicitly closes):
+
+```
+rm -f .sdd/.active     # on workflow close (any terminal state)
+```
+
+### 2. Engram marker (best-effort, if engram available)
 
 ```
 mem_save(
@@ -150,4 +171,10 @@ mem_save(
 )
 ```
 
+The engram marker carries the richer NEXT directive used by recovery. The `.sdd/.active` file carries only the change-name and is read by the language-agnostic compaction hooks.
+
 This enables compaction recovery (see `_shared/recovery.md`).
+
+> NOTE: The same "Initial Workflow Marker" section appears in the per-assistant variants
+> (`launch-templates.claude.md`, `.copilot.md`, `.opencode.md`). Until those variants are
+> regenerated from this base, port the on-disk marker steps into each one manually.

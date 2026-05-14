@@ -114,7 +114,20 @@ mem_save(
 
 This provides an additional recovery path if `.sdd/` files are lost, but is NEVER required.
 
-### Role Marker for Compaction Recovery
+### On-Disk Active Marker (mandatory)
+
+The orchestrator MUST maintain `.sdd/.active` as a single-line file containing the active change-name:
+
+```
+echo "{change}" > .sdd/.active   # on workflow start
+rm  -f .sdd/.active              # on workflow close (abort or complete)
+```
+
+This is the canonical signal read by language-agnostic compaction hooks (`sdd-pre-compact.sh`, `sdd-session-compact.sh`, `sdd-compaction.ts`). Without it, hooks fall back to scanning every `.sdd/*/state.yaml` and emit noise for dormant or archived workflows.
+
+The orchestrator's existing sole-writer contract over `state.yaml` extends to `.sdd/.active`: only the orchestrator writes/deletes this file.
+
+### Role Marker for Compaction Recovery (engram, best-effort)
 
 If engram is available, the orchestrator ALSO saves an active-workflow role marker alongside the state:
 
